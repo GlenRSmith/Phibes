@@ -91,6 +91,47 @@ def get_password_hash(password, salt):
     return get_strong_hash(password, AUTH_KEY_ROUNDS, salt)
 
 
+class Secret(object):
+
+    def __init__(self, name, locker):
+        self.name = name
+        self.locker = locker
+        self.salt = None
+        self.secret_file = os.path.join(
+            locker.locker_path, f"{name}.sct"
+        )
+        super().__init__()  # is this best practice?
+
+    def validate(self):
+        return
+
+    def create(self, secret_text):
+        # safely get random bytes, turn into string hexadecimal
+        self.salt = secrets.token_bytes(16).hex()
+        iv, self.ciphertext = encrypt(
+            self.locker.crypt_key,
+            secret_text,
+            iv=bytes.fromhex(self.salt)
+        )
+        # Write the new Secret file
+        entry = f"{self.salt}\n{self.ciphertext}\n"
+        with open(self.secret_file, "w") as cipher_file:
+            cipher_file.write(entry)
+        return
+
+    def read(self):
+        self.validate()
+        with open(f"{self.secret_file}", "r") as s_file:
+            # the salt was stored in hexidecimal form, with a line feed
+            self.salt = s_file.readline().strip('\n')
+            # the next line in the file is the encrypted secret
+            read_secret = s_file.readline().strip('\n')
+            ciphertext = decrypt(
+                self.locker.crypt_key, bytes.fromhex(self.salt), read_secret
+            )
+        return ciphertext.decode()
+
+
 class Locker(object):
 
     def __init__(self, name, password, create=False):
@@ -121,15 +162,14 @@ class Locker(object):
         self.locker_path = os.path.join(LOCKER_PATH, f"{name}")
         self.lock_file = os.path.join(self.locker_path, ".locker.cfg")
         if create:
-            self._create(name, password)
+            self._create(password)
         else:
-            self._open(name, password)
+            self._open(password)
         super().__init__()  # is this best practice?
 
-    def _create(self, name, password):
+    def _create(self, password):
         """
         Creates a new Locker folder with auth config file
-        :param name: Name of the locker to create
         :param password: Password for the locker
         :return: None
         """
@@ -161,8 +201,7 @@ class Locker(object):
             vault_file.write(entry)
         return
 
-    def _open(self, name, pw):
-        # can proceed if valid auth config file is in place in named dir
+    def validate(self):
         if not os.path.exists(self.locker_path):
             raise ValueError(f"Locker path {self.locker_path} does not exist")
         if not os.path.isdir(self.locker_path):
@@ -171,6 +210,9 @@ class Locker(object):
             raise ValueError(f"Locker file {self.lock_file} does not exist")
         if not os.path.isfile(self.lock_file):
             raise ValueError(f"{self.lock_file} is not a file")
+
+    def _open(self, pw):
+        self.validate()
         with open(f"{self.lock_file}", "r") as locker_file:
             # the salt was stored in hexidecimal form, with a line feed
             self.salt = locker_file.readline().strip('\n')

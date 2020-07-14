@@ -12,6 +12,7 @@ import click
 # local project modules
 from lib.locker import decrypt, encrypt
 from lib.locker import Locker
+from lib.locker import Secret
 
 
 @click.group()
@@ -79,15 +80,17 @@ def create(name, password):
 )
 @secret.command()
 def add(locker_name, password, secret_name, secret_text):
+    """
+    Add an encrypted secret to the named Locker
+    :param locker_name: Name of the Locker
+    :param password: Password assigned when Locker was created
+    :param secret_name: Name of the new secret
+    :param secret_text: Text of secret to be encrypted
+    :return:
+    """
     my_locker = Locker(locker_name, password)
-    click.echo(f"secret: {secret_text}")
-    iv, hidden = encrypt(my_locker.crypt_key, secret_text)
-    # click.echo(f"existing_locker.crypt_key: {my_locker.crypt_key}")
-    # click.echo(f"existing_locker.crypt_key: {my_locker.crypt_key.hex()}")
-    # click.echo(f"encrypted form {hidden}")
-    unhidden = decrypt(my_locker.crypt_key, iv, hidden).decode()
-    click.echo(f"unhidden {unhidden}")
-    assert secret_text == unhidden
+    my_secret = Secret(secret_name, my_locker)
+    my_secret.create(secret_text)
     return
 
 
@@ -112,12 +115,10 @@ def add(locker_name, password, secret_name, secret_text):
 @secret.command()
 def inspect(locker_name, password, secret_name):
     my_locker = Locker(locker_name, password)
-    click.echo(f"secret: {secret_text}")
-    iv, hidden = encrypt(my_locker.crypt_key, secret_text)
-    unhidden = decrypt(my_locker.crypt_key, iv, hidden).decode()
-    click.echo(f"unhidden {unhidden}")
-    assert secret_text == unhidden
-    return
+    my_secret = Secret(secret_name, my_locker)
+    pw = my_secret.read()
+    click.echo(f"unhidden {pw}")
+    return pw
 
 
 @click.pass_context
