@@ -10,39 +10,73 @@ import os
 import click
 
 # local project modules
-from lib import locker
+from lib.locker import decrypt, encrypt
+from lib.locker import Locker
 
 
-@click.command()
+@click.group()
+def main():
+    pass
+
+
+@main.group()
+def locker():
+    pass
+
+
+@main.group()
+def secret():
+    pass
+
+
+@locker.command()
 @click.argument('name')
 @click.option('--password', prompt=True, hide_input=True,
               confirmation_prompt=True)
-def create_locker(name, password):
+def create(name, password):
     click.echo("Create a new user account and locker")
-    new_locker = locker.Locker(name, password, create=True)
+    new_locker = Locker(name, password, create=True)
     click.echo(f"User account created {new_locker.auth_hash}")
-    existing_locker = locker.Locker(name, password)
+    existing_locker = Locker(name, password)
     hide = "BatteryHorseStaplerCorrect"
     click.echo(f"hide: {hide}")
-    iv, hidden = locker.encrypt(
+    iv, hidden = encrypt(
         existing_locker.crypt_key,
         hide
     )
     click.echo(f"existing_locker.crypt_key: {existing_locker.crypt_key}")
     click.echo(f"existing_locker.crypt_key: {existing_locker.crypt_key.hex()}")
     click.echo(f"encrypted form {hidden}")
-    unhidden = locker.decrypt(
-        existing_locker.crypt_key,
-        iv,
-        hidden
-    ).decode()
+    unhidden = decrypt(existing_locker.crypt_key, iv, hidden).decode()
     click.echo(f"unhidden {unhidden}")
     assert hide == unhidden
     return
 
 
+@click.option(
+    '--secret_text', prompt=True, hide_input=True, confirmation_prompt=True
+)
+@click.option(
+    '--password', prompt=True, hide_input=True, confirmation_prompt=False
+)
+@click.argument('secret_name')
+@click.argument('locker_name')
+@secret.command()
+def add(locker_name, password, secret_name, secret_text):
+    my_locker = Locker(locker_name, password)
+    click.echo(f"secret: {secret_text}")
+    iv, hidden = encrypt(my_locker.crypt_key, secret_text)
+    # click.echo(f"existing_locker.crypt_key: {my_locker.crypt_key}")
+    # click.echo(f"existing_locker.crypt_key: {my_locker.crypt_key.hex()}")
+    # click.echo(f"encrypted form {hidden}")
+    unhidden = decrypt(my_locker.crypt_key, iv, hidden).decode()
+    click.echo(f"unhidden {unhidden}")
+    assert secret_text == unhidden
+    return
+
+
 @click.pass_context
-def main(ctx, api_key, config_file):
+def what(ctx, api_key, config_file):
     """
     This is a tool for managing a secure, local password locker.
     """
@@ -58,7 +92,7 @@ def main(ctx, api_key, config_file):
     }
 
 
-@click.command()
+@main.command()
 @click.option('--count', default=1, help='Number of greetings.')
 @click.option('--name', prompt='Your name',
               help='The person to greet.')
@@ -81,4 +115,4 @@ def hello(count, name):
 
 
 if __name__ == '__main__':
-    create_locker()
+    main()
