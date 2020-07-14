@@ -104,8 +104,6 @@ class Locker(object):
         :param password: The password to the locker
         :param create: Should invocation try to create a new locker?
         """
-        # Try to find an existing locker. Even if we get the `create` flag,
-        # we will need to guard against accidental overwriting
         self.auth_hash = None
         # auth_hash will be the hash used to auth the user
         # It is derived from the main password.
@@ -113,22 +111,40 @@ class Locker(object):
         # crypt_key will be the symmetrical encryption key
         # It is derived from the main password, but wouldn't have to be.
         self.salt = None
-        lock_file = os.path.join(LOCKER_PATH, f"{name}.lck")
-        exists = os.path.exists(lock_file)
-        isfile = os.path.isfile(lock_file)
-        if exists:
-            if not isfile:
-                raise SyntaxError(f"{lock_file} exists and isn't a file")
-            else:
-                if create:
-                    raise SyntaxError(f"{lock_file} already exists!")
-                else:
-                    self._open(name, password)
-        else:
+        # Try to find an existing locker. Even if we get the `create` flag,
+        # we will need to guard against accidental overwriting
+        # Locker will be a directory and have a file for salt and auth hash
+        if not os.path.exists(LOCKER_PATH):
+            raise ValueError(f"Base path {LOCKER_PATH} does not exist")
+        if not os.path.isdir(LOCKER_PATH):
+            raise ValueError(f"Base path {LOCKER_PATH} is not a directory")
+        self.locker_path = os.path.join(LOCKER_PATH, f"{name}")
+        self.lock_file = os.path.join(self.locker_path, ".locker.cfg")
+        if create:
             self._create(name, password)
+        else:
+            self._open(name, password)
         super().__init__()  # is this best practice?
 
     def _create(self, name, password):
+        """
+        Creates a new Locker folder with auth config file
+        :param name: Name of the locker to create
+        :param password: Password for the locker
+        :return: None
+        """
+        # Can proceed if either the dir doesn't exist or is empty
+        if not os.path.exists(self.locker_path):
+            os.mkdir(self.locker_path)
+        else:
+            if not os.path.isdir(self.locker_path):
+                raise ValueError(
+                    f"{self.locker_path} already exists and is not a directory"
+                )
+            if not os.listdir(self.locker_path):
+                raise ValueError(
+                    f"dir {self.locker_path} already exists and is not empty"
+                )
         # safely get random bytes, turn into string hexadecimal
         self.salt = secrets.token_bytes(16).hex()
         # create a crypt key from the password - never store that!
@@ -140,14 +156,22 @@ class Locker(object):
         )
         # Write the new locker file
         entry = f"{self.salt}\n{self.auth_hash}\n"
-        lock_file = os.path.join(LOCKER_PATH, f"{name}.lck")
-        with open(lock_file, "w") as vault_file:
+        # lock_file = os.path.join(LOCKER_PATH, f"{name}.lck")
+        with open(self.lock_file, "w") as vault_file:
             vault_file.write(entry)
         return
 
     def _open(self, name, pw):
-        lock_file = os.path.join(LOCKER_PATH, f"{name}.lck")
-        with open(f"{lock_file}", "r") as locker_file:
+        # can proceed if valid auth config file is in place in named dir
+        if not os.path.exists(self.locker_path):
+            raise ValueError(f"Locker path {self.locker_path} does not exist")
+        if not os.path.isdir(self.locker_path):
+            raise ValueError(f"Locker path {self.locker_path} not a directory")
+        if not os.path.exists(self.lock_file):
+            raise ValueError(f"Locker file {self.lock_file} does not exist")
+        if not os.path.isfile(self.lock_file):
+            raise ValueError(f"{self.lock_file} is not a file")
+        with open(f"{self.lock_file}", "r") as locker_file:
             # the salt was stored in hexidecimal form, with a line feed
             self.salt = locker_file.readline().strip('\n')
             # the next line in the file is the encrypted hash of the pw with lf
