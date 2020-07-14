@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-This is a script to set/get authentication credentials
+Command-line interface to python privacy playground features
 """
 
 # core library modules
@@ -31,7 +31,7 @@ def secret():
 
 @locker.command()
 @click.argument('name')
-@click.option('--password', prompt=True, hide_input=True,
+@click.option('--password', prompt='New Locker password?', hide_input=True,
               confirmation_prompt=True)
 def create(name, password):
     click.echo("Create a new user account and locker")
@@ -54,13 +54,29 @@ def create(name, password):
 
 
 @click.option(
-    '--secret_text', prompt=True, hide_input=True, confirmation_prompt=True
+    '--secret_text',
+    prompt='Entry to be encrypted',
+    hide_input=True,
+    confirmation_prompt=True
 )
 @click.option(
-    '--password', prompt=True, hide_input=True, confirmation_prompt=False
+    '--secret_name',
+    prompt='Unique name for secret entry',
+    hide_input=False,
+    confirmation_prompt=False
 )
-@click.argument('secret_name')
-@click.argument('locker_name')
+@click.option(
+    '--password',
+    prompt='Existing Locker password',
+    hide_input=True,
+    confirmation_prompt=False
+)
+@click.option(
+    '--locker_name',
+    prompt='Name of Locker for storage',
+    hide_input=False,
+    confirmation_prompt=False
+)
 @secret.command()
 def add(locker_name, password, secret_name, secret_text):
     my_locker = Locker(locker_name, password)
@@ -69,6 +85,35 @@ def add(locker_name, password, secret_name, secret_text):
     # click.echo(f"existing_locker.crypt_key: {my_locker.crypt_key}")
     # click.echo(f"existing_locker.crypt_key: {my_locker.crypt_key.hex()}")
     # click.echo(f"encrypted form {hidden}")
+    unhidden = decrypt(my_locker.crypt_key, iv, hidden).decode()
+    click.echo(f"unhidden {unhidden}")
+    assert secret_text == unhidden
+    return
+
+
+@click.option(
+    '--secret_name',
+    prompt='Unique name for secret entry',
+    hide_input=False,
+    confirmation_prompt=False
+)
+@click.option(
+    '--password',
+    prompt='Existing Locker password',
+    hide_input=True,
+    confirmation_prompt=False
+)
+@click.option(
+    '--locker_name',
+    prompt='Name of Locker for storage',
+    hide_input=False,
+    confirmation_prompt=False
+)
+@secret.command()
+def inspect(locker_name, password, secret_name):
+    my_locker = Locker(locker_name, password)
+    click.echo(f"secret: {secret_text}")
+    iv, hidden = encrypt(my_locker.crypt_key, secret_text)
     unhidden = decrypt(my_locker.crypt_key, iv, hidden).decode()
     click.echo(f"unhidden {unhidden}")
     assert secret_text == unhidden

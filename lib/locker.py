@@ -112,6 +112,7 @@ class Locker(object):
         self.crypt_key = None
         # crypt_key will be the symmetrical encryption key
         # It is derived from the main password, but wouldn't have to be.
+        self.salt = None
         lock_file = os.path.join(LOCKER_PATH, f"{name}.lck")
         exists = os.path.exists(lock_file)
         isfile = os.path.isfile(lock_file)
@@ -129,16 +130,16 @@ class Locker(object):
 
     def _create(self, name, password):
         # safely get random bytes, turn into string hexadecimal
-        salt = secrets.token_bytes(16).hex()
+        self.salt = secrets.token_bytes(16).hex()
         # create a crypt key from the password - never store that!
-        self.crypt_key = get_crypt_key(password, salt)
-        self.auth_hash = get_password_hash(password, salt).hex()
+        self.crypt_key = get_crypt_key(password, self.salt)
+        self.auth_hash = get_password_hash(password, self.salt).hex()
         # Encrypt the password hash before storing it
         iv, self.auth_hash = encrypt(
-            self.crypt_key, self.auth_hash, iv=bytes.fromhex(salt)
+            self.crypt_key, self.auth_hash, iv=bytes.fromhex(self.salt)
         )
         # Write the new locker file
-        entry = f"{salt}\n{self.auth_hash}\n"
+        entry = f"{self.salt}\n{self.auth_hash}\n"
         lock_file = os.path.join(LOCKER_PATH, f"{name}.lck")
         with open(lock_file, "w") as vault_file:
             vault_file.write(entry)
@@ -148,19 +149,19 @@ class Locker(object):
         lock_file = os.path.join(LOCKER_PATH, f"{name}.lck")
         with open(f"{lock_file}", "r") as locker_file:
             # the salt was stored in hexidecimal form, with a line feed
-            salt = locker_file.readline().strip('\n')
+            self.salt = locker_file.readline().strip('\n')
             # the next line in the file is the encrypted hash of the pw with lf
             read_hash_hash = locker_file.readline().strip('\n')
             # calculate the hypothetical key based on the pw submitted for auth
-            self.crypt_key = get_crypt_key(pw, salt)
+            self.crypt_key = get_crypt_key(pw, self.salt)
             # try to decrypt using the presented password's key
             passhash = decrypt(
-                self.crypt_key, bytes.fromhex(salt), read_hash_hash
+                self.crypt_key, bytes.fromhex(self.salt), read_hash_hash
             )
-            passhash2 = get_password_hash(pw, salt)
+            passhash2 = get_password_hash(pw, self.salt)
             # Compare the values to validate presented password
             if passhash2.hex() != passhash.decode():
                 raise ValueError(
                     f"{passhash2.hex()} and {passhash.decode()} do not match"
                 )
-        return salt, read_hash_hash
+        return self.salt, read_hash_hash
