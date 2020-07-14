@@ -121,44 +121,5 @@ def inspect(locker_name, password, secret_name):
     return pw
 
 
-@click.pass_context
-def what(ctx, api_key, config_file):
-    """
-    This is a tool for managing a secure, local password locker.
-    """
-    filename = os.path.expanduser(config_file)
-
-    if not api_key and os.path.exists(filename):
-        with open(filename) as cfg:
-            api_key = cfg.read()
-
-    ctx.obj = {
-        'api_key': api_key,
-        'config_file': filename,
-    }
-
-
-@main.command()
-@click.option('--count', default=1, help='Number of greetings.')
-@click.option('--name', prompt='Your name',
-              help='The person to greet.')
-def hello(count, name):
-    """Simple program that greets NAME for a total of COUNT times."""
-    for x in range(count):
-        click.echo('Hello %s!' % name)
-
-
-# @main.command()
-# @click.argument('location')
-# @click.pass_context
-# def current(ctx, location):
-    """
-    Show the current weather for a location using OpenWeatherMap data.
-    """
-    # api_key = ctx.obj['api_key']
-    # weather = current_weather(location, api_key)
-    # print(f"The weather in {location} right now: {weather}.")
-
-
 if __name__ == '__main__':
     main()
