@@ -112,3 +112,6 @@ Neither the client nor the server know the master password (MP). Rather, upon cr
   
 - Elliptical Curve Cryptography (ECC)
   - https://qvault.io/2019/12/31/very-basic-intro-to-elliptic-curve-cryptography
+  
+- MFA auth package
+  - https://pypi.org/project/authenticator/
