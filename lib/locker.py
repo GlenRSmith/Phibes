@@ -156,7 +156,7 @@ class Locker(object):
         # we will need to guard against accidental overwriting
         # Locker will be a directory and have a file for salt and auth hash
         if not os.path.exists(LOCKER_PATH):
-            raise ValueError(f"Base path {LOCKER_PATH} does not exist")
+            os.mkdir(LOCKER_PATH)
         if not os.path.isdir(LOCKER_PATH):
             raise ValueError(f"Base path {LOCKER_PATH} is not a directory")
         self.locker_path = os.path.join(LOCKER_PATH, f"{name}")
