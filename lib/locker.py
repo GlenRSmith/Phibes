@@ -22,6 +22,7 @@ CRYPT_KEY_ROUNDS = 100100
 AUTH_KEY_ROUNDS = CRYPT_KEY_ROUNDS + 1
 CRYPT_KEY_BYTES = 32
 KEY_BYTES = 32
+SALT_BYTES = 16
 # PBKDF2-generate key length, default is 32 I think, longest AES allows
 LOCKER_PATH = "locker"
 
@@ -46,7 +47,7 @@ def encrypt(key, plaintext, iv=None):
     """
     iv, cipher = get_cipher(key, iv=iv)
     cipherbytes = cipher.encrypt(plaintext.encode('utf-8'))
-    ciphertext = base64.b64encode(cipherbytes).decode('utf-8')
+    ciphertext = base64.urlsafe_b64encode(cipherbytes).decode('utf-8')
     return iv, ciphertext
 
 
@@ -61,7 +62,7 @@ def decrypt(key, iv, ciphertext):
     :return: plaintext from decryption
     """
     iv, cipher = get_cipher(key, iv=iv)
-    cipherbytes = base64.b64decode(ciphertext)
+    cipherbytes = base64.urlsafe_b64decode(ciphertext)
     return cipher.decrypt(cipherbytes)
 
 
@@ -97,8 +98,14 @@ class Secret(object):
         self.name = name
         self.locker = locker
         self.salt = None
+        self.ciphertext = None
+        self.secret_name = None
+        # don't want to even expose the plaintext name
+        iv, self.secret_name = encrypt(
+            self.locker.crypt_key, self.name, iv=bytes.fromhex(locker.salt)
+        )
         self.secret_file = os.path.join(
-            locker.locker_path, f"{name}.sct"
+            locker.locker_path, f"{self.secret_name}.sct"
         )
         super().__init__()  # is this best practice?
 
@@ -107,11 +114,9 @@ class Secret(object):
 
     def create(self, secret_text):
         # safely get random bytes, turn into string hexadecimal
-        self.salt = secrets.token_bytes(16).hex()
+        self.salt = secrets.token_bytes(SALT_BYTES).hex()
         iv, self.ciphertext = encrypt(
-            self.locker.crypt_key,
-            secret_text,
-            iv=bytes.fromhex(self.salt)
+            self.locker.crypt_key, secret_text, iv=bytes.fromhex(self.salt)
         )
         # Write the new Secret file
         entry = f"{self.salt}\n{self.ciphertext}\n"
