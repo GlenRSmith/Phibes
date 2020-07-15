@@ -70,7 +70,7 @@ def get_strong_hash(content, number_of_rounds, salt):
     Get a PDKDF2-based hash value for some string
     :param content: String to hash, string
     :param number_of_rounds: Number of rounds to iterate, integer
-    :param salt: Hash salt, string containing valid hexidecimal
+    :param salt: Hash salt, string containing valid hexadecimal
     :return: hash value, in bytes
     """
     ret_val = hashlib.pbkdf2_hmac(
@@ -122,7 +122,7 @@ class Secret(object):
     def read(self):
         self.validate()
         with open(f"{self.secret_file}", "r") as s_file:
-            # the salt was stored in hexidecimal form, with a line feed
+            # the salt was stored in hexadecimal form, with a line feed
             self.salt = s_file.readline().strip('\n')
             # the next line in the file is the encrypted secret
             read_secret = s_file.readline().strip('\n')
@@ -196,7 +196,6 @@ class Locker(object):
         )
         # Write the new locker file
         entry = f"{self.salt}\n{self.auth_hash}\n"
-        # lock_file = os.path.join(LOCKER_PATH, f"{name}.lck")
         with open(self.lock_file, "w") as vault_file:
             vault_file.write(entry)
         return
@@ -214,7 +213,7 @@ class Locker(object):
     def _open(self, pw):
         self.validate()
         with open(f"{self.lock_file}", "r") as locker_file:
-            # the salt was stored in hexidecimal form, with a line feed
+            # the salt was stored in hexadecimal form, with a line feed
             self.salt = locker_file.readline().strip('\n')
             # the next line in the file is the encrypted hash of the pw with lf
             read_hash_hash = locker_file.readline().strip('\n')
@@ -235,7 +234,7 @@ class Locker(object):
     def _delete(self, pw):
         self.validate()
         with open(f"{self.lock_file}", "r") as locker_file:
-            # the salt was stored in hexidecimal form, with a line feed
+            # the salt was stored in hexadecimal form, with a line feed
             self.salt = locker_file.readline().strip('\n')
             # the next line in the file is the encrypted hash of the pw with lf
             read_hash_hash = locker_file.readline().strip('\n')
