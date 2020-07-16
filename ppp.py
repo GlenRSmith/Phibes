@@ -32,8 +32,10 @@ def secret():
 
 @locker.command()
 @click.argument('name')
-@click.option('--password', prompt='New Locker password?', hide_input=True,
-              confirmation_prompt=True)
+@click.option(
+    '--password', prompt='New Locker password?', hide_input=True,
+    confirmation_prompt=True
+)
 def create(name, password):
     click.echo("Create a new user account and locker")
     new_locker = Locker(name, password, create=True)
@@ -55,27 +57,19 @@ def create(name, password):
 
 
 @click.option(
-    '--secret_text',
-    prompt='Entry to be encrypted',
-    hide_input=True,
+    '--secret_text', prompt='Entry to be encrypted', hide_input=True,
     confirmation_prompt=True
 )
 @click.option(
-    '--secret_name',
-    prompt='Unique name for secret entry',
-    hide_input=False,
+    '--secret_name', prompt='Unique name for secret entry', hide_input=False,
     confirmation_prompt=False
 )
 @click.option(
-    '--password',
-    prompt='Existing Locker password',
-    hide_input=True,
+    '--password', prompt='Existing Locker password', hide_input=True,
     confirmation_prompt=False
 )
 @click.option(
-    '--locker_name',
-    prompt='Name of Locker for storage',
-    hide_input=False,
+    '--locker_name', prompt='Name of Locker for storage', hide_input=False,
     confirmation_prompt=False
 )
 @secret.command()
@@ -95,21 +89,15 @@ def add(locker_name, password, secret_name, secret_text):
 
 
 @click.option(
-    '--secret_name',
-    prompt='Unique name for secret entry',
-    hide_input=False,
+    '--secret_name', prompt='Unique name for secret entry', hide_input=False,
     confirmation_prompt=False
 )
 @click.option(
-    '--password',
-    prompt='Existing Locker password',
-    hide_input=True,
+    '--password', prompt='Existing Locker password', hide_input=True,
     confirmation_prompt=False
 )
 @click.option(
-    '--locker_name',
-    prompt='Name of Locker for storage',
-    hide_input=False,
+    '--locker_name', prompt='Name of Locker for storage', hide_input=False,
     confirmation_prompt=False
 )
 @secret.command()
@@ -118,7 +106,23 @@ def inspect(locker_name, password, secret_name):
     my_secret = Secret(secret_name, my_locker)
     pw = my_secret.read()
     click.echo(f"unhidden {pw}")
-    return pw
+
+
+@click.option(
+    '--password', prompt='Locker password', hide_input=True,
+    confirmation_prompt=False
+)
+@click.option(
+    '--locker_name', prompt='Locker Name', hide_input=False,
+    confirmation_prompt=False
+)
+@secret.command()
+def list_all(locker_name, password):
+    my_locker = Locker(locker_name, password)
+    secrets = my_locker.list_secrets()
+    for secret in secrets:
+        print(f"{secret}")
+    return
 
 
 if __name__ == '__main__':

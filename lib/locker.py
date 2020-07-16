@@ -16,6 +16,7 @@ from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
 
 # In-project modules
+from lib.config import LOCKER_PATH
 
 HASH_ALGO = 'sha256'
 CRYPT_KEY_ROUNDS = 100100
@@ -24,7 +25,6 @@ CRYPT_KEY_BYTES = 32
 KEY_BYTES = 32
 SALT_BYTES = 16
 # PBKDF2-generate key length, default is 32 I think, longest AES allows
-LOCKER_PATH = "locker"
 
 
 def get_cipher(key, iv=None):
@@ -256,3 +256,24 @@ class Locker(object):
                     f"{passhash2.hex()} and {passhash.decode()} do not match"
                 )
         return self.salt, read_hash_hash
+
+    def decrypt(self, ciphertext):
+        """
+        Convenience method to decrypt using a Locker object
+        :param ciphertext: Encrypted text
+        :return: decrypted text
+        """
+        return decrypt(
+            self.crypt_key, bytes.fromhex(self.salt), ciphertext
+        )
+
+    def list_secrets(self):
+        self.validate()
+        secret_names = []
+        for entry in os.scandir(self.locker_path):
+            if entry.is_file() and entry.name.endswith('.sct'):
+                secret_names.append(
+                    self.decrypt(entry.name[0:-4]).decode()
+                )
+        return secret_names
+
