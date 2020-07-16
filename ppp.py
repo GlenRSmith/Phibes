@@ -11,7 +11,7 @@ import click
 # local project modules
 from lib.locker import Locker
 from lib.locker import Secret
-from lib.utils import get_user_edit_content
+from lib.utils import get_user_edit_content, write_user_edit_content
 
 
 @click.group()
@@ -103,9 +103,17 @@ def edit(locker_name, password, secret_name):
     :return:
     """
     my_locker = Locker(locker_name, password)
-    my_secret = Secret(secret_name, my_locker)
+    existing = Secret.find(secret_name, my_locker)
+    if existing:
+        write_user_edit_content(existing)
     plaintext = get_user_edit_content()
-    my_secret.create(plaintext)
+    if existing:
+        my_secret = Secret(secret_name, locker_name, create=False)
+        my_secret.update(plaintext)
+    else:
+        Secret(
+            secret_name, my_locker, create=True, secret_text=plaintext
+        )
     return
 
 

@@ -18,3 +18,8 @@ def get_user_edit_content():
         ret_val = user_file.read()
     os.remove(USER_EDIT_FILE)
     return ret_val
+
+
+def write_user_edit_content(text):
+    with open(USER_EDIT_FILE, "w") as user_file:
+        user_file.write(text)
