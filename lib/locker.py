@@ -9,6 +9,7 @@ A Locker has other data on the file system, but that file
 import base64
 import hashlib
 import os
+from pathlib import Path
 import secrets
 
 # Third party packages
@@ -92,9 +93,19 @@ def get_password_hash(password, salt):
     return get_strong_hash(password, AUTH_KEY_ROUNDS, salt)
 
 
+# def manage_file(func):
+#
+#     def wrapped_handler(*args, **kwargs):
+#         print(f"{func.__name__}")
+#         print(f"{args}{kwargs}")
+#         return func(*args, **kwargs)
+#     return wrapped_handler
+
+
 class Secret(object):
 
-    def __init__(self, name, locker):
+    def __init__(self, name, locker, create=False):
+        # locker_path =
         self.name = name
         self.locker = locker
         self.salt = None
@@ -105,6 +116,8 @@ class Secret(object):
         self.secret_file = os.path.join(
             locker.locker_path, f"{self.secret_name}.sct"
         )
+        if os.path.exists(self.secret_file):
+            pass
         super().__init__()  # is this best practice?
 
     def validate(self):
@@ -148,60 +161,77 @@ class Locker(object):
         :param password: The password to the locker
         :param create: Should invocation try to create a new locker?
         """
-        self.auth_hash = None
-        # auth_hash will be the hash used to auth the user
-        # It is derived from the main password.
-        self.crypt_key = None
         # crypt_key will be the symmetrical encryption key
         # It is derived from the main password, but wouldn't have to be.
+        self.crypt_key = None
         self.salt = None
-        # Try to find an existing locker. Even if we get the `create` flag,
-        # we will need to guard against accidental overwriting
-        # Locker will be a directory and have a file for salt and auth hash
-        if not os.path.exists(LOCKER_PATH):
+
+        # Make sure the application's base locker path is an existing dir
+        base_path = Path(LOCKER_PATH)
+        if not base_path.exists():
             os.mkdir(LOCKER_PATH)
-        if not os.path.isdir(LOCKER_PATH):
+        if not base_path.is_dir():
             raise ValueError(f"Base path {LOCKER_PATH} is not a directory")
-        self.locker_path = os.path.join(LOCKER_PATH, f"{name}")
-        self.lock_file = os.path.join(self.locker_path, ".locker.cfg")
+
+        # Locker will be a directory and have a file for salt and auth hash
+        self.locker_path = base_path.joinpath(name)
+        self.lock_file = self.locker_path.joinpath(".locker.cfg")
         if create:
-            self._create(password)
+            if Locker.can_create(self.locker_path):
+                os.mkdir(self.locker_path)
+                # safely get random bytes, turn into string hexadecimal
+                self.salt = secrets.token_bytes(16).hex()
+                # create a crypt key from the password - never store that!
+                self.crypt_key = get_crypt_key(password, self.salt)
+                # iv, self.auth_hash = encrypt(
+                iv, auth_hash = encrypt(
+                    self.crypt_key,
+                    get_password_hash(password, self.salt).hex(),
+                    iv=bytes.fromhex(self.salt)
+                )
+                with open(self.lock_file, "w") as vault_file:
+                    vault_file.write(f"{self.salt}\n{auth_hash}\n")
+                    # vault_file.write(f"{self.salt}\n{self.auth_hash}\n")
+            else:
+                raise ValueError(f"could not create {name}")
         else:
-            self._open(password)
+            with open(f"{self.lock_file}", "r") as locker_file:
+                # the salt was stored in hexadecimal form, with a line feed
+                self.salt = locker_file.readline().strip('\n')
+                # the next line is the encrypted hash of the secret
+                auth_hash = locker_file.readline().strip('\n')
+                # calculate a key from the password submitted for auth
+                self.crypt_key = get_crypt_key(password, self.salt)
+                # try to decrypt using that key
+                passhash = decrypt(
+                    self.crypt_key, bytes.fromhex(self.salt), auth_hash
+                )
+                # Calculate the hash of the password
+                passhash2 = get_password_hash(password, self.salt)
+                # Compare the values to validate presented password
+                if passhash2.hex() != passhash.decode():
+                    raise ValueError(
+                        f"{passhash2.hex()} & {passhash.decode()} don't match"
+                    )
+
         super().__init__()  # is this best practice?
 
-    def _create(self, password):
+    @classmethod
+    def can_create(cls, locker_path):
         """
-        Creates a new Locker folder with auth config file
-        :param password: Password for the locker
-        :return: None
+        Evaluates whether the filesystem allows creation of a new locker
+        :return: Bool
         """
-        # Can proceed if either the dir doesn't exist or is empty
-        if not os.path.exists(self.locker_path):
-            os.mkdir(self.locker_path)
-        else:
-            if not os.path.isdir(self.locker_path):
+        if locker_path.exists():
+            if not locker_path.is_dir():
                 raise ValueError(
-                    f"{self.locker_path} already exists and is not a directory"
+                    f"{locker_path} already exists and is not a directory"
                 )
-            if bool(os.listdir(self.locker_path)):
+            if bool(locker_path.glob('*')):
                 raise ValueError(
-                    f"dir {self.locker_path} already exists and is not empty"
+                    f"dir {locker_path} already exists and is not empty"
                 )
-        # safely get random bytes, turn into string hexadecimal
-        self.salt = secrets.token_bytes(16).hex()
-        # create a crypt key from the password - never store that!
-        self.crypt_key = get_crypt_key(password, self.salt)
-        self.auth_hash = get_password_hash(password, self.salt).hex()
-        # Encrypt the password hash before storing it
-        iv, self.auth_hash = encrypt(
-            self.crypt_key, self.auth_hash, iv=bytes.fromhex(self.salt)
-        )
-        # Write the new locker file
-        entry = f"{self.salt}\n{self.auth_hash}\n"
-        with open(self.lock_file, "w") as vault_file:
-            vault_file.write(entry)
-        return
+        return True
 
     def validate(self):
         if not os.path.exists(self.locker_path):
