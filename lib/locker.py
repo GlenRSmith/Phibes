@@ -243,27 +243,6 @@ class Locker(object):
         if not os.path.isfile(self.lock_file):
             raise ValueError(f"{self.lock_file} is not a file")
 
-    def _open(self, pw):
-        self.validate()
-        with open(f"{self.lock_file}", "r") as locker_file:
-            # the salt was stored in hexadecimal form, with a line feed
-            self.salt = locker_file.readline().strip('\n')
-            # the next line in the file is the encrypted hash of the pw with lf
-            read_hash_hash = locker_file.readline().strip('\n')
-            # calculate the hypothetical key based on the pw submitted for auth
-            self.crypt_key = get_crypt_key(pw, self.salt)
-            # try to decrypt using the presented password's key
-            passhash = decrypt(
-                self.crypt_key, bytes.fromhex(self.salt), read_hash_hash
-            )
-            passhash2 = get_password_hash(pw, self.salt)
-            # Compare the values to validate presented password
-            if passhash2.hex() != passhash.decode():
-                raise ValueError(
-                    f"{passhash2.hex()} and {passhash.decode()} do not match"
-                )
-        return self.salt, read_hash_hash
-
     def _delete(self, pw):
         self.validate()
         with open(f"{self.lock_file}", "r") as locker_file:
