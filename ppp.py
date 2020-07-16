@@ -76,8 +76,7 @@ def add(locker_name, password, secret_name, secret_text):
     :return:
     """
     my_locker = Locker(locker_name, password)
-    my_secret = Secret(secret_name, my_locker)
-    my_secret.create(secret_text)
+    Secret(secret_name, my_locker, create=True, secret_text=secret_text)
     return
 
 
@@ -126,8 +125,7 @@ def edit(locker_name, password, secret_name):
 def inspect(locker_name, password, secret_name):
     my_locker = Locker(locker_name, password)
     my_secret = Secret(secret_name, my_locker)
-    pw = my_secret.read()
-    click.echo(f"unhidden {pw}")
+    click.echo(f"{my_secret.plaintext}")
 
 
 @click.option(

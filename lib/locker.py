@@ -104,8 +104,7 @@ def get_password_hash(password, salt):
 
 class Secret(object):
 
-    def __init__(self, name, locker, create=False):
-        # locker_path =
+    def __init__(self, name, locker, create=False, secret_text=None):
         self.name = name
         self.locker = locker
         self.salt = None
@@ -113,39 +112,32 @@ class Secret(object):
         self.secret_name = None
         # don't want to even expose the plaintext name
         self.secret_name = self.locker.encrypt(self.name)
-        self.secret_file = os.path.join(
-            locker.locker_path, f"{self.secret_name}.sct"
+        self.secret_file = locker.locker_path.joinpath(
+            f"{self.secret_name}.sct"
         )
-        if os.path.exists(self.secret_file):
-            pass
+        if create:
+            if self.secret_file.exists():
+                raise ValueError(f"Secret {name} already exists")
+            else:
+                # safely get random bytes, turn into string hexadecimal
+                self.salt = secrets.token_bytes(SALT_BYTES).hex()
+                iv, self.ciphertext = encrypt(
+                    self.locker.crypt_key,
+                    secret_text,
+                    iv=bytes.fromhex(self.salt)
+                )
+                with open(self.secret_file, "w") as cipher_file:
+                    cipher_file.write(f"{self.salt}\n{self.ciphertext}\n")
+        else:
+            with open(f"{self.secret_file}", "r") as s_file:
+                # the salt was stored in hexadecimal form, with a line feed
+                self.salt = s_file.readline().strip('\n')
+                # the next line in the file is the encrypted secret
+                ciphertext = s_file.readline().strip('\n')
+                self.plaintext = decrypt(
+                    self.locker.crypt_key, bytes.fromhex(self.salt), ciphertext
+                ).decode()
         super().__init__()  # is this best practice?
-
-    def validate(self):
-        return
-
-    def create(self, secret_text):
-        # safely get random bytes, turn into string hexadecimal
-        self.salt = secrets.token_bytes(SALT_BYTES).hex()
-        iv, self.ciphertext = encrypt(
-            self.locker.crypt_key, secret_text, iv=bytes.fromhex(self.salt)
-        )
-        # Write the new Secret file
-        entry = f"{self.salt}\n{self.ciphertext}\n"
-        with open(self.secret_file, "w") as cipher_file:
-            cipher_file.write(entry)
-        return
-
-    def read(self):
-        self.validate()
-        with open(f"{self.secret_file}", "r") as s_file:
-            # the salt was stored in hexadecimal form, with a line feed
-            self.salt = s_file.readline().strip('\n')
-            # the next line in the file is the encrypted secret
-            read_secret = s_file.readline().strip('\n')
-            ciphertext = decrypt(
-                self.locker.crypt_key, bytes.fromhex(self.salt), read_secret
-            )
-        return ciphertext.decode()
 
 
 class Locker(object):
@@ -180,10 +172,9 @@ class Locker(object):
             if Locker.can_create(self.locker_path):
                 os.mkdir(self.locker_path)
                 # safely get random bytes, turn into string hexadecimal
-                self.salt = secrets.token_bytes(16).hex()
+                self.salt = secrets.token_bytes(SALT_BYTES).hex()
                 # create a crypt key from the password - never store that!
                 self.crypt_key = get_crypt_key(password, self.salt)
-                # iv, self.auth_hash = encrypt(
                 iv, auth_hash = encrypt(
                     self.crypt_key,
                     get_password_hash(password, self.salt).hex(),
@@ -191,7 +182,6 @@ class Locker(object):
                 )
                 with open(self.lock_file, "w") as vault_file:
                     vault_file.write(f"{self.salt}\n{auth_hash}\n")
-                    # vault_file.write(f"{self.salt}\n{self.auth_hash}\n")
             else:
                 raise ValueError(f"could not create {name}")
         else:
