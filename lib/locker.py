@@ -101,9 +101,7 @@ class Secret(object):
         self.ciphertext = None
         self.secret_name = None
         # don't want to even expose the plaintext name
-        iv, self.secret_name = encrypt(
-            self.locker.crypt_key, self.name, iv=bytes.fromhex(locker.salt)
-        )
+        self.secret_name = self.locker.encrypt(self.name)
         self.secret_file = os.path.join(
             locker.locker_path, f"{self.secret_name}.sct"
         )
@@ -266,6 +264,17 @@ class Locker(object):
         return decrypt(
             self.crypt_key, bytes.fromhex(self.salt), ciphertext
         )
+
+    def encrypt(self, plaintext):
+        """
+        Convenience method to encrypt using a Locker object
+        :param plaintext: Text to encrypt
+        :return: encrypted text
+        """
+        iv, ciphertext = encrypt(
+            self.crypt_key, plaintext, iv=bytes.fromhex(self.salt)
+        )
+        return ciphertext
 
     def list_secrets(self):
         self.validate()
