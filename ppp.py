@@ -131,6 +131,13 @@ def edit(locker_name, password, secret_name):
 )
 @secret.command()
 def inspect(locker_name, password, secret_name):
+    """
+    Display the (unencrypted) contents of the named Secret
+    :param locker_name:
+    :param password:
+    :param secret_name:
+    :return:
+    """
     my_locker = Locker(locker_name, password)
     my_secret = Secret(secret_name, my_locker)
     click.echo(f"{my_secret.plaintext}")
@@ -146,10 +153,16 @@ def inspect(locker_name, password, secret_name):
 )
 @secret.command()
 def list_all(locker_name, password):
+    """
+    Display the (unencrypted) names of all Secrets in the Locker
+    :param locker_name:
+    :param password:
+    :return:
+    """
     my_locker = Locker(locker_name, password)
     secrets = my_locker.list_secrets()
-    for secret in secrets:
-        print(f"{secret}")
+    for sec in secrets:
+        print(f"{sec}")
     return
 
 
