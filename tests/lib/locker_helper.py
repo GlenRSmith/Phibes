@@ -25,8 +25,10 @@ class LockerHelper(object):
             LockerHelper.my_locker = Locker(
                 LockerHelper.locker_name, LockerHelper.password, create=True
             )
+        return
 
     def teardown_method(self):
         Locker.delete(LockerHelper.locker_name, LockerHelper.password)
+        return
 
 
