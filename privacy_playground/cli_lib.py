@@ -9,10 +9,10 @@ import sys
 # third party packages
 from colorama import Fore, Style
 
-# for purposes of the CLI project, lib is being treated as third-party!
-from lib.config import Config
-from lib.item import Item
-from lib.locker import Locker
+# in-project modules
+from . lib.config import Config
+from . lib.item import Item
+from . lib.locker import Locker
 
 
 def get_user_editor():

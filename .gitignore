@@ -3,3 +3,4 @@ locker
 *.pyc
 system
 users
+privacy_playground.egg-info
