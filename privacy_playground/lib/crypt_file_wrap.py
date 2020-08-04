@@ -32,65 +32,55 @@ class CryptFileWrap(object):
     The key required is the key from the Locker owning the Item.
     """
 
-    def __init__(self, path: Path):
+    def __init__(
+            self, path: Path,
+            crypt_arg,
+            crypt_arg_is_key: bool,
+            create=False
+    ):
         """
-        :param path:
+        Find or create a CryptFileWrap instance
+        :param path: pathlib.Path on filesystem for actual encrypted file
+        :param crypt_arg: Either a cryptographic key, or the seed for one
+        :param crypt_arg_is_key: Whether the crypt_arg is a key (o/w a seed)
+        :param create: Whether caller intends to create a new instance
         """
         self.path = path
-        self.salt = None
-        self.key = None
         self._timestamp = None
         self._ciphertext = None
+        if not self.path.exists():
+            if create:
+                self.salt = make_salt_string()
+            else:
+                raise FileNotFoundError(
+                    f"Matching item not found"
+                    f"Did you mean to pass create=True?"
+                )
+        else:
+            if not create:
+                with path.open('r') as cf:
+                    # the salt was stored as a hexadecimal string
+                    self.salt = cf.readline().strip('\n')
+                    # the next line is an encrypted datetime stamp
+                    self._timestamp = cf.readline().strip('\n')
+                    # the next line is the encrypted content
+                    self._ciphertext = cf.readline().strip('\n')
+            else:
+                raise FileExistsError(
+                    f"Matching item already exists"
+                    f"Did you mean to pass create=False?"
+                )
+        # couldn't set the encryption key until the salt was set
+        if crypt_arg_is_key:
+            self.key = crypt_arg
+        else:
+            self.key = make_crypt_key(crypt_arg, self.salt)
         return
 
     def delete(self):
         if not self.path.exists():
             raise FileNotFoundError(f"{self.path} does not exist")
         self.path.unlink()
-
-    @classmethod
-    def create(cls, path: Path, crypt_arg, crypt_arg_is_key: bool):
-        """
-        Create (but don't save yet) an instance.
-        If crypt_arg_is_key, caller already has an encryption key.
-        Otherwise, caller is passing in a "seed" (like password I'm using)
-        :param path: encryption file location
-        :param crypt_arg: crypt key or password
-        :param crypt_arg_is_key: whether crypt_arg is a crypt key, o/w password
-        :return:
-        """
-        if path.exists():
-            raise FileExistsError(f"{path} already exists")
-        inst = cls(path)
-        inst.salt = make_salt_string()
-        if crypt_arg_is_key:
-            inst.key = crypt_arg
-        else:
-            inst.key = make_crypt_key(crypt_arg, inst.salt)
-        return inst
-
-    @classmethod
-    def find(cls, path):
-        """
-        Tries to get, read, and return conformant file at the path
-        :param path:
-        :return: class instance
-        """
-        if not path.exists():
-            raise FileNotFoundError(f"File {path.absolute()} does not exist")
-        with path.open('r') as cf:
-            # the salt was stored as a hexadecimal string
-            salt = cf.readline().strip('\n')
-            # the next line is an encrypted datetime stamp
-            timestamp = cf.readline().strip('\n')
-            # the next line is the encrypted content
-            ciphertext = cf.readline().strip('\n')
-        # If those reads succeeded, create & populate an object instance
-        inst = cls(path)
-        inst.salt = salt
-        inst._ciphertext = ciphertext
-        inst._timestamp = timestamp
-        return inst
 
     @property
     def plaintext(self):
@@ -129,19 +119,6 @@ class CryptFileWrap(object):
 
     def set_crypt_key(self, password):
         self.key = make_crypt_key(password, self.salt)
-
-    def read(self):
-        # TODO: might be redundant
-        if not self.path.exists():
-            raise FileExistsError(f"File {self.path} does not exist")
-        with self.path.open('r') as cf:
-            # the salt was stored in hexadecimal form, with a line feed
-            self.salt = cf.readline().strip('\n')
-            # the next line in the file is a datetime stamp
-            self._timestamp = cf.readline().strip('\n')
-            # the next line in the file is the encrypted content
-            self._ciphertext = cf.readline().strip('\n')
-        return
 
     def write(self, overwrite=False):
         if self.path.exists() and not overwrite:
