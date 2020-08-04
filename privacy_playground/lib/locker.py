@@ -6,7 +6,10 @@ A Locker has other data on the file system, but that file
 """
 
 # Built-in library packages
+from __future__ import annotations
+from pathlib import Path
 import shutil
+from typing import List, Union
 
 # Third party packages
 
@@ -17,6 +20,9 @@ from . crypto import get_name_hash, get_password_hash
 from . crypto import encrypt, decrypt
 from . crypt_file_wrap import CryptFileWrap
 from . item import FILE_EXT, Item
+
+
+ItemList = List[Item]
 
 
 class Locker(object):
@@ -94,18 +100,18 @@ class Locker(object):
         return
 
     @classmethod
-    def delete(cls, name, password):
+    def delete(cls, name: str, password: str):
         inst = Locker(name, password)
         if inst:
             shutil.rmtree(inst.path)
 
     @classmethod
-    def find(cls, name, password):
+    def find(cls, name: str, password: str) -> Union[Locker, None]:
         """
         Find and return the matching locker
         :param name: Plaintext name of locker
         :param password: Locker password
-        :return:
+        :return: Found Locker or None
         """
         try:
             inst = Locker(name, password, create=False)
@@ -114,7 +120,7 @@ class Locker(object):
         return inst
 
     @classmethod
-    def can_create(cls, locker_path, remove_if_empty=True):
+    def can_create(cls, locker_path: Path, remove_if_empty=True) -> bool:
         """
         Evaluates whether the filesystem allows creation of a new locker.
         :param locker_path: Path to a specific user Locker
@@ -147,7 +153,7 @@ class Locker(object):
         if not self.lock_file.is_file():
             raise ValueError(f"{self.lock_file} is not a file")
 
-    def decrypt(self, ciphertext):
+    def decrypt(self, ciphertext: str) -> str:
         """
         Convenience method to decrypt using a Locker object
         :param ciphertext:
@@ -157,7 +163,7 @@ class Locker(object):
             self.crypt_key, bytes.fromhex(self.salt), ciphertext
         )
 
-    def encrypt(self, plaintext):
+    def encrypt(self, plaintext: str) -> str:
         """
         Convenience method to encrypt using a Locker object
         :param plaintext:
@@ -168,7 +174,7 @@ class Locker(object):
         )
         return ciphertext
 
-    def list_items(self, item_type=None):
+    def list_items(self, item_type=None) -> ItemList:
         """
         Return a list of Items of the specified type in this locker
         :param item_type: type of Items (e.g. Secret) to list, None = all
