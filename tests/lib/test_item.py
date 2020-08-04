@@ -41,12 +41,33 @@ class TestCreateAndSave(LockerHelper):
             new_item.content = content
             new_item.save()
         for item_type in Item.get_item_types():
-            found = Item.find(
+            found = Item(
                 TestCreateAndSave.my_locker,
                 f"{item_type}_name",
                 f"{item_type}"
             )
             assert found
+
+    def test_create_item(self):
+        content = (
+            f"here is some stuff"
+            f"password: HardHat"
+            f"template:my_template"
+        )
+        new_item = Item(
+            TestCreate.my_locker,
+            f"sekrit_name",
+            f"secret",
+            create=True
+        )
+        new_item.content = content
+        new_item.save()
+        found = Item(
+            TestCreateAndSave.my_locker,
+            f"sekrit_name",
+            f"secret"
+        )
+        assert found
 
 
 class TestItems(LockerHelper):

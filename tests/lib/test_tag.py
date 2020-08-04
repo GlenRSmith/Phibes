@@ -29,7 +29,6 @@ class TestTags(LockerHelper):
         t1.add_item(s3)
         # save the tag
         t1.save()
-        print(f"{t1}")
         # list the secrets in the item
         assert "secret:facebook" in t1.content
         assert "secret:twitter" in t1.content
@@ -43,5 +42,9 @@ class TestTags(LockerHelper):
         assert sorted(them_secrets) == sorted(
             ["secret:twitter", "secret:reddit"]
         )
+        t1.save(overwrite=True)
         t2 = Tag.find(TestTags.my_locker, "social_media", "tag")
         assert t2 is not None
+        assert "secret:facebook" not in t2.content
+        assert "secret:twitter" in t2.content
+        assert "secret:reddit" in t2.content

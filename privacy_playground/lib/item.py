@@ -5,12 +5,12 @@ Item is a base class for things to be stored in a Locker.
 """
 
 # Built-in library packages
+from pathlib import Path
 
 # Third party packages
 
 # In-project modules
-# from lib.crypto import CryptFileWrap
-from .crypto import CryptFileWrap
+from .crypt_file_wrap import CryptFileWrap
 
 
 FILE_EXT = "cry"
@@ -24,11 +24,32 @@ class Item(object):
 
     item_types = list(ITEM_TYPES)
 
-    def __init__(self, locker, name, item_type):
+    def __init__(self, locker, name, item_type, create: bool = False):
         self.locker = locker
         self.item_type = item_type
         self.name = name
-        self.crypt = None
+        pth = Item.encode_file_name(locker, item_type, name)
+        if pth.exists() and create:
+            raise FileExistsError(
+                f"Matching item found {pth} - "
+                f"Did you mean to pass create=False?"
+            )
+        if not pth.exists() and not create:
+            raise FileNotFoundError(
+                f"Matching item not found - "
+                f"Did you mean to pass create=True?"
+            )
+        self.crypt = CryptFileWrap(
+            Item.encode_file_name(locker, item_type, name),
+            locker.crypt_key,
+            crypt_arg_is_key=True,
+            create=create
+        )
+        self.crypt.key = locker.crypt_key
+        return
+
+    def save(self, overwrite=False):
+        self.crypt.write(overwrite=overwrite)
         return
 
     def __str__(self):
@@ -43,45 +64,9 @@ class Item(object):
         return ret_val
 
     @classmethod
-    def create(cls, locker, name, item_type, content=None):
-        """
-        Creates and returns a new Item without saving, caller must save
-        :param locker:
-        :param name:
-        :param item_type:
-        :param content:
-        :return:
-        """
-        inst = cls(locker, name, item_type)
-        inst.crypt = CryptFileWrap.create(
-            inst.get_cipher_file(), locker.crypt_key, crypt_arg_is_key=True
-        )
-        if bool(content):
-            inst.content = content
-        return inst
-
-    @classmethod
-    def create_and_save(cls, locker, name, item_type, content):
-        """
-        Convenience method for creating Item and saving in one call
-        :param locker:
-        :param name:
-        :param item_type:
-        :param content:
-        :return:
-        """
-        inst = Item.create(locker, name, item_type, content)
-        inst.save(overwrite=False)
-        return inst
-
-    @classmethod
     def delete(cls, locker, name, item_type):
         inst = Item.find(locker, name, item_type)
         inst.crypt.delete()
-
-    @classmethod
-    def get(cls, locker, item_path):
-        raise NotImplementedError('Item.get not implemented yet')
 
     @classmethod
     def find(cls, locker, name, item_type):
@@ -92,14 +77,10 @@ class Item(object):
         :param item_type:
         :return:
         """
-        item_path = Item.encode_file_name(locker, item_type, name)
         try:
-            my_crypt = CryptFileWrap.find(item_path)
-        except Exception:
+            inst = Item(locker, name, item_type, create=False)
+        except FileNotFoundError:
             return None
-        inst = Item(locker, name, item_type)
-        inst.crypt = my_crypt
-        inst.crypt.key = locker.get_crypt_key()
         return inst
 
     @classmethod
@@ -143,7 +124,7 @@ class Item(object):
         return items
 
     @classmethod
-    def encode_file_name(cls, locker, item_type, item_name):
+    def encode_file_name(cls, locker, item_type, item_name) -> Path:
         """
         Encode and encrypt the item type and name into the
         encrypted file name used to store Items.
@@ -174,8 +155,9 @@ class Item(object):
         item_name = locker.decrypt(name_enc).decode()
         return item_type, item_name
 
-    def get_cipher_file(self):
-        return Item.encode_file_name(self.locker, self.item_type, self.name)
+    @classmethod
+    def get_item_types(cls):
+        return cls.item_types
 
     @property
     def content(self):
@@ -200,10 +182,19 @@ class Item(object):
     def timestamp(self):
         return self.crypt.timestamp
 
-    def save(self, overwrite=False):
-        self.crypt.write(overwrite=overwrite)
-        return
+    @property
+    def salt(self):
+        """
+        Convenience accessor to crypt.salt
+        :return:
+        """
+        return self.crypt.salt
 
-    @classmethod
-    def get_item_types(cls):
-        return cls.item_types
+    @property
+    def crypt_key(self):
+        """
+        Method to get crypt key
+        Lack of setter is intentional
+        :return: crypt_key
+        """
+        return self.crypt.key

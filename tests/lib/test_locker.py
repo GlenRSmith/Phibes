@@ -18,7 +18,7 @@ class TestLocker(object):
 
     def setup_method(self):
         try:
-            if locker.Locker.find(
+            if locker.Locker(
                     TestLocker.locker_name, TestLocker.password
             ):
                 locker.Locker.delete(
