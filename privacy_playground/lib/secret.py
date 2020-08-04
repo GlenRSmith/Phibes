@@ -9,22 +9,18 @@ A Secret is an entry in a Locker.
 # Third party packages
 
 # In-project modules
-from lib.item import Item
-
-KEY_BYTES = 32
-SALT_BYTES = 16
+from . item import Item
 
 
 class Secret(Item):
 
+    def __init__(self, locker, name, create: bool = False):
+        super().__init__(locker, name, 'secret', create=create)
+        return
+
     @classmethod
-    def find(cls, locker, name):
+    def find(cls, locker, name, item_type='secret'):
         return super(Secret, cls).find(
             locker, name, 'secret'
         )
 
-    def __init__(
-            self, locker, name, content=None
-    ):
-        super().__init__(locker, name, 'secret')
-        return
