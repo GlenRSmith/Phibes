@@ -12,9 +12,10 @@ import shutil
 
 # In-project modules
 from .config import Config
-from .crypto import authenticate_password, CryptFileWrap
+from .crypto import authenticate_password
 from .crypto import get_name_hash, get_password_hash
 from .crypto import encrypt, decrypt
+from .crypt_file_wrap import CryptFileWrap
 from .item import FILE_EXT, Item
 
 
@@ -28,7 +29,16 @@ class Locker(object):
         """
         return self.crypt.salt
 
-    def __init__(self, name):
+    @property
+    def crypt_key(self):
+        """
+        Method to get crypt key
+        Lack of setter is intentional
+        :return: crypt_key
+        """
+        return self.crypt.key
+
+    def __init__(self, name: str, password: str, create: bool = False):
         """
         A Locker object can be constructed in two scenarios:
         - client code is creating a new, empty locker
@@ -37,39 +47,48 @@ class Locker(object):
           - this method should try to open the locker on disk
         :param name: The name of the locker. Must be unique in storage
         """
-        # key will be the symmetrical encryption key
-        # It is derived from the main password, but wouldn't have to be.
-        self.crypt_key = None
+        self.conf = Config('.')
         # TODO: should this be abstracted to "confirm installed" or something?
-        self.conf = Config()
         self.conf.assure_users_dir()
         if self.conf.hash_locker_names:
             self.path = self.conf.users_path.joinpath(get_name_hash(name))
         else:
             self.path = self.conf.users_path.joinpath(name)
         self.lock_file = self.path.joinpath(".locker.cfg")
-        self.crypt = None
+        self.crypt = CryptFileWrap.find(self.lock_file)
+        if self.crypt:
+            if not create:
+                authenticate_password(
+                    password, self.crypt.ciphertext, self.crypt.salt
+                )
+                self.crypt.set_crypt_key(password)
+            else:
+                raise FileExistsError(
+                    f"Matching locker already exists"
+                    f"Did you mean to pass create=False?"
+                )
+        else:
+            if create:
+                if not Locker.can_create(self.path):
+                    raise ValueError(f"could not create {name}")
+                self.path.mkdir(exist_ok=False)
+                self.crypt = CryptFileWrap.create(
+                    self.lock_file, password, crypt_arg_is_key=False
+                )
+                self.crypt.plaintext = get_password_hash(
+                    password, self.crypt.salt
+                ).hex()
+                self.crypt.write()
+            else:
+                raise FileNotFoundError(
+                    f"Matching locker not found"
+                    f"Did you mean to pass create=True?"
+                )
         return
 
     @classmethod
-    def create_and_save(cls, name, password):
-        inst = cls(name)
-        if not Locker.can_create(inst.path):
-            raise ValueError(f"could not create {name}")
-        inst.path.mkdir(exist_ok=False)
-        inst.crypt = CryptFileWrap.create(
-            inst.lock_file, password, crypt_arg_is_key=False
-        )
-        inst.crypt.plaintext = get_password_hash(
-            password, inst.crypt.salt
-        ).hex()
-        inst.crypt.write()
-        inst.crypt_key = inst.crypt.key
-        return inst
-
-    @classmethod
     def delete(cls, name, password):
-        inst = Locker.find(name, password)
+        inst = Locker(name, password)
         if inst:
             shutil.rmtree(inst.path)
 
@@ -81,21 +100,11 @@ class Locker(object):
         :param password: Locker password
         :return:
         """
-        # create a Locker instance
-        inst = cls(name)
-        # try to find a matching locker file there
-        inst.crypt = CryptFileWrap.find(inst.lock_file)
-        # test whether the provided password "works" with the found file
-        authenticate_password(
-            password, inst.crypt.ciphertext, inst.crypt.salt
-        )
-        # associate the successful password's key with the locker and its file
-        inst.crypt.set_crypt_key(password)
-        inst.crypt_key = inst.crypt.key
+        try:
+            inst = Locker(name, password, create=False)
+        except FileNotFoundError:
+            return None
         return inst
-
-    def get_crypt_key(self):
-        return self.crypt.key
 
     @classmethod
     def can_create(cls, locker_path, remove_if_empty=True):
