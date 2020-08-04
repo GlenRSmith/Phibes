@@ -11,12 +11,12 @@ import shutil
 # Third party packages
 
 # In-project modules
-from .config import Config
-from .crypto import authenticate_password
-from .crypto import get_name_hash, get_password_hash
-from .crypto import encrypt, decrypt
-from .crypt_file_wrap import CryptFileWrap
-from .item import FILE_EXT, Item
+from . config import Config
+from . crypto import authenticate_password
+from . crypto import get_name_hash, get_password_hash
+from . crypto import encrypt, decrypt
+from . crypt_file_wrap import CryptFileWrap
+from . item import FILE_EXT, Item
 
 
 class Locker(object):
@@ -55,13 +55,17 @@ class Locker(object):
         else:
             self.path = self.conf.users_path.joinpath(name)
         self.lock_file = self.path.joinpath(".locker.cfg")
-        self.crypt = CryptFileWrap.find(self.lock_file)
-        if self.crypt:
+        if self.lock_file.exists():
             if not create:
+                self.crypt = CryptFileWrap(
+                    self.lock_file,
+                    password,
+                    crypt_arg_is_key=False,
+                    create=create
+                )
                 authenticate_password(
                     password, self.crypt.ciphertext, self.crypt.salt
                 )
-                self.crypt.set_crypt_key(password)
             else:
                 raise FileExistsError(
                     f"Matching locker already exists"
@@ -72,8 +76,11 @@ class Locker(object):
                 if not Locker.can_create(self.path):
                     raise ValueError(f"could not create {name}")
                 self.path.mkdir(exist_ok=False)
-                self.crypt = CryptFileWrap.create(
-                    self.lock_file, password, crypt_arg_is_key=False
+                self.crypt = CryptFileWrap(
+                    self.lock_file,
+                    password,
+                    crypt_arg_is_key=False,
+                    create=create
                 )
                 self.crypt.plaintext = get_password_hash(
                     password, self.crypt.salt
@@ -119,7 +126,7 @@ class Locker(object):
                 raise FileExistsError(
                     f"{locker_path} already exists and is not a directory"
                 )
-            if bool(locker_path.glob('*')):
+            if bool(list(locker_path.glob('*'))):
                 raise FileExistsError(
                     f"dir {locker_path} already exists and is not empty"
                 )
