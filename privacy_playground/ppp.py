@@ -8,20 +8,16 @@ Operation-centric command-line interface to python privacy playground features
 # third party packages
 import click
 
-# for purposes of the CLI project, lib is being treated as third-party!
-from cli_lib import edit_item
-from lib.config import Config
-from lib.item import Item
-from lib.locker import Locker
+# in-project modules
+from privacy_playground.cli_lib import edit_item, present_list_items
+from privacy_playground.cli_lib import make_str_bool
+from privacy_playground.lib.config import Config
+from privacy_playground.lib.item import Item
+from privacy_playground.lib.locker import Locker
 
 
 @click.group()
 def main():
-    pass
-
-
-@main.group()
-def util():
     pass
 
 
@@ -34,20 +30,15 @@ def util():
     type=click.Choice(Item.get_item_types() + ['all']),
     default='all'
 )
-def ls(locker, password, item_type):
-    if item_type == 'all':
-        item_type = None
-    my_locker = Locker.find(locker, password)
-    items = Item.find_all(my_locker, item_type)
-    longest = 10
-    for sec in items:
-        longest = (longest, len(sec.name))[longest < len(sec.name)]
-    print(f"{'Item Type':>15}{'Item Name':>{longest+2}}")
-    for sec in items:
-        print(
-            f"{str(sec.item_type).rjust(4, '-'):>15}"
-            f"{str(sec.name):>{longest+2}}"
-        )
+@click.option('--verbose', prompt='Verbose', default=False)
+def ls(locker, password, item_type, verbose):
+    verbose = make_str_bool(verbose)
+    click.secho(
+        present_list_items(
+            locker, password, item_type, verbose
+        ),
+        fg='green'
+    )
     return
 
 
@@ -64,20 +55,9 @@ def create_locker(locker, password):
     :param password: Password of locker to create
     :return:
     """
-    new_locker = Locker.create_and_save(locker, password)
+    new_locker = Locker(locker, password, create=True)
+    click.echo(f"Locker created {locker}")
     click.echo(f"Locker created {new_locker.path}")
-    return
-
-
-@main.command()
-def no():
-    """
-    """
-    import os, tempfile
-    from pathlib import Path
-    tmpdir = tempfile.mkdtemp(dir=Path.cwd().absolute())
-    click.echo(f"{tmpdir}")
-    os.chdir(tmpdir)
     return
 
 
@@ -85,7 +65,7 @@ def no():
 @click.option('--locker', prompt='Locker Name')
 @click.option('--password', prompt='Locker password', hide_input=True,)
 def delete_locker(locker, password):
-    inst = Locker(locker)
+    inst = Locker(locker, password)
     if inst.lock_file.exists():
         click.echo(f"confirmed lock file {inst.lock_file} exists")
     if inst.path.exists():
@@ -123,7 +103,11 @@ def delete_locker(locker, password):
     prompt='Name of template to start with',
     default='Empty'
 )
-@click.option('--editor', prompt='Editor', default=Config().editor)
+@click.option(
+    '--editor',
+    prompt='Editor',
+    default=Config('.').editor
+)
 def edit(
         locker, password, item_type, item, editor, overwrite, template
 ):
@@ -191,16 +175,26 @@ def delete_item(locker, password, item_type, item):
 @main.command()
 @click.option('--locker', prompt='Locker')
 @click.option('--password', prompt='Password', hide_input=True)
-def list_items(locker, password):
+@click.option(
+    '--item_type',
+    prompt='Type of item to list',
+    type=click.Choice(Item.get_item_types() + ['all']),
+    default='all'
+)
+@click.option('--verbose', prompt='Verbose', default=False)
+def list_items(locker, password, item_type, verbose):
     """
     Display the (unencrypted) names of all Secrets in the Locker
     :param locker:
     :param password:
+    :param item_type:
+    :param verbose:
     :return:
     """
-    my_locker = Locker.find(locker, password)
-    for sec in my_locker.list_secrets():
-        print(f"{sec}")
+    verbose = make_str_bool(verbose)
+    click.echo(
+        present_list_items(locker, password, item_type, verbose)
+    )
     return
 
 
