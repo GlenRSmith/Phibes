@@ -117,9 +117,6 @@ class CryptFileWrap(object):
     def ciphertext(self):
         return self._ciphertext
 
-    def set_crypt_key(self, password):
-        self.key = make_crypt_key(password, self.salt)
-
     def write(self, overwrite=False):
         if self.path.exists() and not overwrite:
             raise FileExistsError(
