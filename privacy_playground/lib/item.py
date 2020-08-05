@@ -5,12 +5,14 @@ Item is a base class for things to be stored in a Locker.
 """
 
 # Built-in library packages
+from __future__ import annotations
 from pathlib import Path
+from typing import Union
 
 # Third party packages
 
 # In-project modules
-from .crypt_file_wrap import CryptFileWrap
+from . crypt_file_wrap import CryptFileWrap
 
 
 FILE_EXT = "cry"
@@ -24,7 +26,12 @@ class Item(object):
 
     item_types = list(ITEM_TYPES)
 
-    def __init__(self, locker, name, item_type, create: bool = False):
+    def __init__(
+            self, locker,
+            name: str,
+            item_type: str,
+            create: bool = False
+    ):
         self.locker = locker
         self.item_type = item_type
         self.name = name
@@ -69,7 +76,7 @@ class Item(object):
         inst.crypt.delete()
 
     @classmethod
-    def find(cls, locker, name, item_type):
+    def find(cls, locker, name, item_type) -> Union[Item, None]:
         """
         Find one item - name and type are a natural combination key
         :param locker:
