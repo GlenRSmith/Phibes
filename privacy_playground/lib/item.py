@@ -115,7 +115,7 @@ class Item(object):
         Convenience accessor to crypt.salt
         :return:
         """
-        return self.crypt_impl.iv
+        return self.crypt_impl.iv.hex()
 
     @property
     def crypt_key(self):

@@ -66,9 +66,9 @@ def write(
     if "\n" in salt or "\n" in timestamp or "\n" in body:
         raise ValueError(
             f"File fields can not contain newline char\n"
-            f"salt: {salt}"
-            f"timestamp: {timestamp}"
-            f"body: {body}"
+            f"salt: {salt}\n"
+            f"timestamp: {timestamp}\n"
+            f"body: {body}\n"
         )
     with pth.open("w") as cipher_file:
         cipher_file.write(
