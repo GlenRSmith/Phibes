@@ -5,47 +5,56 @@ pytest module for lib.item
 # Standard library imports
 
 # Related third party imports
+import pytest
 
 # Local application/library specific imports
 from privacy_playground.lib.item import Item
-from locker_helper import LockerHelper
+from locker_helper import EmptyLocker
 
 
-class TestCreate(LockerHelper):
+class TestCreate(EmptyLocker):
 
     def test_create_empty_items(self):
-        for item_type in Item.get_item_types():
-            new_item = Item(
-                self.my_locker,
-                f"{item_type}_name",
-                f"{item_type}",
-                create=True
+        for item_type in TestCreate.my_locker.registered_items.keys():
+            pth = TestCreate.my_locker.get_item_path(
+                f"{item_type}", f"{item_type}_name"
             )
+            new_item = Item(
+                TestCreate.my_locker.crypt_key,
+                f"{item_type}_name"
+            )
+            with pytest.raises(AttributeError):
+                new_item.save(pth)
 
 
-class TestCreateAndSave(LockerHelper):
+class TestCreateAndSave(EmptyLocker):
 
     def test_create_items(self):
-        for item_type in Item.get_item_types():
+        for item_type in TestCreate.my_locker.registered_items.keys():
             content = (
                 f"here is some stuff"
                 f"password: HardHat"
                 f"{item_type}:{item_type}_name"
             )
+            pth = TestCreate.my_locker.get_item_path(
+                f"{item_type}", f"{item_type}_name"
+            )
             new_item = Item(
-                TestCreate.my_locker,
-                f"{item_type}_name",
-                f"{item_type}",
-                create=True
+                TestCreate.my_locker.crypt_key,
+                f"{item_type}_name"
             )
             new_item.content = content
-            new_item.save()
-        for item_type in Item.get_item_types():
-            found = Item(
-                TestCreateAndSave.my_locker,
-                f"{item_type}_name",
-                f"{item_type}"
+            new_item.save(pth)
+        for item_type in TestCreate.my_locker.registered_items.keys():
+            pth = TestCreate.my_locker.get_item_path(
+                f"{item_type}",
+                f"{item_type}_name"
             )
+            found = Item(
+                TestCreate.my_locker.crypt_key,
+                f"{item_type}_name"
+            )
+            found.read(pth)
             assert found
 
     def test_create_item(self):
@@ -54,62 +63,57 @@ class TestCreateAndSave(LockerHelper):
             f"password: HardHat"
             f"template:my_template"
         )
+        pth = TestCreate.my_locker.get_item_path(
+            f"secret", f"secret_name",
+        )
         new_item = Item(
-            TestCreate.my_locker,
-            f"sekrit_name",
-            f"secret",
-            create=True
+            TestCreate.my_locker.crypt_key,
+            f"sekrit_name"
         )
         new_item.content = content
-        new_item.save()
+        new_item.save(pth)
         found = Item(
-            TestCreateAndSave.my_locker,
-            f"sekrit_name",
-            f"secret"
+            TestCreate.my_locker.crypt_key,
+            f"sekrit_name"
         )
+        found.read(pth)
         assert found
 
-
-class TestItems(LockerHelper):
-
-    def test_delete(self):
-        pass
-
-    def test_find(self):
-        pass
-
     def test_find_all(self):
+        return
+
+
+class TestItems(EmptyLocker):
+
+    def _test_delete(self):
+        pass
+
+    def _test_find(self):
+        pass
+
+    def _test_find_all(self):
         pass
 
     def test_Xcode_file_name(self):
         encoded = {}
-        for it in Item.get_item_types():
-            fn = Item.encode_file_name(
-                LockerHelper.my_locker, it, f"{it}_name"
-            )
-            assert fn.name.endswith('.cry')
-            assert it not in fn.name
-            assert "name" not in fn.name
+        for it in TestCreate.my_locker.registered_items.keys():
+            fn = TestCreate.my_locker.encode_item_name(it, f"{it}_name")
+            assert fn.endswith('.cry')
+            assert it not in fn
+            assert "name" not in fn
             encoded[f"{it}"] = fn
         for it in encoded:
-            item_type, item_name = Item.decode_file_name(
-                LockerHelper.my_locker, encoded[it].name
+            item_type, item_name = TestCreate.my_locker.decode_item_name(
+                encoded[it]
             )
-            assert item_type in Item.get_item_types()
+            assert item_type in TestCreate.my_locker.registered_items.keys()
             assert item_name == f"{item_type}_name"
 
-    def test_content(self):
+    def _test_content(self):
         pass
 
-    def test_timestamp(self):
+    def _test_timestamp(self):
         pass
 
-    def test_save(self):
+    def _test_save(self):
         pass
-
-
-class TestItemTypes(object):
-
-    def test_get_item_types(self):
-        item_types = Item.get_item_types()
-        assert type(item_types) is list

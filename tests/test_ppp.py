@@ -3,74 +3,65 @@ pytest module for ppp
 """
 
 # Standard library imports
+# import shutil
 import json
-import os
-from pathlib import Path
-import shutil
-import tempfile
 
 # Related third party imports
 from click.testing import CliRunner
-import pytest
 
 # Local application/library specific imports
-from privacy_playground.ppp import create_locker
 from privacy_playground.lib.config import Config
+from privacy_playground.lib.locker import Locker
+from privacy_playground.ppp import create_locker
 
 
-DEFAULT_CONFIG = {
-  "editor": "vim",
-  "hash_locker_names": "False",
-  "store_path": "."
-}
-
-
-def create_config_file():
-    with open('pp-config.json', 'w') as f:
-        f.write(json.dumps(DEFAULT_CONFIG))
-
-
-@pytest.fixture
-def change_working_dir():
-    tmpdir = tempfile.mkdtemp(
-        dir=Path.cwd().absolute()
-    )
-    os.chdir(tmpdir)
+def copy_config(source, target):
+    my_conf = source.read()
+    Config.write_config(target, **json.loads(my_conf))
     return
 
 
-# @contextlib.contextmanager
-# def isolated_filesystem(self):
-#     """A context manager that creates a temporary folder and changes
-#     the current working directory to it for isolated filesystem tests.
-#     """
-#     cwd = os.getcwd()
-#     t = tempfile.mkdtemp()
-#     os.chdir(t)
-#     try:
-#         yield t
-#     finally:
-#         os.chdir(cwd)
-#         try:
-#             shutil.rmtree(t)
-#         except (OSError, IOError):  # noqa: B014
-#             pass
+# datadirs = [
+#     ('tests.test_ppp/TestCreateLocker/test_create_locker'),
+#     ('tests.test_ppp/TestCreateLocker'),
+#     ('tests.test_ppp'),
+#     ('data/tests.test_ppp/TestCreateLocker/test_create_locker'),
+#     ('data/tests.test_ppp/TestCreateLocker'),
+#     ('data/tests.test_ppp'),
+#     ('data')
+# ]
 
 
-def test_create_locker(change_working_dir):
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        create_config_file()
-        result = runner.invoke(
-            create_locker,
-            [
-                "--locker", "new_locker",
-                "--password", "SmellyBeansVictor"
-            ]
+class TestCreateLocker(object):
+
+    name = "new_locker"
+    pw = "SmellyBeansVictor"
+
+    def setup_method(self):
+        try:
+            Locker.delete(TestCreateLocker.name, TestCreateLocker.pw)
+        except FileNotFoundError:
+            pass
+        return
+
+    def teardown_method(self):
+        Locker.delete(
+            TestCreateLocker.name, TestCreateLocker.pw
         )
-        assert result.exit_code == 0
-        assert "created" in result.output
-    return
+        return
 
-
-
+    def test_create_locker(self, tmp_path, datadir, capsys):
+        copy_config(datadir["pp-config.json"], tmp_path)
+        with capsys.disabled():
+            test_config = Config(tmp_path)
+            runner = CliRunner()
+            result = runner.invoke(
+                create_locker,
+                [
+                    "--locker", TestCreateLocker.name,
+                    "--password", TestCreateLocker.pw
+                ]
+            )
+            assert result.exit_code == 0
+            assert "created" in result.output
+        return

@@ -1,61 +1,42 @@
 """
-pytest module for ppp
+pytest module for ppp lib.config
 """
 
 # Standard library imports
+import json
 from pathlib import Path
-import os
 
 # Related third party imports
-import pytest
 
 # Local application/library specific imports
-from ..import ppp
-from ..lib.config import Config
+from privacy_playground.lib.config import Config
 
 
-def test_nothing():
+def copy_config(source, target):
+    my_conf = source.read()
+    Config.write_config(target, **json.loads(my_conf))
     return
 
 
-def test_create_locker():
-    return
+class TestConfig(object):
 
-
-class TestConfig:
-
-    def test_default_good(self):
-        """
-        Test depends on default pp-config.json in project root, and for
-        Config class to set properties in specific ways
-        :return:
-        """
-        test_config = Config()
+    def test_default_good(self, tmp_path, datadir):
+        copy_config(datadir["default.json"], tmp_path)
+        test_config = Config(tmp_path)
         assert test_config.editor == 'vim'
         assert test_config.hash_locker_names
         assert test_config.store_path == Path('.')
 
-    def test_override_file(self):
-        """
-        Test depends on pp-config.json in test dir, and for
-        Config class to set properties in specific ways
-        :return:
-        """
-        my_file = Path('.').joinpath('tests').joinpath('pp-config-other.json')
-        test_config = Config(my_file)
-        assert test_config.editor == 'other'
-        assert not test_config.hash_locker_names
-        assert test_config.store_path == Path('.')
-
-    def test_override_directory(self):
-        """
-        Test depends on pp-config.json in test dir, and for
-        Config class to set properties in specific ways
-        :return:
-        """
-        os.chdir('tests')
-        test_config = Config()
+    def test_hash_false(self, tmp_path, datadir):
+        copy_config(datadir["hash_false.json"], tmp_path)
+        test_config = Config(tmp_path)
         assert test_config.editor == 'vim'
         assert not test_config.hash_locker_names
         assert test_config.store_path == Path('.')
 
+    def test_path_home(self, tmp_path, datadir):
+        copy_config(datadir["path_home.json"], tmp_path)
+        test_config = Config(tmp_path)
+        assert test_config.editor == 'vim'
+        assert test_config.hash_locker_names
+        assert test_config.store_path == Path('~')

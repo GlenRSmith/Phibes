@@ -13,7 +13,7 @@ from privacy_playground.cli_lib import edit_item, present_list_items
 from privacy_playground.cli_lib import make_str_bool
 from privacy_playground.lib.config import Config
 from privacy_playground.lib.item import Item
-from privacy_playground.lib.locker import Locker
+from privacy_playground.lib.locker import Locker, registered_items
 
 
 @click.group()
@@ -27,7 +27,7 @@ def main():
 @click.option(
     '--item_type',
     prompt='Type of item to list',
-    type=click.Choice(Item.get_item_types() + ['all']),
+    type=click.Choice(list(registered_items.keys()) + ['all']),
     default='all'
 )
 @click.option('--verbose', prompt='Verbose', default=False)
@@ -89,7 +89,7 @@ def delete_locker(locker, password):
 @click.option(
     '--item_type',
     prompt='Type of item to edit',
-    type=click.Choice(Item.get_item_types()),
+    type=click.Choice(registered_items.keys()),
     default='secret'
 )
 @click.option('--item', prompt='Item name')
@@ -124,7 +124,7 @@ def edit(
 @click.option(
     '--item_type',
     prompt='Type of item to show',
-    type=click.Choice(Item.get_item_types()),
+    type=click.Choice(registered_items.keys()),
     default='secret'
 )
 @click.option('--item', prompt='Item name')
@@ -150,7 +150,7 @@ def show_item(locker, password, item_type, item):
 @click.option(
     '--item_type',
     prompt='Type of item to delete',
-    type=click.Choice(Item.get_item_types()),
+    type=click.Choice(registered_items.keys()),
     default='secret'
 )
 @click.option('--item', prompt='Item name')
@@ -178,7 +178,7 @@ def delete_item(locker, password, item_type, item):
 @click.option(
     '--item_type',
     prompt='Type of item to list',
-    type=click.Choice(Item.get_item_types() + ['all']),
+    type=click.Choice(list(registered_items.keys()) + ['all']),
     default='all'
 )
 @click.option('--verbose', prompt='Verbose', default=False)

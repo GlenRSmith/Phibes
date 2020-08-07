@@ -1,7 +1,7 @@
 """
-Implementation of Secrets
+Implementation of Template
 
-A Secret is an entry in a Locker.
+A Template is an entry in a Locker.
 """
 
 # Built-in library packages
@@ -12,14 +12,15 @@ A Secret is an entry in a Locker.
 from . item import Item
 
 
-class Secret(Item):
+class Template(Item):
 
     def __init__(self, key: str, name: str, content: str = ""):
         super().__init__(key, name, content)
         return
 
     @classmethod
-    def find(cls, locker, name, item_type='secret'):
-        return super(Secret, cls).find(
+    def find(cls, locker, name, item_type='template'):
+        return super(Template, cls).find(
             locker, name, 'secret'
         )
+

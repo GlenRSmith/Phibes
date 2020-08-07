@@ -8,13 +8,25 @@ pytest module for lib.secret
 
 # Local application/library specific imports
 from privacy_playground.lib.secret import Secret
-from locker_helper import LockerHelper
+from locker_helper import EmptyLocker
 
 
-class TestSecrets(LockerHelper):
+class TestSecrets(EmptyLocker):
 
     def test_secrets(self):
         # create some secrets
-        s1 = Secret(TestSecrets.my_locker, "facebook", create=True)
-        s2 = Secret(TestSecrets.my_locker, "twitter", create=True)
-        s3 = Secret(TestSecrets.my_locker, "reddit", create=True)
+        pth = TestSecrets.my_locker.get_item_path("secret", "facebook")
+        s1 = Secret(TestSecrets.my_locker.crypt_key, "facebook")
+        s1.content = "password:KidsBirthday"
+        s1.save(pth)
+        pth = TestSecrets.my_locker.get_item_path("secret", "twitter")
+        s2 = Secret(TestSecrets.my_locker.crypt_key, "twitter")
+        s2.content = "password:KidsBirthday"
+        s2.save(pth)
+        pth = TestSecrets.my_locker.get_item_path("secret", "reddit")
+        s3 = Secret(TestSecrets.my_locker.crypt_key, "reddit")
+        s3.content = "password:KidsBirthday"
+        s3.save(pth)
+        # TestSecrets.my_locker.add_item(s1)
+        # TestSecrets.my_locker.add_item(s2)
+        # TestSecrets.my_locker.add_item(s3)

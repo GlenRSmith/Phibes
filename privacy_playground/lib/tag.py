@@ -7,6 +7,7 @@ A Tag is an Item whose content is a list of items
 # Built-in library packages
 from __future__ import annotations
 import json
+from pathlib import Path
 from typing import List, Set
 
 # Third party packages
@@ -24,14 +25,15 @@ class Tag(Item):
     A tag is a name and list of items.
     """
 
-    def __init__(self, locker, name, create: bool = False):
+    def __init__(self, key: str, name: str, content: str = ""):
         """
         Create or find a matching tag in the locker
-        :param locker: Locker to use
+        :param key: Encryption key
         :param name: name of Tag
-        :param create: whether to create a new Tag
+        :param content: optional content
         """
-        super().__init__(locker, name, 'tag', create=create)
+        super().__init__(key, name, content)
+        # if there is existing content, it will be applied during read
         self.content = set()
         return
 
@@ -102,6 +104,11 @@ class Tag(Item):
         :return:
         """
         return list(self.content)
+
+    def save(self, pth: Path, overwrite=False):
+        # need to make sure referenced Items are actually saved?
+        super().save(pth, overwrite=overwrite)
+        return
 
     def __str__(self):
         """

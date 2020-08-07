@@ -6,41 +6,65 @@ Cryptography support
 import base64
 import hashlib
 import secrets
+from typing import Optional, Tuple
 
 # Third party packages
 from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
 
 # In-project modules
+
+
 HASH_ALGO = 'sha256'
 CRYPT_KEY_ROUNDS = 100100
 AUTH_KEY_ROUNDS = CRYPT_KEY_ROUNDS + 1
 # PBKDF2-generated key length, default is 32 I think, longest AES allows
 CRYPT_KEY_BYTES = 32
 KEY_BYTES = 32
-SALT_BYTES = 16
+SALT_BYTES = AES.block_size  # 16
 NAME_BYTES = 4
 
+# HEX_REGEX = re.compile("^(0[xX])?[A-Fa-f0-9]+$")
+# HexStr = Match[HEX_REGEX]
+# KEY_REGEX = re.compile(b"[.]{CRYPT_KEY_BYTES}")
+# KeyBytes = Match[KEY_REGEX]
+# CipherDetails = Tuple[bytes, AES]
+EncryptDetails = Tuple[bytes, str]
 
-def make_salt_string(num_bytes=SALT_BYTES):
-    return secrets.token_bytes(num_bytes).hex()
 
-
-def make_salt_bytes(num_bytes=SALT_BYTES):
+def make_salt_bytes(num_bytes: int = SALT_BYTES) -> bytes:
     return secrets.token_bytes(num_bytes)
 
 
-def get_cipher(key, iv=None):
-    assert len(key) == CRYPT_KEY_BYTES
+def make_salt_string(num_bytes: int = SALT_BYTES):
+    return make_salt_bytes(num_bytes).hex()
+
+
+def get_cipher(key, iv: Optional[bytes] = None):
+    """
+    Creates and returns a cryptographic cipher which is then
+    used to encrypt/decrypt
+    :param key: cryptographic key
+    :param iv: initialization vector (like a salt)
+    :return: cipher
+    """
+    if not len(key) == CRYPT_KEY_BYTES:
+        raise ValueError(
+            f"`key` arg must be exactly {CRYPT_KEY_BYTES} long"
+        )
     if not iv:
-        iv = secrets.token_bytes(AES.block_size)
+        iv = make_salt_bytes()
     iv_int = int.from_bytes(iv, "big")
     ctr = Counter.new(AES.block_size * 8, initial_value=iv_int)
     cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
     return iv, cipher
 
 
-def encrypt(key, plaintext, iv=None):
+def encrypt(
+        key,
+        plaintext: str,
+        iv: Optional[bytes] = None
+) -> EncryptDetails:
     """
     Encrypt some plaintext
     :param key: 32-byte encryption key
@@ -96,7 +120,13 @@ def make_crypt_key(seed: str, salt: str) -> bytes:
     :param salt: String containing a hexadecimal value
     :return:
     """
-    return get_strong_hash(seed, CRYPT_KEY_ROUNDS, salt, length=KEY_BYTES)
+    try:
+        ret_val = get_strong_hash(
+            seed, CRYPT_KEY_ROUNDS, salt, length=KEY_BYTES
+        )
+    except TypeError as err:
+        raise err
+    return ret_val
 
 
 def get_password_hash(password: str, salt: str) -> bytes:

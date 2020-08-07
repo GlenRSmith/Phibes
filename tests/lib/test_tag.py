@@ -7,28 +7,32 @@ pytest module for lib.tag
 # Related third party imports
 
 # Local application/library specific imports
+from privacy_playground.lib.locker import Locker
 # from privacy_playground.lib.item import Item
 from privacy_playground.lib.secret import Secret
 from privacy_playground.lib.tag import Tag
-from locker_helper import LockerHelper
+from locker_helper import EmptyLocker
 
 
-class TestTags(LockerHelper):
+class TestTags(EmptyLocker):
 
     def test_tags(self):
         # create some secrets
-        s1 = Secret(TestTags.my_locker, "facebook", create=True)
-        s2 = Secret(TestTags.my_locker, "twitter", create=True)
-        s3 = Secret(TestTags.my_locker, "reddit", create=True)
+        s1 = TestTags.my_locker.create_item("facebook", "secret")
+        s2 = TestTags.my_locker.create_item("twitter", "secret")
+        s3 = TestTags.my_locker.create_item("reddit", "secret")
         # create a tag
-        t1 = Tag(TestTags.my_locker, "social_media", create=True)
+        t1 = Tag(
+            TestTags.my_locker.crypt_key, "social_media"
+        )
         assert t1.list_items() == list()
         # add the secrets to the tag
         t1.add_item(s1)
         t1.add_item(s2)
         t1.add_item(s3)
         # save the tag
-        t1.save()
+        pth = TestTags.my_locker.get_item_path("tag", "social_media")
+        t1.save(pth)
         # list the secrets in the item
         assert "secret:facebook" in t1.content
         assert "secret:twitter" in t1.content
@@ -42,9 +46,11 @@ class TestTags(LockerHelper):
         assert sorted(them_secrets) == sorted(
             ["secret:twitter", "secret:reddit"]
         )
-        t1.save(overwrite=True)
-        t2 = Tag.find(TestTags.my_locker, "social_media", "tag")
+        t1.save(pth, overwrite=True)
+        t2 = Tag(self.my_locker.crypt_key, f"social_media")
+        t2.read(pth)
         assert t2 is not None
-        assert "secret:facebook" not in t2.content
-        assert "secret:twitter" in t2.content
-        assert "secret:reddit" in t2.content
+        those_secrets = t2.list_items()
+        assert "secret:facebook" not in those_secrets
+        assert "secret:twitter" in those_secrets
+        assert "secret:reddit" in those_secrets

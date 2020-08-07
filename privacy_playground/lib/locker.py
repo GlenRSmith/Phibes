@@ -7,9 +7,10 @@ A Locker has other data on the file system, but that file
 
 # Built-in library packages
 from __future__ import annotations
+from datetime import datetime
 from pathlib import Path
 import shutil
-from typing import List, Union
+from typing import List, Optional, Tuple
 
 # Third party packages
 
@@ -17,15 +18,32 @@ from typing import List, Union
 from . config import Config
 from . crypto import authenticate_password
 from . crypto import get_name_hash, get_password_hash
-from . crypto import encrypt, decrypt
-from . crypt_file_wrap import CryptFileWrap
+from . crypt_impl import CryptImpl
 from . item import FILE_EXT, Item
+from . import phibes_file
+# pylint: disable=unused-import
+# noinspection UnusedImport
+# Item subclasses must be loaded so __subclasses__ below will report them
+from . schema import Schema
+from . secret import Secret
+from . tag import Tag
+from . template import Template
+
+registered_items = {}
+for cls in Item.__subclasses__():
+    ndx = cls.get_type_name()
+    registered_items[ndx] = cls
 
 
 ItemList = List[Item]
+# HEX_REGEX = "^(0[xX])?[A-Fa-f0-9]+$"
+# HexStr = Match[HEX_REGEX]
+# str(type(self)).split("'")[1].split(".")[-1].lower()
 
 
 class Locker(object):
+
+    registered_items = registered_items
 
     @property
     def salt(self):
@@ -33,7 +51,8 @@ class Locker(object):
         Convenience accessor to crypt.salt
         :return:
         """
-        return self.crypt.salt
+        # return self.crypt.salt
+        return self._salt
 
     @property
     def crypt_key(self):
@@ -42,7 +61,26 @@ class Locker(object):
         Lack of setter is intentional
         :return: crypt_key
         """
-        return self.crypt.key
+        return self.crypt_impl.key
+
+    @property
+    def plaintext(self):
+        """
+        Plaintext only available here by decrypting
+        :return:
+        """
+        return self.crypt_impl.decrypt(self._ciphertext).decode()
+
+    @plaintext.setter
+    def plaintext(self, content: str):
+        """
+        Take the submitted plaintext and update the ciphertext attribute,
+        as well as the the salt used to encrypt
+        :param content:
+        :return:
+        """
+        self._ciphertext = self.crypt_impl.encrypt(content)
+        return
 
     def __init__(self, name: str, password: str, create: bool = False):
         """
@@ -54,6 +92,8 @@ class Locker(object):
         :param name: The name of the locker. Must be unique in storage
         """
         self.conf = Config('.')
+        self._salt = None
+        self._ciphertext = None
         # TODO: should this be abstracted to "confirm installed" or something?
         self.conf.assure_users_dir()
         if self.conf.hash_locker_names:
@@ -61,52 +101,69 @@ class Locker(object):
         else:
             self.path = self.conf.users_path.joinpath(name)
         self.lock_file = self.path.joinpath(".locker.cfg")
-        if self.lock_file.exists():
-            if not create:
-                self.crypt = CryptFileWrap(
-                    self.lock_file,
-                    password,
-                    crypt_arg_is_key=False,
-                    create=create
-                )
-                authenticate_password(
-                    password, self.crypt.ciphertext, self.crypt.salt
-                )
-            else:
-                raise FileExistsError(
-                    f"Matching locker already exists"
-                    f"Did you mean to pass create=False?"
-                )
+        if not self.lock_file.exists() and not create:
+            raise FileNotFoundError(
+                f"Matching locker not found"
+                f"Did you mean to pass create=True?"
+            )
+        if self.lock_file.exists() and create:
+            raise FileExistsError(
+                f"Matching locker already exists"
+                f"Did you mean to pass create=False?"
+            )
+        if create and not Locker.can_create(self.path):
+            raise ValueError(f"could not create {name}")
+        if create:
+            self.path.mkdir(exist_ok=False)
+            self.crypt_impl = CryptImpl(password, crypt_arg_is_key=False)
+            self._salt = self.crypt_impl.iv.hex()
+            # The password is HASHED, then encrypted!
+            # Some IDEs don't understand using the property setter
+            # during init, so I'm encrypting directly
+            self._ciphertext = self.crypt_impl.encrypt(
+                get_password_hash(password, self.salt).hex()
+            )
+            self._timestamp = self.crypt_impl.encrypt(
+                str(datetime.now())
+            )
+            phibes_file.write(
+                self.lock_file,
+                self._salt,
+                self._timestamp,
+                self._ciphertext,
+                overwrite=False
+            )
         else:
-            if create:
-                if not Locker.can_create(self.path):
-                    raise ValueError(f"could not create {name}")
-                self.path.mkdir(exist_ok=False)
-                self.crypt = CryptFileWrap(
-                    self.lock_file,
-                    password,
-                    crypt_arg_is_key=False,
-                    create=create
-                )
-                self.crypt.plaintext = get_password_hash(
-                    password, self.crypt.salt
-                ).hex()
-                self.crypt.write()
-            else:
-                raise FileNotFoundError(
-                    f"Matching locker not found"
-                    f"Did you mean to pass create=True?"
-                )
+            # read the file to get the salt
+            rec = phibes_file.read(self.lock_file)
+            self._salt = rec['salt']
+            self._timestamp = rec['timestamp']
+            self._ciphertext = rec['body']
+            self.crypt_impl = CryptImpl(
+                password, crypt_arg_is_key=False, iv=self._salt
+            )
+            authenticate_password(
+                password,
+                self._ciphertext,
+                self.crypt_impl.iv.hex()
+            )
         return
 
     @classmethod
     def delete(cls, name: str, password: str):
-        inst = Locker(name, password)
+        try:
+            inst = Locker(name, password)
+        except FileNotFoundError:
+            inst = None
         if inst:
             shutil.rmtree(inst.path)
+        else:
+            raise FileNotFoundError(
+                f"Locker {name} not found to delete!"
+            )
 
     @classmethod
-    def find(cls, name: str, password: str) -> Union[Locker, None]:
+    def find(cls, name: str, password: str) -> Optional[Locker]:
         """
         Find and return the matching locker
         :param name: Plaintext name of locker
@@ -143,6 +200,44 @@ class Locker(object):
                     return False
         return True
 
+    def encode_item_name(
+            self, item_type: str, item_name: str
+    ) -> str:
+        """
+        Encode and encrypt the item type and name into the
+        encrypted file name used to store Items.
+
+        :param item_type: Item type
+        :param item_name: Item name
+        :return: Fully encoded/encrypted file name
+        """
+        if item_type not in self.registered_items:
+            raise ValueError(
+                f"{item_type} not registered: {self.registered_items}")
+        type_enc = self.encrypt(item_type)
+        name_enc = self.encrypt(item_name)
+        encrypted_name = self.encrypt(f"{type_enc}:{name_enc}")
+        return f"{encrypted_name}.{FILE_EXT}"
+
+    def decode_item_name(
+            self, file_name: str
+    ) -> Tuple[str, str]:
+
+        """
+        Convert from encrypted, encoded filename format on disk
+        and return the item type and name used to create the filename.
+
+        :param file_name:
+        :return:
+        """
+        # Tolerate with or without file extension
+        if file_name.endswith(f".{FILE_EXT}"):
+            file_name = file_name[0:-4]
+        type_enc, name_enc = self.decrypt(file_name).decode().split(':')
+        item_type = self.decrypt(type_enc).decode()
+        item_name = self.decrypt(name_enc).decode()
+        return item_type, item_name
+
     def validate(self):
         if not self.path.exists():
             raise ValueError(f"Locker path {self.path} does not exist")
@@ -153,15 +248,13 @@ class Locker(object):
         if not self.lock_file.is_file():
             raise ValueError(f"{self.lock_file} is not a file")
 
-    def decrypt(self, ciphertext: str) -> str:
+    def decrypt(self, ciphertext: str) -> bytes:
         """
         Convenience method to decrypt using a Locker object
         :param ciphertext:
         :return:
         """
-        return decrypt(
-            self.crypt_key, bytes.fromhex(self.salt), ciphertext
-        )
+        return self.crypt_impl.decrypt(ciphertext)
 
     def encrypt(self, plaintext: str) -> str:
         """
@@ -169,10 +262,38 @@ class Locker(object):
         :param plaintext:
         :return:
         """
-        iv, ciphertext = encrypt(
-            self.crypt_key, plaintext, iv=bytes.fromhex(self.salt)
-        )
-        return ciphertext
+        return self.crypt_impl.encrypt(plaintext)
+
+    def get_item_path(self, item_type: str, item_name: str) -> Path:
+        file_name = self.encode_item_name(item_type, item_name)
+        return self.path.joinpath(file_name)
+
+    def create_item(self, item_name: str, item_type: str) -> Item:
+        pth = self.get_item_path(item_type, item_name)
+        item_cls = registered_items[item_type]
+        new_item = item_cls(self.crypt_key, item_name)
+        return new_item
+
+    def add_item(self, item: Item) -> None:
+        pth = self.get_item_path(item.item_type, item.name)
+        item.save(pth, overwrite=False)
+        return
+
+    def get_item(self, item_name: str, item_type: str) -> Optional[Item]:
+        pth = self.get_item_path(item_type, item_name)
+        item_cls = registered_items[item_type]
+        found_item = item_cls(self.crypt_key, item_name)
+        found_item.read(pth)
+        # TODO: validate using salt
+        return found_item
+
+    def update_item(self, item: Item) -> None:
+        pth = self.get_item_path(item.item_type, item.name)
+        item.save(pth, overwrite=True)
+        return
+
+    def delete_item(self, item: Item) -> None:
+        self.get_item_path(item.get_type_name(), item.name).unlink()
 
     def list_items(self, item_type=None) -> ItemList:
         """
@@ -181,26 +302,58 @@ class Locker(object):
         :return:
         """
         if item_type:
+            if type(item_type) is set:
+                item_type = list(item_type)
             if type(item_type) is not list:
                 item_type = [item_type]
             missing_types = []
             for it in item_type:
-                if it not in Item.get_item_types():
+                if it not in registered_items:
                     missing_types.append(it)
             if missing_types:
                 raise ValueError(
-                    f"{missing_types} not found in {Item.get_item_types()}")
+                    f"{missing_types} not found in {registered_items}")
         else:
-            item_type = Item.get_item_types()
+            item_type = registered_items
         items = []
         item_gen = self.path.glob(f"*.{FILE_EXT}")
         for item_path in [it for it in item_gen]:
-            inst_type, inst_name = Item.decode_file_name(self, item_path.name)
+            inst_type, inst_name = self.decode_item_name(item_path.name)
             if inst_type:
-                if inst_type not in Item.get_item_types():
+                if inst_type not in registered_items:
                     raise ValueError(f"{item_type} is not a valid item type")
                 else:
                     if inst_type in item_type:
-                        found = Item.find(self, inst_name, inst_type)
+                        found = self.get_item(inst_name, inst_type)
                         items.append(found)
+        return items
+
+    def find_all(self, item_type_filter=None, filter_include=True):
+        """
+        Find matching items in a locker
+        Default invocation returns all items.
+        :param item_type_filter: list of item types to include/exclude
+        :param filter_include: whether item_type_filter is `include` or exclude
+        :return: list of matching items
+        """
+        if not item_type_filter and not filter_include:
+            raise ValueError(f"You are asking to exclude all item types!")
+        if not item_type_filter:
+            item_type_filter = set(Locker.registered_items)
+        else:
+            if type(item_type_filter) is set:
+                pass
+            if type(item_type_filter) is list:
+                item_type_filter = set(item_type_filter)
+            elif type(item_type_filter) is str:
+                item_type_filter = {item_type_filter}
+            else:
+                raise TypeError(f"unexpected arg type {type(item_type_filter)}")
+        if not item_type_filter <= set(Locker.registered_items):
+            unknown_types = item_type_filter - set(Locker.registered_items)
+            raise ValueError(
+                f"{unknown_types} not found in {set(Locker.registered_items)}")
+        if not filter_include:
+            item_type_filter = set(Locker.registered_items) - item_type_filter
+        items = self.list_items(item_type_filter)
         return items
