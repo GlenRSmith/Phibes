@@ -17,9 +17,3 @@ class Secret(Item):
     def __init__(self, key: str, name: str, content: str = ""):
         super().__init__(key, name, content)
         return
-
-    @classmethod
-    def find(cls, locker, name, item_type='secret'):
-        return super(Secret, cls).find(
-            locker, name, 'secret'
-        )

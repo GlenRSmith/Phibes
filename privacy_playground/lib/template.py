@@ -17,10 +17,3 @@ class Template(Item):
     def __init__(self, key: str, name: str, content: str = ""):
         super().__init__(key, name, content)
         return
-
-    @classmethod
-    def find(cls, locker, name, item_type='template'):
-        return super(Template, cls).find(
-            locker, name, 'secret'
-        )
-
