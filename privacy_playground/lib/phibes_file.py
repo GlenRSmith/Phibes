@@ -61,8 +61,15 @@ def write(
         raise FileExistsError(
             f"file {pth} already exists, and overwrite is False"
         )
-    elif not body:
+    if not body:
         raise AttributeError(f"Record has no content!")
+    if "\n" in salt or "\n" in timestamp or "\n" in body:
+        raise ValueError(
+            f"File fields can not contain newline char\n"
+            f"salt: {salt}"
+            f"timestamp: {timestamp}"
+            f"body: {body}"
+        )
     with pth.open("w") as cipher_file:
         cipher_file.write(
             f"{salt}\n{timestamp}\n{body}\n"
