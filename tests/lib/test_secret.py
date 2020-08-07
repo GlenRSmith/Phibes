@@ -15,16 +15,16 @@ class TestSecrets(EmptyLocker):
 
     def test_secrets(self):
         # create some secrets
-        pth = TestSecrets.my_locker.get_item_path("secret", "facebook")
-        s1 = Secret(TestSecrets.my_locker.crypt_key, "facebook")
+        pth = self.my_locker.get_item_path("secret", "facebook")
+        s1 = Secret(self.my_locker.crypt_key, "facebook")
         s1.content = "password:KidsBirthday"
         s1.save(pth)
-        pth = TestSecrets.my_locker.get_item_path("secret", "twitter")
-        s2 = Secret(TestSecrets.my_locker.crypt_key, "twitter")
+        pth = self.my_locker.get_item_path("secret", "twitter")
+        s2 = Secret(self.my_locker.crypt_key, "twitter")
         s2.content = "password:KidsBirthday"
         s2.save(pth)
-        pth = TestSecrets.my_locker.get_item_path("secret", "reddit")
-        s3 = Secret(TestSecrets.my_locker.crypt_key, "reddit")
+        pth = self.my_locker.get_item_path("secret", "reddit")
+        s3 = Secret(self.my_locker.crypt_key, "reddit")
         s3.content = "password:KidsBirthday"
         s3.save(pth)
         # TestSecrets.my_locker.add_item(s1)

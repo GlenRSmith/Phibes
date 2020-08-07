@@ -19,18 +19,18 @@ class TestLocker(object):
 
     def setup_method(self):
         try:
-            if Locker(TestLocker.locker_name, TestLocker.password):
-                Locker.delete(TestLocker.locker_name, TestLocker.password)
+            if Locker(self.locker_name, self.password):
+                Locker.delete(self.locker_name, self.password)
         except:
             pass
 
     def teardown_method(self):
-        Locker.delete(TestLocker.locker_name, TestLocker.password)
+        Locker.delete(self.locker_name, self.password)
 
     def test_good(self, tmp_path, datadir):
-        Locker(TestLocker.locker_name, TestLocker.password, create=True)
+        Locker(self.locker_name, self.password, create=True)
         found = Locker(
-            TestLocker.locker_name, TestLocker.password, create=False
+            self.locker_name, self.password, create=False
         )
         assert found
         return

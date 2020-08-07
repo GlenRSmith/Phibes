@@ -103,12 +103,12 @@ class Locker(object):
         self.lock_file = self.path.joinpath(".locker.cfg")
         if not self.lock_file.exists() and not create:
             raise FileNotFoundError(
-                f"Matching locker not found"
+                f"Matching locker {self.lock_file} not found\n"
                 f"Did you mean to pass create=True?"
             )
         if self.lock_file.exists() and create:
             raise FileExistsError(
-                f"Matching locker already exists"
+                f"Matching locker {self.lock_file} already exists\n"
                 f"Did you mean to pass create=False?"
             )
         if create and not Locker.can_create(self.path):
@@ -213,7 +213,8 @@ class Locker(object):
         """
         if item_type not in self.registered_items:
             raise ValueError(
-                f"{item_type} not registered: {self.registered_items}")
+                f"{item_type} not registered: {self.registered_items}"
+            )
         type_enc = self.encrypt(item_type)
         name_enc = self.encrypt(item_name)
         encrypted_name = self.encrypt(f"{type_enc}:{name_enc}")
