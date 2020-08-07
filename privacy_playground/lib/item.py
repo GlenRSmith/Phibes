@@ -8,7 +8,7 @@ Item is a base class for things to be stored in a Locker.
 from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 # Third party packages
 
@@ -29,7 +29,7 @@ class Item(object):
             self,
             key: str,
             name: str,
-            content: str = ""
+            content: Optional[str] = None
     ):
         self.item_type = self.get_type_name()
         self.name = name
@@ -99,7 +99,11 @@ class Item(object):
 
     @property
     def timestamp(self):
-        return self.crypt_impl.decrypt(self._timestamp).decode()
+        try:
+            ret_val = self.crypt_impl.decrypt(self._timestamp).decode()
+        except:
+            ret_val = datetime.now()
+        return ret_val
 
     @property
     def ciphertext(self):

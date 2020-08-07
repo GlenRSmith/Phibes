@@ -79,9 +79,6 @@ class TestCreateAndSave(EmptyLocker):
         found.read(pth)
         assert found
 
-    def test_find_all(self):
-        return
-
 
 class TestItems(EmptyLocker):
 
@@ -91,8 +88,18 @@ class TestItems(EmptyLocker):
     def _test_find(self):
         pass
 
-    def _test_find_all(self):
-        pass
+    def test_string_add_content(self):
+        # can I += the content field?
+        k = self.my_locker
+        s1 = k.create_item("facebook", "secret")
+        s1.content = "initial content"
+        k.add_item(s1)
+        s2 = k.get_item("facebook", "secret")
+        assert s2.content == "initial content"
+        s2.content += " - more content"
+        k.update_item(s2)
+        s3 = k.get_item("facebook", "secret")
+        assert s3.content == "initial content - more content"
 
     def test_Xcode_file_name(self):
         encoded = {}
@@ -113,7 +120,4 @@ class TestItems(EmptyLocker):
         pass
 
     def _test_timestamp(self):
-        pass
-
-    def _test_save(self):
         pass

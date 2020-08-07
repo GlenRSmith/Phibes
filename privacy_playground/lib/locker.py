@@ -268,10 +268,16 @@ class Locker(object):
         file_name = self.encode_item_name(item_type, item_name)
         return self.path.joinpath(file_name)
 
-    def create_item(self, item_name: str, item_type: str) -> Item:
-        pth = self.get_item_path(item_type, item_name)
+    def create_item(
+            self, item_name: str,
+            item_type: str,
+            template_name: Optional[str] = None
+    ) -> Item:
         item_cls = registered_items[item_type]
         new_item = item_cls(self.crypt_key, item_name)
+        if template_name:
+            template = self.get_item(template_name, "template")
+            new_item.content = template.content
         return new_item
 
     def add_item(self, item: Item) -> None:
@@ -281,10 +287,13 @@ class Locker(object):
 
     def get_item(self, item_name: str, item_type: str) -> Optional[Item]:
         pth = self.get_item_path(item_type, item_name)
-        item_cls = registered_items[item_type]
-        found_item = item_cls(self.crypt_key, item_name)
-        found_item.read(pth)
-        # TODO: validate using salt
+        if pth.exists():
+            item_cls = registered_items[item_type]
+            found_item = item_cls(self.crypt_key, item_name)
+            found_item.read(pth)
+            # TODO: validate using salt
+        else:
+            found_item = None
         return found_item
 
     def update_item(self, item: Item) -> None:

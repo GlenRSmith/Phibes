@@ -55,22 +55,36 @@ def edit_item(
     :return:
     """
     my_locker = Locker.find(locker_name, password)
-    item = Item.find(my_locker, item_name, item_type)
-    if item is None:
-        item = Item(my_locker, item_name, item_type, create=True)
-    elif not overwrite:
-        raise FileExistsError(
-            f"{locker_name}:{item_type}:{item_name} already exists"
+    item = my_locker.get_item(item_name, item_type)
+    if item:
+        if not overwrite:
+            raise FileExistsError(
+                f"file for {item_type}:{item_name} already exists"
+                f"overwrite True must be specified to replace"
+            )
+        else:
+            if template_name:
+                template = my_locker.get_item(template_name, 'template')
+                item.content += (
+                        f"\nprevious content above\n"
+                        f"template {template_name} follows\n"
+                        f"{template.content}"
+                    )
+                my_locker.update_item(item)
+    else:
+        item = my_locker.create_item(
+            item_name=item_name,
+            item_type=item_type,
+            template_name=template_name
         )
+        my_locker.add_item(item)
     work_file = my_locker.path.joinpath(
         f"{item_type}:{item_name}.tmp"
     )
-    if template_name:
-        template = Item.find(my_locker, template_name, 'template')
-        work_file.write_text(template.content)
+    work_file.write_text(item.content)
     os.system(f"{editor} {work_file}")
     item.content = work_file.read_text()
-    item.save(overwrite=overwrite)
+    my_locker.update_item(item)
     work_file.unlink()
     return
 
@@ -82,7 +96,8 @@ def present_list_items(
     if item_type == 'all':
         item_type = None
     my_locker = Locker.find(locker, password)
-    items = Item.find_all(my_locker, item_type)
+    items = my_locker.find_all(item_type, filter_include=True)
+    # items = Item.find_all(my_locker, item_type)
     if verbose:
         for sec in my_locker.list_items():
             ret_val += f"{sec}"

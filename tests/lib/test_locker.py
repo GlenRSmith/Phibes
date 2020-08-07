@@ -54,4 +54,22 @@ class TestItemStuff(PopulatedLocker):
                 assert it.item_type != item_type
         return
 
+    def test_get_missing_item(self, tmp_path, datadir):
+        my_item = self.my_locker.get_item("never", "secret")
+        assert my_item is None
+        return
+
+    def test_update_item(self):
+        content = (
+            f"here is some stuff"
+            f"password: Iwashacked007"
+            f"template:my_template"
+        )
+        found = self.my_locker.get_item("secret_name", "secret")
+        assert found
+        found.content = content
+        self.my_locker.update_item(found)
+        refound = self.my_locker.get_item("secret_name", "secret")
+        test_cont = refound.content
+        assert test_cont == content
 

@@ -7,9 +7,6 @@ pytest module for lib.tag
 # Related third party imports
 
 # Local application/library specific imports
-from privacy_playground.lib.locker import Locker
-# from privacy_playground.lib.item import Item
-from privacy_playground.lib.secret import Secret
 from privacy_playground.lib.tag import Tag
 from locker_helper import EmptyLocker
 
@@ -18,20 +15,22 @@ class TestTags(EmptyLocker):
 
     def test_tags(self):
         # create some secrets
-        s1 = TestTags.my_locker.create_item("facebook", "secret")
-        s2 = TestTags.my_locker.create_item("twitter", "secret")
-        s3 = TestTags.my_locker.create_item("reddit", "secret")
+        s1 = self.my_locker.create_item("facebook", "secret")
+        s2 = self.my_locker.create_item("twitter", "secret")
+        s3 = self.my_locker.create_item("reddit", "secret")
         # create a tag
         t1 = Tag(
-            TestTags.my_locker.crypt_key, "social_media"
+            self.my_locker.crypt_key, "social_media"
         )
         assert t1.list_items() == list()
         # add the secrets to the tag
+        # TODO: decide whether unsaved items should be allowed.
+        # (these items don't even have assigned content yet!)
         t1.add_item(s1)
         t1.add_item(s2)
         t1.add_item(s3)
         # save the tag
-        pth = TestTags.my_locker.get_item_path("tag", "social_media")
+        pth = self.my_locker.get_item_path("tag", "social_media")
         t1.save(pth)
         # list the secrets in the item
         assert "secret:facebook" in t1.content
