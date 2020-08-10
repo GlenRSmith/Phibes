@@ -13,7 +13,7 @@ from typing import Optional
 # Third party packages
 
 # In-project modules
-from . crypt_impl import CryptImpl
+from . crypto import CryptImpl
 from . import phibes_file
 
 
@@ -120,7 +120,7 @@ class Item(object):
         Convenience accessor to crypt.salt
         :return:
         """
-        return self.crypt_impl.iv.hex()
+        return self.crypt_impl.salt
 
     @property
     def crypt_key(self):
