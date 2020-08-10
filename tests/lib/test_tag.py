@@ -5,6 +5,7 @@ pytest module for lib.tag
 # Standard library imports
 
 # Related third party imports
+import pytest
 
 # Local application/library specific imports
 from privacy_playground.lib.tag import Tag
@@ -13,15 +14,17 @@ from locker_helper import EmptyLocker
 
 class TestTags(EmptyLocker):
 
+    @pytest.mark.positive
     def test_tags(self):
         # create some secrets
         s1 = self.my_locker.create_item("facebook", "secret")
         s2 = self.my_locker.create_item("twitter", "secret")
         s3 = self.my_locker.create_item("reddit", "secret")
         # create a tag
-        t1 = Tag(
-            self.my_locker.crypt_key, "social_media"
-        )
+        t1 = self.my_locker.create_item("social_media", "tag")
+        # t1 = Tag(
+        #     self.my_locker.crypt_key, "social_media"
+        # )
         assert t1.list_items() == list()
         # add the secrets to the tag
         # TODO: decide whether unsaved items should be allowed.
@@ -31,7 +34,7 @@ class TestTags(EmptyLocker):
         t1.add_item(s3)
         # save the tag
         pth = self.my_locker.get_item_path("tag", "social_media")
-        t1.save(pth)
+        self.my_locker.add_item(t1)
         # list the secrets in the item
         assert "secret:facebook" in t1.content
         assert "secret:twitter" in t1.content
