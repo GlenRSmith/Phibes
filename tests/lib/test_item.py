@@ -3,6 +3,7 @@ pytest module for lib.item
 """
 
 # Standard library imports
+from datetime import datetime
 
 # Related third party imports
 import pytest
@@ -14,6 +15,7 @@ from locker_helper import EmptyLocker
 
 class TestCreate(EmptyLocker):
 
+    @pytest.mark.negative
     def test_create_empty_items(self):
         for item_type in self.my_locker.registered_items.keys():
             pth = self.my_locker.get_item_path(
@@ -82,8 +84,23 @@ class TestCreateAndSave(EmptyLocker):
     def _test_content(self):
         pass
 
-    def _test_timestamp(self):
-        pass
+    def test_timestamp(self):
+        k = self.my_locker
+        content = f"do timestamps work?"
+        new_item = self.my_locker.create_item('any name', 'secret')
+        new_item.content = content
+        k.add_item(new_item)
+        new_ts = new_item.timestamp
+        try:
+            datetime.strptime(new_ts, '%Y-%m-%d %H:%M:%S.%f')
+        except Exception as err:
+            pytest.fail(f"invalid datetime str: {new_ts}\n{err}")
+        found = k.get_item('any name', 'secret')
+        assert new_ts == found.timestamp
+        try:
+            datetime.strptime(found.timestamp, '%Y-%m-%d %H:%M:%S.%f')
+        except Exception as err:
+            pytest.fail(f"invalid datetime str: {new_ts}\n{err}")
 
 
 class TestItems(EmptyLocker):

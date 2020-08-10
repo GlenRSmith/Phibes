@@ -8,7 +8,7 @@ Item is a base class for things to be stored in a Locker.
 from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional
 
 # Third party packages
 
@@ -41,10 +41,15 @@ class Item(object):
         return
 
     def save(self, pth: Path, overwrite: bool = False):
-        self._timestamp = str(datetime.now())
-        ts = self.crypt_impl.encrypt(self._timestamp)
+        self._timestamp = self.crypt_impl.encrypt(
+            str(datetime.now())
+        )
         phibes_file.write(
-            pth, self.salt, ts, self._ciphertext, overwrite=overwrite
+            pth,
+            self.salt,
+            self._timestamp,
+            self._ciphertext,
+            overwrite=overwrite
         )
         return
 
@@ -100,10 +105,10 @@ class Item(object):
     @property
     def timestamp(self):
         try:
-            ret_val = self.crypt_impl.decrypt(self._timestamp).decode()
+            ret_val = self.crypt_impl.decrypt(self._timestamp)
         except:
             ret_val = datetime.now()
-        return ret_val
+        return str(ret_val)
 
     @property
     def ciphertext(self):
