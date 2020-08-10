@@ -85,7 +85,7 @@ class Item(object):
         Cipher text is decrypted when this method is invoked.
         :return: Plain text content
         """
-        return self.crypt_impl.decrypt(self._ciphertext).decode()
+        return self.crypt_impl.decrypt(self._ciphertext)
 
     @content.setter
     def content(self, content):

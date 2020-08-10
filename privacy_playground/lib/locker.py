@@ -69,7 +69,7 @@ class Locker(object):
         Plaintext only available here by decrypting
         :return:
         """
-        return self.crypt_impl.decrypt(self._ciphertext).decode()
+        return self.crypt_impl.decrypt(self._ciphertext)
 
     @plaintext.setter
     def plaintext(self, content: str):
@@ -234,9 +234,9 @@ class Locker(object):
         # Tolerate with or without file extension
         if file_name.endswith(f".{FILE_EXT}"):
             file_name = file_name[0:-4]
-        type_enc, name_enc = self.decrypt(file_name).decode().split(':')
-        item_type = self.decrypt(type_enc).decode()
-        item_name = self.decrypt(name_enc).decode()
+        type_enc, name_enc = self.decrypt(file_name).split(':')
+        item_type = self.decrypt(type_enc)
+        item_name = self.decrypt(name_enc)
         return item_type, item_name
 
     def validate(self):
@@ -249,7 +249,7 @@ class Locker(object):
         if not self.lock_file.is_file():
             raise ValueError(f"{self.lock_file} is not a file")
 
-    def decrypt(self, ciphertext: str) -> bytes:
+    def decrypt(self, ciphertext: str) -> str:
         """
         Convenience method to decrypt using a Locker object
         :param ciphertext:

@@ -37,9 +37,9 @@ class CryptImpl(object):
         self._refresh_cipher()
         return ret_val
 
-    def decrypt(self, ciphertext: str):
+    def decrypt(self, ciphertext: str) -> str:
         cipherbytes = base64.urlsafe_b64decode(ciphertext)
-        ret_val = self.cipher.decrypt(cipherbytes)
+        ret_val = self.cipher.decrypt(cipherbytes).decode()
         self._refresh_cipher()
         return ret_val
 
