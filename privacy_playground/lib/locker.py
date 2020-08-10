@@ -30,9 +30,12 @@ from . tag import Tag
 from . template import Template
 
 registered_items = {}
+for sub in [Schema, Secret, Tag, Template]:
+    registered_items[sub.get_type_name()] = sub
+
 for cls in Item.__subclasses__():
-    ndx = cls.get_type_name()
-    registered_items[ndx] = cls
+    if cls.get_type_name() not in registered_items:
+        registered_items[cls.get_type_name()] = cls
 
 
 ItemList = List[Item]
