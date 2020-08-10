@@ -79,6 +79,12 @@ class TestCreateAndSave(EmptyLocker):
         found.read(pth)
         assert found
 
+    def _test_content(self):
+        pass
+
+    def _test_timestamp(self):
+        pass
+
 
 class TestItems(EmptyLocker):
 
@@ -94,24 +100,3 @@ class TestItems(EmptyLocker):
         k.update_item(s2)
         s3 = k.get_item("facebook", "secret")
         assert s3.content == "initial content - more content"
-
-    def test_Xcode_file_name(self):
-        encoded = {}
-        for it in self.my_locker.registered_items.keys():
-            fn = self.my_locker.encode_item_name(it, f"{it}_name")
-            assert fn.endswith('.cry')
-            assert it not in fn
-            assert "name" not in fn
-            encoded[f"{it}"] = fn
-        for it in encoded:
-            item_type, item_name = self.my_locker.decode_item_name(
-                encoded[it]
-            )
-            assert item_type in self.my_locker.registered_items.keys()
-            assert item_name == f"{item_type}_name"
-
-    def _test_content(self):
-        pass
-
-    def _test_timestamp(self):
-        pass

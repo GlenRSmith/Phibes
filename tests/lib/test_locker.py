@@ -7,7 +7,7 @@ pytest module for lib.locker
 # Related third party imports
 
 # Local application/library specific imports
-from locker_helper import PopulatedLocker
+from locker_helper import EmptyLocker, PopulatedLocker
 from privacy_playground.lib.locker import Locker
 
 
@@ -73,3 +73,20 @@ class TestItemStuff(PopulatedLocker):
         test_cont = refound.content
         assert test_cont == content
 
+
+class TestFileNames(EmptyLocker):
+
+    def test_xcode_file_name(self):
+        encoded = {}
+        for it in self.my_locker.registered_items.keys():
+            fn = self.my_locker.encode_item_name(it, f"{it}_name")
+            assert fn.endswith('.cry')
+            assert it not in fn
+            assert "name" not in fn
+            encoded[f"{it}"] = fn
+        for it in encoded:
+            item_type, item_name = self.my_locker.decode_item_name(
+                encoded[it]
+            )
+            assert item_type in self.my_locker.registered_items.keys()
+            assert item_name == f"{item_type}_name"
