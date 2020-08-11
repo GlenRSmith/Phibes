@@ -1,4 +1,4 @@
-Python Privacy Playground is a utility to keep your secrets (passwords, restore codes, etc.) in an encrypted storage location on your filesystem.
+Phibes is a utility to keep your secrets (passwords, restore codes, etc.) in an encrypted storage location on your filesystem.
 
 As this is an early work-in-progress, I would discourage the use of it as an actual single-storage of passwords you can't afford to lose.
 
