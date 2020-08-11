@@ -17,8 +17,8 @@ from typing import List, Optional, Tuple
 # In-project modules
 from . config import Config
 from . crypto import authenticate_password
-from . crypto import get_name_hash, get_password_hash
-from . crypt_impl import CryptImpl
+from . crypto import CryptImpl, get_name_hash, get_password_hash
+# from . crypt_impl import CryptImpl
 from . item import FILE_EXT, Item
 from . import phibes_file
 # pylint: disable=unused-import
@@ -119,13 +119,12 @@ class Locker(object):
         if create:
             self.path.mkdir(exist_ok=False)
             self.crypt_impl = CryptImpl(password, crypt_arg_is_key=False)
-            self._salt = self.crypt_impl.iv.hex()
+            self._salt = self.crypt_impl.salt
             # The password is HASHED, then encrypted!
             # Some IDEs don't understand using the property setter
             # during init, so I'm encrypting directly
-            self._ciphertext = self.crypt_impl.encrypt(
-                get_password_hash(password, self.salt).hex()
-            )
+            pw_hash_str = get_password_hash(password, self.salt)
+            self._ciphertext = self.crypt_impl.encrypt(pw_hash_str)
             self._timestamp = self.crypt_impl.encrypt(
                 str(datetime.now())
             )
@@ -143,12 +142,12 @@ class Locker(object):
             self._timestamp = rec['timestamp']
             self._ciphertext = rec['body']
             self.crypt_impl = CryptImpl(
-                password, crypt_arg_is_key=False, iv=self._salt
+                password, crypt_arg_is_key=False, salt=self._salt
             )
             authenticate_password(
                 password,
                 self._ciphertext,
-                self.crypt_impl.iv.hex()
+                self.crypt_impl.salt
             )
         return
 

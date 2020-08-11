@@ -22,9 +22,6 @@ class TestTags(EmptyLocker):
         s3 = self.my_locker.create_item("reddit", "secret")
         # create a tag
         t1 = self.my_locker.create_item("social_media", "tag")
-        # t1 = Tag(
-        #     self.my_locker.crypt_key, "social_media"
-        # )
         assert t1.list_items() == list()
         # add the secrets to the tag
         # TODO: decide whether unsaved items should be allowed.

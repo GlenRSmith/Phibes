@@ -8,8 +8,6 @@ import json
 # Related third party imports
 
 # Local application/library specific imports
-# from privacy_playground.lib.locker import Locker
-# from privacy_playground.lib.item import Item
 from privacy_playground.lib.secret import Secret
 from privacy_playground.lib.template import Template
 from locker_helper import EmptyLocker
@@ -26,7 +24,7 @@ class TestTemplate(EmptyLocker):
         }
         t1.content = json.dumps(form)
         self.my_locker.add_item(t1)
-        # create a secrets
+        # create a secret
         s1 = self.my_locker.create_item(
             item_name="facebook",
             item_type="secret",

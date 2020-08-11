@@ -31,6 +31,7 @@ class TestCreate(EmptyLocker):
 
 class TestCreateAndSave(EmptyLocker):
 
+    @pytest.mark.positive
     def test_create_items(self):
         for item_type in self.my_locker.registered_items.keys():
             content = (
@@ -59,6 +60,7 @@ class TestCreateAndSave(EmptyLocker):
             found.read(pth)
             assert found
 
+    @pytest.mark.positive
     def test_create_item(self):
         content = (
             f"here is some stuff"
@@ -81,9 +83,17 @@ class TestCreateAndSave(EmptyLocker):
         found.read(pth)
         assert found
 
-    def _test_content(self):
-        pass
+    @pytest.mark.positive
+    def test_content(self):
+        k = self.my_locker
+        content = f"does content work?"
+        new_item = self.my_locker.create_item('any name', 'secret')
+        new_item.content = content
+        k.add_item(new_item)
+        found = k.get_item('any name', 'secret')
+        assert content == found.content
 
+    @pytest.mark.positive
     def test_timestamp(self):
         k = self.my_locker
         content = f"do timestamps work?"

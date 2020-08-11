@@ -106,7 +106,6 @@ class Tag(Item):
         return list(self.content)
 
     def save(self, pth: Path, overwrite=False):
-        # need to make sure referenced Items are actually saved?
         super().save(pth, overwrite=overwrite)
         return
 

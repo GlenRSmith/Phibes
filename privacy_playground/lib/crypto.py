@@ -41,7 +41,7 @@ def make_salt_string(num_bytes: int = SALT_BYTES):
     return make_salt_bytes(num_bytes).hex()
 
 
-def get_cipher(key, iv: Optional[str] = None) -> Tuple[
+def get_cipher(key: str, iv: Optional[str] = None) -> Tuple[
     str, Cryptodome.Cipher._mode_ctr.CtrMode
 ]:
     """
@@ -51,15 +51,16 @@ def get_cipher(key, iv: Optional[str] = None) -> Tuple[
     :param iv: initialization vector (like a salt)
     :return: cipher
     """
-    if not len(key) == CRYPT_KEY_BYTES:
+    key_bytes = bytes.fromhex(key)
+    if not len(key_bytes) == CRYPT_KEY_BYTES:
         raise ValueError(
             f"`key` arg must be exactly {CRYPT_KEY_BYTES} long\n"
-            f"{key} is {len(key)}"
+            f"{key_bytes} (from key:{key}) is {len(key_bytes)}"
         )
     if not iv:
         iv = make_salt_string()
     cipher = AES.new(
-        key=key,
+        key=key_bytes,
         mode=AES.MODE_CTR,
         counter=Counter.new(
             AES.block_size * 8,
@@ -96,7 +97,7 @@ def get_strong_hash(
         number_of_rounds: int,
         salt: str,
         length: int
-) -> bytes:
+) -> str:
     """
     Get a PDKDF2-based hash value for some string
     :param content: String to hash
@@ -105,14 +106,15 @@ def get_strong_hash(
     :param length: Desired length of key in number of bytes
     :return: hash value, in bytes
     """
+    # Library dependancy, so called function here *will* return bytes
     ret_val = hashlib.pbkdf2_hmac(
-        HASH_ALGO, content.encode('utf-8'), bytes.fromhex(salt),
+        HASH_ALGO, content.encode(), bytes.fromhex(salt),
         number_of_rounds, dklen=length
     )
-    return ret_val
+    return ret_val.hex()
 
 
-def make_crypt_key(seed: str, salt: str) -> bytes:
+def make_crypt_key(seed: str, salt: str) -> str:
     """
     Convenience method to create a cryptographic key for the implemented
     encryption method
@@ -129,7 +131,7 @@ def make_crypt_key(seed: str, salt: str) -> bytes:
     return ret_val
 
 
-def get_password_hash(password: str, salt: str) -> bytes:
+def get_password_hash(password: str, salt: str) -> str:
     """
     Convenience method to create a hash for a password using the implemented
     hashing method
@@ -137,7 +139,11 @@ def get_password_hash(password: str, salt: str) -> bytes:
     :param salt: String containing a hexadecimal value
     :return:
     """
-    return get_strong_hash(password, AUTH_KEY_ROUNDS, salt, length=KEY_BYTES)
+    try:
+        ret_val = get_strong_hash(password, AUTH_KEY_ROUNDS, salt, length=KEY_BYTES)
+    except TypeError as err:
+        raise err
+    return ret_val
 
 
 def authenticate_password(password: str, cipher: str, salt: str):
@@ -149,27 +155,26 @@ def authenticate_password(password: str, cipher: str, salt: str):
     :param salt: Crypto salt, a hexadecimal value
     :return:
     """
-    ciphertext = encrypt(
-        make_crypt_key(password, salt),
-        get_password_hash(password, salt).hex(),
-        salt
-    )
+    # hypothetical key - it will work if the password is correct
+    key = make_crypt_key(password, salt)
+    # this value becomes the "plain text" that we will now encrypt
+    pw_hash_str = get_password_hash(password, salt)
+    ciphertext = encrypt(key, pw_hash_str, salt)
+    # ciphertext = CryptImpl(
+    #     key, crypt_arg_is_key=True, salt=salt
+    # ).encrypt(pw_hash_str)
     if cipher != ciphertext:
-        raise ValueError(
-            f"{cipher} & {ciphertext} don't match"
-        )
+        raise ValueError(f"{cipher} & {ciphertext} don't match")
     return True
 
 
-def get_name_hash(name):
+def get_name_hash(name: str) -> str:
     """
     Return the one-way hash of the name.
     :param name:
     :return:
     """
-    return get_strong_hash(
-        name, AUTH_KEY_ROUNDS, '0000', length=NAME_BYTES
-    ).hex()
+    return get_strong_hash(name, AUTH_KEY_ROUNDS, '0000', length=NAME_BYTES)
 
 
 class CryptImpl(object):
@@ -184,11 +189,8 @@ class CryptImpl(object):
             self.key = crypt_arg
         else:
             self.key = make_crypt_key(crypt_arg, salt)
-        self.salt, self.cipher = get_cipher(self.key, iv=salt)
+        self._refresh_cipher(salt)
         return
-
-    def _refresh_cipher(self):
-        self.salt, self.cipher = get_cipher(self.key, self.salt)
 
     def encrypt(self, plaintext: str) -> str:
         cipherbytes = self.cipher.encrypt(plaintext.encode('utf-8'))
@@ -202,10 +204,19 @@ class CryptImpl(object):
         self._refresh_cipher()
         return ret_val
 
+    def _refresh_cipher(self, salt: Optional[str] = None):
+        """
+        Create a new cipher instance - least complicated way to
+        avoid exceptions like "can't encrypt after decrypt" and vice-versa
+        :param salt:
+        :return:
+        """
+        if not salt:
+            salt = self.salt
+        self.salt, self.cipher = get_cipher(self.key, iv=salt)
+
     def __str__(self):
         return (
             f"key: {self.key} - type: {type(self.key)}\n"
-            f"iv: {self.salt} - type: {type(self.salt)}\n"
-            f"key: {self.key.hex()} - type: {type(self.key.hex())}\n"
-            f"iv: {self.salt} - type: {type(self.salt)}\n"
+            f"iv: {self.salt} - type: {type(self.salt)}"
         )
