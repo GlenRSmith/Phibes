@@ -9,7 +9,6 @@ import secrets
 from typing import Optional, Tuple
 
 # Third party packages
-import Cryptodome
 from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
 
@@ -30,7 +29,6 @@ NAME_BYTES = 4
 # KEY_REGEX = re.compile(b"[.]{CRYPT_KEY_BYTES}")
 # KeyBytes = Match[KEY_REGEX]
 # CipherDetails = Tuple[bytes, AES]
-EncryptDetails = Tuple[str, str]
 
 
 def make_salt_bytes(num_bytes: int = SALT_BYTES) -> bytes:
@@ -39,35 +37,6 @@ def make_salt_bytes(num_bytes: int = SALT_BYTES) -> bytes:
 
 def make_salt_string(num_bytes: int = SALT_BYTES):
     return make_salt_bytes(num_bytes).hex()
-
-
-def get_cipher(key: str, iv: Optional[str] = None) -> Tuple[
-    str, Cryptodome.Cipher._mode_ctr.CtrMode
-]:
-    """
-    Creates and returns a cryptographic cipher which is then
-    used to encrypt/decrypt
-    :param key: cryptographic key
-    :param iv: initialization vector (like a salt)
-    :return: cipher
-    """
-    key_bytes = bytes.fromhex(key)
-    if not len(key_bytes) == CRYPT_KEY_BYTES:
-        raise ValueError(
-            f"`key` arg must be exactly {CRYPT_KEY_BYTES} long\n"
-            f"{key_bytes} (from key:{key}) is {len(key_bytes)}"
-        )
-    if not iv:
-        iv = make_salt_string()
-    cipher = AES.new(
-        key=key_bytes,
-        mode=AES.MODE_CTR,
-        counter=Counter.new(
-            AES.block_size * 8,
-            initial_value=int.from_bytes(bytes.fromhex(iv), "big")
-        )
-    )
-    return iv, cipher
 
 
 def encrypt(key: str, plaintext: str, iv: Optional[str] = None) -> str:
@@ -164,6 +133,7 @@ class CryptImpl(object):
             salt: str = make_salt_string()
     ):
         salt = (make_salt_string(), salt)[bool(salt)]
+        self.salt = salt
         if crypt_arg_is_key:
             self.key = crypt_arg
         else:
@@ -174,13 +144,13 @@ class CryptImpl(object):
     def encrypt(self, plaintext: str) -> str:
         cipherbytes = self.cipher.encrypt(plaintext.encode('utf-8'))
         ret_val = base64.urlsafe_b64encode(cipherbytes).decode('utf-8')
-        self._refresh_cipher()
+        self._refresh_cipher(self.salt)
         return ret_val
 
     def decrypt(self, ciphertext: str) -> str:
         cipherbytes = base64.urlsafe_b64decode(ciphertext)
         ret_val = self.cipher.decrypt(cipherbytes).decode()
-        self._refresh_cipher()
+        self._refresh_cipher(self.salt)
         return ret_val
 
     def encrypt_password(self, password: str) -> str:
@@ -200,16 +170,28 @@ class CryptImpl(object):
         """
         return cipher == self.encrypt_password(password)
 
-    def _refresh_cipher(self, salt: Optional[str] = None):
+    def _refresh_cipher(self, salt: str):
         """
         Create a new cipher instance - least complicated way to
         avoid exceptions like "can't encrypt after decrypt" and vice-versa
         :param salt:
         :return:
         """
-        if not salt:
-            salt = self.salt
-        self.salt, self.cipher = get_cipher(self.key, iv=salt)
+        key_bytes = bytes.fromhex(self.key)
+        if not len(key_bytes) == CRYPT_KEY_BYTES:
+            raise ValueError(
+                f"`key` arg must be exactly {CRYPT_KEY_BYTES} long\n"
+                f"{key_bytes} (from key:{self.key}) is {len(key_bytes)}"
+            )
+        self.cipher = AES.new(
+            key=key_bytes,
+            mode=AES.MODE_CTR,
+            counter=Counter.new(
+                AES.block_size * 8,
+                initial_value=int.from_bytes(bytes.fromhex(salt), "big")
+            )
+        )
+        return
 
     def __str__(self):
         return (
