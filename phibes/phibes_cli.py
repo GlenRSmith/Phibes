@@ -9,6 +9,11 @@ Operation-centric command-line interface to phibes features
 import click
 
 # in-project modules
+# from . cli_lib import edit_item, present_list_items
+# from . cli_lib import make_str_bool
+# from . lib.config import Config
+# from . lib.item import Item
+# from . lib.locker import Locker, registered_items
 from phibes.cli_lib import edit_item, present_list_items
 from phibes.cli_lib import make_str_bool
 from phibes.lib.config import Config
