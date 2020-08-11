@@ -163,8 +163,7 @@ class CryptImpl(object):
             crypt_arg_is_key: bool = True,
             salt: str = make_salt_string()
     ):
-        if not salt:
-            salt = make_salt_string()
+        salt = (make_salt_string(), salt)[bool(salt)]
         if crypt_arg_is_key:
             self.key = crypt_arg
         else:
