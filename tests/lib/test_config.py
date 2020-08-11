@@ -9,7 +9,7 @@ from pathlib import Path
 # Related third party imports
 
 # Local application/library specific imports
-from privacy_playground.lib.config import Config
+from phibes.lib.config import Config
 
 
 def copy_config(source, target):

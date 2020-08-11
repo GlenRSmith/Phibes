@@ -8,8 +8,8 @@ import json
 # Related third party imports
 
 # Local application/library specific imports
-from privacy_playground.lib.secret import Secret
-from privacy_playground.lib.template import Template
+from phibes.lib.secret import Secret
+from phibes.lib.template import Template
 from locker_helper import EmptyLocker
 
 

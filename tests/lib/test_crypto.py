@@ -8,8 +8,8 @@ pytest module for lib.crypto
 import pytest
 
 # Local application/library specific imports
-from privacy_playground.lib import crypto
-from privacy_playground.lib import locker
+from phibes.lib import crypto
+from phibes.lib import locker
 from locker_helper import EmptyLocker
 
 

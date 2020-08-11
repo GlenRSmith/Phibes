@@ -7,7 +7,7 @@ pytest module for lib.secret
 # Related third party imports
 
 # Local application/library specific imports
-from privacy_playground.lib.secret import Secret
+from phibes.lib.secret import Secret
 from locker_helper import EmptyLocker
 
 

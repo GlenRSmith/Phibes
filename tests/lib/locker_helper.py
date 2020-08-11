@@ -7,8 +7,8 @@ EmptyLocker class used by several tests for setup, teardown
 # Related third party imports
 
 # Local application/library specific imports
-from privacy_playground.lib.item import Item
-from privacy_playground.lib.locker import Locker
+from phibes.lib.item import Item
+from phibes.lib.locker import Locker
 
 
 class EmptyLocker(object):

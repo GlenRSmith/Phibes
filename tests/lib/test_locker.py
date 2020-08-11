@@ -9,7 +9,7 @@ import pytest
 
 # Local application/library specific imports
 from locker_helper import EmptyLocker, PopulatedLocker
-from privacy_playground.lib.locker import Locker
+from phibes.lib.locker import Locker
 
 
 class TestLocker(object):
