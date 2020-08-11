@@ -1,5 +1,5 @@
 """
-pytest module for ppp lib.config
+pytest module for phibes lib.config
 """
 
 # Standard library imports

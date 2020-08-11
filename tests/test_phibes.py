@@ -1,5 +1,5 @@
 """
-pytest module for ppp
+pytest module for phibes
 """
 
 # Standard library imports
@@ -12,7 +12,7 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes.lib.config import Config
 from phibes.lib.locker import Locker
-from phibes.ppp import create_locker
+from phibes.phibes import create_locker
 
 
 def copy_config(source, target):
@@ -22,12 +22,12 @@ def copy_config(source, target):
 
 
 # datadirs = [
-#     ('tests.test_ppp/TestCreateLocker/test_create_locker'),
-#     ('tests.test_ppp/TestCreateLocker'),
-#     ('tests.test_ppp'),
-#     ('data/tests.test_ppp/TestCreateLocker/test_create_locker'),
-#     ('data/tests.test_ppp/TestCreateLocker'),
-#     ('data/tests.test_ppp'),
+#     ('tests.test_phibes/TestCreateLocker/test_create_locker'),
+#     ('tests.test_phibes/TestCreateLocker'),
+#     ('tests.test_phibes'),
+#     ('data/tests.test_phibes/TestCreateLocker/test_create_locker'),
+#     ('data/tests.test_phibes/TestCreateLocker'),
+#     ('data/tests.test_phibes'),
 #     ('data')
 # ]
 
@@ -51,7 +51,7 @@ class TestCreateLocker(object):
         return
 
     def test_create_locker(self, tmp_path, datadir, capsys):
-        copy_config(datadir["pp-config.json"], tmp_path)
+        copy_config(datadir["phibes-config.json"], tmp_path)
         with capsys.disabled():
             test_config = Config(tmp_path)
             runner = CliRunner()

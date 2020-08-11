@@ -37,7 +37,7 @@ log = print
 
 class Config(object):
 
-    file_name = 'pp-config.json'
+    file_name = 'phibes-config.json'
 
     @property
     def hash_locker_names(self) -> bool:

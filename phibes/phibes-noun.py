@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Entity-centric command-line interface to python privacy playground features
+Entity-centric command-line interface to phibes features
 """
 
 # core library modules
@@ -12,10 +12,10 @@ import click
 from colorama import Fore, Style
 
 # for purposes of the CLI project, lib is being treated as third-party!
-from cli_lib import edit_item, get_user_editor
-from lib.item import Item
-from lib.locker import Locker
-from lib.secret import Secret
+from phibes.cli_lib import edit_item, get_user_editor
+from phibes.lib.item import Item
+from phibes.lib.locker import Locker
+from phibes.lib.secret import Secret
 
 
 @click.group()
