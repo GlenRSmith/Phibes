@@ -8,7 +8,7 @@ pytest module for lib.tag
 import pytest
 
 # Local application/library specific imports
-from privacy_playground.lib.tag import Tag
+from phibes.lib.tag import Tag
 from locker_helper import EmptyLocker
 
 

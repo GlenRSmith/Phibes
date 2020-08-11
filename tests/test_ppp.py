@@ -10,9 +10,9 @@ import json
 from click.testing import CliRunner
 
 # Local application/library specific imports
-from privacy_playground.lib.config import Config
-from privacy_playground.lib.locker import Locker
-from privacy_playground.ppp import create_locker
+from phibes.lib.config import Config
+from phibes.lib.locker import Locker
+from phibes.ppp import create_locker
 
 
 def copy_config(source, target):

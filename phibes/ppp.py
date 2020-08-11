@@ -9,11 +9,11 @@ Operation-centric command-line interface to python privacy playground features
 import click
 
 # in-project modules
-from privacy_playground.cli_lib import edit_item, present_list_items
-from privacy_playground.cli_lib import make_str_bool
-from privacy_playground.lib.config import Config
-from privacy_playground.lib.item import Item
-from privacy_playground.lib.locker import Locker, registered_items
+from phibes.cli_lib import edit_item, present_list_items
+from phibes.cli_lib import make_str_bool
+from phibes.lib.config import Config
+from phibes.lib.item import Item
+from phibes.lib.locker import Locker, registered_items
 
 
 @click.group()

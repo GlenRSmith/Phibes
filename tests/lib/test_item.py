@@ -9,7 +9,7 @@ from datetime import datetime
 import pytest
 
 # Local application/library specific imports
-from privacy_playground.lib.item import Item
+from phibes.lib.item import Item
 from locker_helper import EmptyLocker
 
 

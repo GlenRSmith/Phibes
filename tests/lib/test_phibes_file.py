@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 # Local application/library specific imports
-from privacy_playground.lib import phibes_file
+from phibes.lib import phibes_file
 
 
 class TestPhibesFile(object):
