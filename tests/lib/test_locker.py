@@ -5,6 +5,7 @@ pytest module for lib.locker
 # Standard library imports
 
 # Related third party imports
+import pytest
 
 # Local application/library specific imports
 from locker_helper import EmptyLocker, PopulatedLocker
@@ -90,3 +91,14 @@ class TestFileNames(EmptyLocker):
             )
             assert item_type in self.my_locker.registered_items.keys()
             assert item_name == f"{item_type}_name"
+
+
+class TestAuth(EmptyLocker):
+
+    @pytest.mark.negative
+    def test_fail_auth(self):
+        wrong_pw = "ThisWillNotBeIt"
+        with pytest.raises(ValueError):
+            self.my_locker = Locker(
+                self.locker_name, wrong_pw, create=False
+            )

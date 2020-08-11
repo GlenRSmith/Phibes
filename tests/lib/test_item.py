@@ -115,6 +115,7 @@ class TestCreateAndSave(EmptyLocker):
 
 class TestItems(EmptyLocker):
 
+    @pytest.mark.positive
     def test_string_add_content(self):
         # can I += the content field?
         k = self.my_locker

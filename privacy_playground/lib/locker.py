@@ -16,13 +16,10 @@ from typing import List, Optional, Tuple
 
 # In-project modules
 from . config import Config
-from . crypto import authenticate_password
-from . crypto import CryptImpl, get_name_hash, get_password_hash
-# from . crypt_impl import CryptImpl
+from . crypto import CryptImpl, get_name_hash
 from . item import FILE_EXT, Item
 from . import phibes_file
 # pylint: disable=unused-import
-# noinspection UnusedImport
 # Item subclasses must be loaded so __subclasses__ below will report them
 from . schema import Schema
 from . secret import Secret
@@ -54,7 +51,6 @@ class Locker(object):
         Convenience accessor to crypt.salt
         :return:
         """
-        # return self.crypt.salt
         return self._salt
 
     @property
@@ -116,18 +112,19 @@ class Locker(object):
             )
         if create and not Locker.can_create(self.path):
             raise ValueError(f"could not create {name}")
+        if not create:
+            rec = phibes_file.read(self.lock_file)
+            self._salt = rec['salt']
+            self._timestamp = rec['timestamp']
+            self._ciphertext = rec['body']
+        self.crypt_impl = CryptImpl(
+            password, crypt_arg_is_key=False, salt=self._salt
+        )
         if create:
-            self.path.mkdir(exist_ok=False)
-            self.crypt_impl = CryptImpl(password, crypt_arg_is_key=False)
             self._salt = self.crypt_impl.salt
-            # The password is HASHED, then encrypted!
-            # Some IDEs don't understand using the property setter
-            # during init, so I'm encrypting directly
-            pw_hash_str = get_password_hash(password, self.salt)
-            self._ciphertext = self.crypt_impl.encrypt(pw_hash_str)
-            self._timestamp = self.crypt_impl.encrypt(
-                str(datetime.now())
-            )
+            self.path.mkdir(exist_ok=False)
+            self._ciphertext = self.crypt_impl.encrypt_password(password)
+            self._timestamp = self.crypt_impl.encrypt(str(datetime.now()))
             phibes_file.write(
                 self.lock_file,
                 self._salt,
@@ -136,19 +133,8 @@ class Locker(object):
                 overwrite=False
             )
         else:
-            # read the file to get the salt
-            rec = phibes_file.read(self.lock_file)
-            self._salt = rec['salt']
-            self._timestamp = rec['timestamp']
-            self._ciphertext = rec['body']
-            self.crypt_impl = CryptImpl(
-                password, crypt_arg_is_key=False, salt=self._salt
-            )
-            authenticate_password(
-                password,
-                self._ciphertext,
-                self.crypt_impl.salt
-            )
+            if not self.crypt_impl.authenticate(password, self._ciphertext):
+                raise ValueError(f"{password} is invalid")
         return
 
     @classmethod

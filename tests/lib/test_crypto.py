@@ -3,12 +3,14 @@ pytest module for lib.crypto
 """
 
 # Standard library imports
-import json
 
 # Related third party imports
+import pytest
 
 # Local application/library specific imports
 from privacy_playground.lib import crypto
+# from privacy_playground.lib import locker
+from locker_helper import EmptyLocker
 
 
 class TestCryptImpl(object):
@@ -51,13 +53,27 @@ class TestCryptImpl(object):
             assert pt == tt
 
 
-class TestCrypto(object):
+class TestCrypto(EmptyLocker):
 
-    def setup_method(self):
-        return
-
+    @pytest.mark.positive
     def test_make_salt_bytes(self):
         res = crypto.make_salt_bytes()
         assert type(res) is bytes
 
-
+    @pytest.mark.positive
+    def test_auth_password(self):
+        # get the pw hash from making a locker
+        # my_locker = locker.Locker('mylocker', self.password, create=True)
+        salt = self.my_locker.salt
+        # get the pw hash from making CryptImpl
+        impl = crypto.CryptImpl(
+            self.password, crypt_arg_is_key=False, salt=salt
+        )
+        # import pdb
+        # pdb.set_trace()
+        # impl.key  # this seems to be getting assigned bytes
+        # impl.salt
+        # impl.cipher
+        # ciphertext = impl.
+        # crypto.authenticate_password(pw, )
+        return

@@ -146,28 +146,6 @@ def get_password_hash(password: str, salt: str) -> str:
     return ret_val
 
 
-def authenticate_password(password: str, cipher: str, salt: str):
-    """
-    Run the submitted password through the same hash+encryption
-    that producted the cipher, and compare
-    :param password: Submitted password
-    :param cipher: The canonical hash, encrypted value
-    :param salt: Crypto salt, a hexadecimal value
-    :return:
-    """
-    # hypothetical key - it will work if the password is correct
-    key = make_crypt_key(password, salt)
-    # this value becomes the "plain text" that we will now encrypt
-    pw_hash_str = get_password_hash(password, salt)
-    ciphertext = encrypt(key, pw_hash_str, salt)
-    # ciphertext = CryptImpl(
-    #     key, crypt_arg_is_key=True, salt=salt
-    # ).encrypt(pw_hash_str)
-    if cipher != ciphertext:
-        raise ValueError(f"{cipher} & {ciphertext} don't match")
-    return True
-
-
 def get_name_hash(name: str) -> str:
     """
     Return the one-way hash of the name.
@@ -185,6 +163,8 @@ class CryptImpl(object):
             crypt_arg_is_key: bool = True,
             salt: str = make_salt_string()
     ):
+        if not salt:
+            salt = make_salt_string()
         if crypt_arg_is_key:
             self.key = crypt_arg
         else:
@@ -203,6 +183,23 @@ class CryptImpl(object):
         ret_val = self.cipher.decrypt(cipherbytes).decode()
         self._refresh_cipher()
         return ret_val
+
+    def encrypt_password(self, password: str) -> str:
+        return encrypt(
+            self.key,
+            get_password_hash(password, self.salt),
+            self.salt
+        )
+
+    def authenticate(self, password: str, cipher: str):
+        """
+        Run the submitted password through the same hash+encryption
+        that produced the cipher, and compare
+        :param password: Submitted password
+        :param cipher: The canonical hash, encrypted value
+        :return:
+        """
+        return cipher == self.encrypt_password(password)
 
     def _refresh_cipher(self, salt: Optional[str] = None):
         """
