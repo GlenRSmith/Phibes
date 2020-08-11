@@ -9,7 +9,7 @@ import pytest
 
 # Local application/library specific imports
 from privacy_playground.lib import crypto
-# from privacy_playground.lib import locker
+from privacy_playground.lib import locker
 from locker_helper import EmptyLocker
 
 
@@ -56,24 +56,29 @@ class TestCryptImpl(object):
 class TestCrypto(EmptyLocker):
 
     @pytest.mark.positive
+    def test_what(self):
+        pw = "this right here"
+        impl = crypto.CryptImpl(pw, crypt_arg_is_key=False)
+        cipher = impl.encrypt_password(pw)
+        assert impl.authenticate(pw, cipher)
+
+    @pytest.mark.positive
     def test_make_salt_bytes(self):
         res = crypto.make_salt_bytes()
         assert type(res) is bytes
 
+    @pytest.mark.negative
+    def test_fail_auth(self):
+        wrong_pw = "ThisWillNotBeIt"
+        with pytest.raises(ValueError):
+            locker.Locker(
+                self.locker_name, wrong_pw, create=False
+            )
+
     @pytest.mark.positive
-    def test_auth_password(self):
-        # get the pw hash from making a locker
-        # my_locker = locker.Locker('mylocker', self.password, create=True)
-        salt = self.my_locker.salt
-        # get the pw hash from making CryptImpl
-        impl = crypto.CryptImpl(
-            self.password, crypt_arg_is_key=False, salt=salt
+    def test_good_auth(self):
+        assert locker.Locker(
+            self.locker_name, self.password, create=False
         )
-        # import pdb
-        # pdb.set_trace()
-        # impl.key  # this seems to be getting assigned bytes
-        # impl.salt
-        # impl.cipher
-        # ciphertext = impl.
-        # crypto.authenticate_password(pw, )
-        return
+
+
