@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Command-line interface to python privacy playground admin
+Command-line interface to phibes admin
 """
 
 # core library modules
@@ -11,7 +11,7 @@ import json
 import click
 
 # In-project modules
-from lib import config
+from phibes.lib import config
 
 
 @click.group()

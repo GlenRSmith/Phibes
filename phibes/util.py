@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Command-line interface to python privacy playground utilities
+Command-line interface to phibes utilities
 """
 
 # core library modules
@@ -10,7 +10,7 @@ from pathlib import Path
 import click
 
 # for purposes of the CLI project, lib is being treated as third-party!
-from lib.locker import Locker
+from phibes.lib.locker import Locker
 
 
 @click.group()

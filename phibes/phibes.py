@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Operation-centric command-line interface to python privacy playground features
+Operation-centric command-line interface to phibes features
 """
 
 # core library modules
