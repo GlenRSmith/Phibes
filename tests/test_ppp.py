@@ -65,3 +65,9 @@ class TestCreateLocker(object):
             assert result.exit_code == 0
             assert "created" in result.output
         return
+
+
+class TestEdit(object):
+
+    def test_edit(self):
+        return

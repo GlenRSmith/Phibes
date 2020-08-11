@@ -82,7 +82,13 @@ class Config(object):
         self._editor = new_val
         return
 
-    def __init__(self, conf_file_path=None):
+    @classmethod
+    def write_config(cls, pth, **entries):
+        with Path(pth).joinpath(Config.file_name) as cf:
+            cf.write_text(json.dumps(entries, indent=4))
+        return
+
+    def __init__(self, conf_file_path):
 
         # order of priority of configuration files:
         # 1a - user param `conf_file_path`
@@ -180,9 +186,14 @@ class Config(object):
                 print(f"{err}")
                 raise err
         else:
-            cwd_file = Path('.').joinpath(Config.file_name)
+            # cwd_file = Path.cwd().joinpath(Config.file_name)
+            cwd_file = Path(conf_file_path).joinpath(Config.file_name)
             # try:
+            # import os
+            # raise ValueError(f"{cwd_file.absolute()}\n{os.getcwd()}")
+
             set_from_file(cwd_file, tags_needed, tags_opts)
+            # set_from_file(cwd_file, tags_needed, tags_opts)
             self.path = cwd_file
             # except Exception as err:
             #     print(f"{err}")
@@ -227,8 +238,6 @@ def system_remove():
     """
     shutil.rmtree(get_config_item("SYSTEM_PATH"))
     return
-
-
 
 
 def system_install(path):
