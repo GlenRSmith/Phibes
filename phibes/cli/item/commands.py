@@ -16,27 +16,6 @@ from phibes.lib.locker import Locker, registered_items
 
 
 @click.command()
-@click.option('--locker', prompt='Locker')
-@click.option('--password', prompt='Password', hide_input=True)
-@click.option(
-    '--item_type',
-    prompt='Type of item to list',
-    type=click.Choice(list(registered_items.keys()) + ['all']),
-    default='all'
-)
-@click.option('--verbose', prompt='Verbose', default=False)
-def ls(locker, password, item_type, verbose):
-    verbose = make_str_bool(verbose)
-    click.secho(
-        present_list_items(
-            locker, password, item_type, verbose
-        ),
-        fg='green'
-    )
-    return
-
-
-@click.command()
 @click.option('--locker', prompt='Locker name')
 @click.option('--password', prompt='Password', hide_input=True)
 @click.option(
@@ -64,6 +43,17 @@ def ls(locker, password, item_type, verbose):
 def edit(
         locker, password, item_type, item, editor, overwrite, template
 ):
+    """
+    Use your text editor to create or update an item in your locker
+    :param locker:
+    :param password:
+    :param item_type:
+    :param item:
+    :param editor:
+    :param overwrite:
+    :param template:
+    :return:
+    """
     if template == 'Empty':
         template = None
     return edit_item(
@@ -134,7 +124,7 @@ def delete_item(locker, password, item_type, item):
     type=click.Choice(list(registered_items.keys()) + ['all']),
     default='all'
 )
-@click.option('--verbose', prompt='Verbose', default=False)
+@click.option('--verbose', prompt='Verbose', default=False, type=bool)
 def list_items(locker, password, item_type, verbose):
     """
     Display the (unencrypted) names of all Secrets in the Locker
@@ -144,8 +134,27 @@ def list_items(locker, password, item_type, verbose):
     :param verbose:
     :return:
     """
-    verbose = make_str_bool(verbose)
+    # verbose = make_str_bool(verbose)
     click.echo(
         present_list_items(locker, password, item_type, verbose)
+    )
+    return
+
+
+@click.command()
+@click.option('--locker', prompt='Locker')
+@click.option('--password', prompt='Password', hide_input=True)
+@click.option(
+    '--item_type',
+    prompt='Type of item to list',
+    type=click.Choice(list(registered_items.keys()) + ['all']),
+    default='all'
+)
+@click.option('--verbose', prompt='Verbose', default=False, type=bool)
+def ls(locker, password, item_type, verbose):
+    # verbose = make_str_bool(verbose)
+    click.secho(
+        present_list_items(locker, password, item_type, verbose),
+        fg='green'
     )
     return

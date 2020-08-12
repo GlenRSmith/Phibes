@@ -49,7 +49,7 @@ The command-line interface follows the approach `./ppp.py <item> <action>` follo
 - Create a Locker for all of your Secrets
 
 ```
-> ./phibes.py locker create
+> ./phibes_cli.py locker create
 ```
 
 You will then be prompted for a locker name and a password.
@@ -60,7 +60,7 @@ For each of the operations below, you will be prompted for the name and password
 - Add a Secret to your Locker
 
 ```
-./phibes.py edit --item-type secret
+./phibes_cli.py edit --item-type secret
 ```
 Your configured editor will be launched with a temporary file.
 Put your secret information in this file, save, and exit, and the contents will be encrypted and saved as a Secret in your Locker.
@@ -68,13 +68,13 @@ Put your secret information in this file, save, and exit, and the contents will 
 
 - Confirm that your Secret is in your Locker
 ```
-./phibes.py secret list-all
+./phibes_cli.py secret list-all
 ```
 You will be presented a list of the names of all Secrets in the Locker.
 
 - See the unencrypted contents of your Secret
 ```
-./phibes.py secret inspect
+./phibes_cli.py secret inspect
 ```
 You will be shown your unencrypted Secret.
 

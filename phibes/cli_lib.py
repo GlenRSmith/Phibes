@@ -96,8 +96,9 @@ def present_list_items(
     if item_type == 'all':
         item_type = None
     my_locker = Locker.find(locker, password)
+    if not my_locker:
+        raise FileNotFoundError(f"No locker {locker} found")
     items = my_locker.find_all(item_type, filter_include=True)
-    # items = Item.find_all(my_locker, item_type)
     if verbose:
         for sec in my_locker.list_items():
             ret_val += f"{sec}"
