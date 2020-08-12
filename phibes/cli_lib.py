@@ -110,6 +110,6 @@ def present_list_items(
         for sec in items:
             ret_val += (
                 f"{str(sec.item_type).rjust(4, '-'):>15}"
-                f"{str(sec.name):>{longest+2}}"
+                f"{str(sec.name):>{longest+2}}\n"
             )
     return ret_val
