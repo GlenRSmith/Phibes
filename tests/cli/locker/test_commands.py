@@ -1,5 +1,5 @@
 """
-pytest module for phibes
+pytest module for phibes_cli locker commands
 """
 
 # Standard library imports
@@ -12,7 +12,7 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes.lib.config import Config
 from phibes.lib.locker import Locker
-from phibes.phibes_cli import create_locker
+from phibes.cli.locker.commands import create_locker
 
 
 def copy_config(source, target):
@@ -21,39 +21,27 @@ def copy_config(source, target):
     return
 
 
-# datadirs = [
-#     ('tests.test_phibes/TestCreateLocker/test_create_locker'),
-#     ('tests.test_phibes/TestCreateLocker'),
-#     ('tests.test_phibes'),
-#     ('data/tests.test_phibes/TestCreateLocker/test_create_locker'),
-#     ('data/tests.test_phibes/TestCreateLocker'),
-#     ('data/tests.test_phibes'),
-#     ('data')
-# ]
-
-
 class TestCreateLocker(object):
 
     name = "new_locker"
     pw = "SmellyBeansVictor"
 
-    def setup_method(self):
+    @staticmethod
+    def setup_method():
         try:
             Locker.delete(TestCreateLocker.name, TestCreateLocker.pw)
         except FileNotFoundError:
             pass
         return
 
-    def teardown_method(self):
-        Locker.delete(
-            TestCreateLocker.name, TestCreateLocker.pw
-        )
+    @staticmethod
+    def teardown_method():
+        Locker.delete(TestCreateLocker.name, TestCreateLocker.pw)
         return
 
     def test_create_locker(self, tmp_path, datadir, capsys):
         copy_config(datadir["phibes-config.json"], tmp_path)
         with capsys.disabled():
-            test_config = Config(tmp_path)
             runner = CliRunner()
             result = runner.invoke(
                 create_locker,
@@ -64,10 +52,4 @@ class TestCreateLocker(object):
             )
             assert result.exit_code == 0
             assert "created" in result.output
-        return
-
-
-class TestEdit(object):
-
-    def test_edit(self):
         return
