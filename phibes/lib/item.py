@@ -76,7 +76,7 @@ class Item(object):
         ret_val += f"content follows (between lines)\n"
         ret_val += f"----------\n"
         ret_val += f"{self.content}"
-        ret_val += f"----------"
+        ret_val += f"\n----------\n"
         return ret_val
 
     @classmethod
