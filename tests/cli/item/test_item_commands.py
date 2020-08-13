@@ -430,7 +430,7 @@ class TestDeleteItem(locker_helper.PopulatedLocker):
         self.my_locker.add_item(my_item)
         return
 
-    def _test_delete_item(self, tmp_path, datadir, capsys):
+    def _test_delete_item(self, tmp_path, datadir):
         copy_config(datadir["phibes-config.json"], tmp_path)
         with capsys.disabled():
             runner = CliRunner()
@@ -450,7 +450,7 @@ class TestDeleteItem(locker_helper.PopulatedLocker):
 
 class TestShowItem(locker_helper.PopulatedLocker):
 
-    def _test_show_item(self, tmp_path, datadir, capsys):
+    def _test_show_item(self, tmp_path, datadir):
         copy_config(datadir["phibes-config.json"], tmp_path)
         with capsys.disabled():
             runner = CliRunner()
@@ -469,7 +469,7 @@ class TestShowItem(locker_helper.PopulatedLocker):
 
 class TestListItems(locker_helper.PopulatedLocker):
 
-    def _test_list_items(self, tmp_path, datadir, capsys):
+    def _test_list_items(self, tmp_path, datadir):
         copy_config(datadir["phibes-config.json"], tmp_path)
         with capsys.disabled():
             runner = CliRunner()
@@ -488,7 +488,7 @@ class TestListItems(locker_helper.PopulatedLocker):
 
 class TestLs(locker_helper.PopulatedLocker):
 
-    def _test_ls(self, tmp_path, datadir, capsys):
+    def _test_ls(self, tmp_path, datadir):
         copy_config(datadir["phibes-config.json"], tmp_path)
         with capsys.disabled():
             runner = CliRunner()
