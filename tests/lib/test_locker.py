@@ -56,8 +56,8 @@ class TestItemStuff(PopulatedLocker):
         return
 
     def test_get_missing_item(self, tmp_path, datadir):
-        my_item = self.my_locker.get_item("never", "secret")
-        assert my_item is None
+        with pytest.raises(FileNotFoundError):
+            self.my_locker.get_item("never", "secret")
         return
 
     def test_update_item(self):
