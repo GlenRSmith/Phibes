@@ -15,6 +15,28 @@ from . lib.item import Item
 from . lib.locker import Locker
 
 
+class PhibesCliError(Exception):
+
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
+        super().__init__(self.message)
+
+    def __str__(self):
+        msg = getattr(self, "message", "was raised")
+        return f"{self.__class__}: {msg}"
+
+
+class PhibesNotFoundError(PhibesCliError):
+    pass
+
+
+class PhibesExistsError(PhibesCliError):
+    pass
+
+
 def make_str_bool(bool_str: str) -> bool:
     return not bool_str.lower().startswith('f')
 
