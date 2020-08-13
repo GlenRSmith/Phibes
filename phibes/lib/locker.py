@@ -266,6 +266,10 @@ class Locker(object):
         new_item = item_cls(self.crypt_key, item_name)
         if template_name:
             template = self.get_item(template_name, "template")
+            if not template:
+                raise FileNotFoundError(
+                    f"template {template_name} not found"
+                )
             new_item.content = template.content
         return new_item
 
@@ -282,7 +286,9 @@ class Locker(object):
             found_item.read(pth)
             # TODO: validate using salt
         else:
-            found_item = None
+            raise FileNotFoundError(
+                f"{item_type}:{item_name} not found"
+            )
         return found_item
 
     def update_item(self, item: Item) -> None:
