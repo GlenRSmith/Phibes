@@ -10,6 +10,8 @@ import click
 # in-project modules
 from phibes.cli_lib import edit_item, present_list_items
 from phibes.cli_lib import make_str_bool
+from phibes.cli_lib import PhibesCliError, PhibesExistsError
+from phibes.cli_lib import PhibesNotFoundError
 from phibes.lib.config import Config
 from phibes.lib.item import Item
 from phibes.lib.locker import Locker, registered_items
@@ -54,11 +56,15 @@ def edit(
     :param template:
     :return:
     """
-    if template == 'Empty':
-        template = None
-    return edit_item(
-        locker, password, item_type, item, overwrite, template, editor
-    )
+    try:
+        if template == 'Empty':
+            template = None
+        return edit_item(
+            locker, password, item_type, item, overwrite, template, editor
+        )
+    except PhibesCliError as err:
+        click.echo(err)
+        exit(1)
 
 
 @click.command()
