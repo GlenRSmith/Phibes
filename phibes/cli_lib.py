@@ -7,13 +7,27 @@ import os
 import sys
 
 # third party packages
+import click
 from colorama import Fore, Style
 
 # in-project modules
-from . lib.config import Config
-from . lib.item import Item
-from . lib.locker import Locker
+from phibes.lib.config import Config
+from phibes.lib.locker import Locker
 
+
+def catch_phibes_cli(func):
+    """
+    decorator for command-line function error handling
+    :param func: command-line function
+    :return:
+    """
+    def inner_function(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except PhibesCliError as err:
+            click.echo(err.message)
+            exit(1)
+    return inner_function
 
 class PhibesCliError(Exception):
 
@@ -168,3 +182,19 @@ def present_list_items(
                 f"{str(sec.name):>{longest+2}}\n"
             )
     return ret_val
+
+
+def delete_item(
+        locker_name: str,
+        password: str,
+        item_type: str,
+        item_name: str
+):
+    my_locker = Locker.find(locker_name, password)
+    try:
+        my_locker.delete_item(item_name, item_type)
+    except FileNotFoundError:
+        raise PhibesNotFoundError(
+            f"can't delete non-existing {item_type}:{item_name}"
+        )
+    return
