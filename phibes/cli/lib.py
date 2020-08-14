@@ -49,9 +49,9 @@ class PhibesCliError(Exception):
 
     def __init__(self, *args):
         if args:
-            self.message = args[0]
+            self.message = f"Phibes error: {args[0]}"
         else:
-            self.message = None
+            self.message = f"Phibes error: no more info"
         super().__init__(self.message)
 
     def __str__(self):
