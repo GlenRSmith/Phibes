@@ -12,17 +12,10 @@ from click.testing import CliRunner
 
 # Local application/library specific imports
 from phibes import phibes_cli
-from phibes.lib.config import Config
 from tests.lib import locker_helper
 
 
-def copy_config(source, target):
-    my_conf = source.read()
-    Config.write_config(target, **json.loads(my_conf))
-    return
-
-
-class TestEditNew(locker_helper.PopulatedLocker):
+class TestEditBase(locker_helper.PopulatedLocker):
 
     test_item_name = 'gonna_edit'
     test_item_type = 'secret'
@@ -31,25 +24,19 @@ class TestEditNew(locker_helper.PopulatedLocker):
     target_cmd_name = 'edit'
 
     def setup_method(self):
-        super(TestEditNew, self).setup_method()
+        super(TestEditBase, self).setup_method()
         my_item = self.my_locker.create_item(
             self.good_template_name, "template"
         )
         my_item.content = f"{self.good_template_name}:template"
         self.my_locker.add_item(my_item)
-        self.common_args = [
-            "--locker", self.locker_name, "--password", self.password,
-            "--item_type", self.test_item_type,
-            "--item", self.test_item_name,
-            "--editor", "echo 'happyclappy' >> "
-        ]
-        self.runner = CliRunner()
         try:
-            self.edit = phibes_cli.main.commands['edit']
             self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
         except KeyError as err:
             commands = list(phibes_cli.main.commands.keys())
-            raise KeyError(f"'edit' not found in {commands}")
+            raise KeyError(
+                f"{self.target_cmd_name} not found in {commands}"
+            )
         return
 
     def invoke(self, overwrite: bool, template: str = None):
@@ -76,10 +63,6 @@ class TestEditNew(locker_helper.PopulatedLocker):
         assert "phibes" in result.output.lower()
         assert "error" in result.output.lower()
         assert result.exception
-        with pytest.raises(FileNotFoundError):
-            self.my_locker.get_item(
-                self.test_item_name, self.test_item_type
-            )
         return
 
     def common_pos_asserts(self, result, expected_content):
@@ -91,6 +74,24 @@ class TestEditNew(locker_helper.PopulatedLocker):
         assert inst.content == expected_content
         return
 
+
+class TestEditNew(TestEditBase):
+
+    def setup_method(self):
+        super(TestEditNew, self).setup_method()
+
+    def common_neg_asserts(self, result):
+        super(TestEditNew, self).common_neg_asserts(result)
+        with pytest.raises(FileNotFoundError):
+            self.my_locker.get_item(
+                self.test_item_name, self.test_item_type
+            )
+        return
+
+    def common_pos_asserts(self, result, expected_content):
+        super(TestEditNew, self).common_pos_asserts(result, expected_content)
+        return
+
     @pytest.mark.positive
     def test_notemplate(self, tmp_path, datadir):
         """
@@ -100,7 +101,6 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         result = self.invoke(False)
         self.common_pos_asserts(result, 'happyclappy\n')
         return
@@ -113,7 +113,6 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         result = self.invoke(True)
         self.common_neg_asserts(result)
         return
@@ -126,7 +125,6 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         result = self.invoke(False, self.good_template_name)
         self.common_pos_asserts(
             result, 'good_template:templatehappyclappy\n'
@@ -141,7 +139,6 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         result = self.invoke(True, self.good_template_name)
         self.common_neg_asserts(result)
         return
@@ -154,7 +151,6 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         result = self.invoke(False, self.bad_template_name)
         self.common_neg_asserts(result)
         return
@@ -168,25 +164,12 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         result = self.invoke(True, self.bad_template_name)
         self.common_neg_asserts(result)
         return
 
 
-class TestEditExists(locker_helper.PopulatedLocker):
-
-    test_item_name = 'gonna_edit'
-    test_item_type = 'secret'
-    good_template_name = 'good_template'
-    bad_template_name = 'bad_template'
-
-    def dry_bad_assertions(self, result):
-        assert result.exit_code == 1
-        assert "Phibes" in result.output
-        assert "Error" in result.output
-        assert "template" in result.output
-        assert result.exception
+class TestEditExists(TestEditBase):
 
     def setup_method(self):
         super(TestEditExists, self).setup_method()
@@ -195,19 +178,24 @@ class TestEditExists(locker_helper.PopulatedLocker):
         )
         my_item.content = f"{self.test_item_name}:{self.test_item_type}"
         self.my_locker.add_item(my_item)
-        my_item = self.my_locker.create_item(
-            self.good_template_name, "template"
+        return
+
+    def common_neg_asserts(self, result):
+        super(TestEditExists, self).common_neg_asserts(result)
+        return
+
+    def common_pos_asserts(self, result, expected_content):
+        super(TestEditExists, self).common_pos_asserts(result, expected_content)
+        return
+
+    def item_unchanged_asserts(self, before_item):
+        after = self.my_locker.get_item(
+            self.test_item_name, self.test_item_type
         )
-        my_item.content = f"{self.good_template_name}:template"
-        self.my_locker.add_item(my_item)
-        self.common_args = [
-            "--locker", self.locker_name, "--password", self.password,
-            "--item_type", self.test_item_type,
-            "--item", self.test_item_name,
-            "--editor", "echo 'happyclappy' >> "
-        ]
-        self.edit = phibes_cli.main.commands['edit']
-        self.runner = CliRunner()
+        # the item still exists and hasn't changed
+        assert after is not None
+        assert before_item.content == after.content
+        assert before_item.timestamp == after.timestamp
         return
 
     @pytest.mark.negative
@@ -218,25 +206,12 @@ class TestEditExists(locker_helper.PopulatedLocker):
         :param datadir:
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         before = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
         )
-        result = self.runner.invoke(
-            self.edit, self.common_args + ["--overwrite", False]
-        )
-        assert result.exit_code == 1
-        assert "phibes" in result.output.lower()
-        assert "error" in result.output.lower()
-        assert "template" in result.output
-        assert result.exception
-        after = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
-        # the item still exists and hasn't changed
-        assert after is not None
-        assert before.content == after.content
-        assert before.timestamp == after.timestamp
+        result = self.invoke(False)
+        self.common_neg_asserts(result)
+        self.item_unchanged_asserts(before)
         return
 
     @pytest.mark.positive
@@ -247,13 +222,10 @@ class TestEditExists(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         before = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
         )
-        result = self.runner.invoke(
-            self.edit, self.common_args + ["--overwrite", True]
-        )
+        result = self.invoke(True)
         assert result.exit_code == 0
         inst = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
@@ -271,28 +243,13 @@ class TestEditExists(locker_helper.PopulatedLocker):
         :param datadir:
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         before = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
         )
-        result = self.runner.invoke(
-            self.edit, self.common_args + [
-                "--overwrite", False,
-                "--template", self.good_template_name
-            ]
-        )
-        assert result.exit_code == 1
-        assert "phibes" in result.output.lower()
-        assert "error" in result.output.lower()
+        result = self.invoke(False, self.good_template_name)
+        self.common_neg_asserts(result)
         assert f"{self.test_item_type}" in result.output
-        assert result.exception
-        after = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
-        # the item still exists and hasn't changed
-        assert after is not None
-        assert before.content == after.content
-        assert before.timestamp == after.timestamp
+        self.item_unchanged_asserts(before)
         return
 
     @pytest.mark.positive
@@ -303,14 +260,7 @@ class TestEditExists(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
-        result = self.runner.invoke(
-            self.edit, self.common_args +
-                [
-                  "--overwrite", True,
-                  "--template", self.good_template_name
-                ]
-        )
+        result = self.invoke(True, self.good_template_name)
         assert result.exit_code == 0
         inst = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
@@ -330,27 +280,12 @@ class TestEditExists(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         before = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
         )
-        result = self.runner.invoke(
-            self.edit, self.common_args + [
-                "--overwrite", False,
-                "--template", self.bad_template_name
-            ]
-        )
-        assert result.exit_code == 1
-        assert "phibes" in result.output.lower()
-        assert "error" in result.output.lower()
-        assert result.exception
-        after = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
-        # the item still exists and hasn't changed
-        assert after is not None
-        assert before.content == after.content
-        assert before.timestamp == after.timestamp
+        result = self.invoke(False, self.bad_template_name)
+        self.common_neg_asserts(result)
+        self.item_unchanged_asserts(before)
         return
 
     @pytest.mark.negative
@@ -361,26 +296,11 @@ class TestEditExists(locker_helper.PopulatedLocker):
         :param datadir: pytest plugin injected
         :return:
         """
-        copy_config(datadir["phibes-config.json"], tmp_path)
         before = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
         )
-        result = self.runner.invoke(
-            self.edit, self.common_args + [
-                "--overwrite", True,
-                "--template", self.bad_template_name
-            ]
-        )
-        assert result.exit_code == 1
-        assert "phibes" in result.output.lower()
-        assert "error" in result.output.lower()
+        result = self.invoke(True, self.bad_template_name)
+        self.common_neg_asserts(result)
         assert "template" in result.output
-        assert result.exception
-        after = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
-        # the item still exists and hasn't changed
-        assert after is not None
-        assert before.content == after.content
-        assert before.timestamp == after.timestamp
+        self.item_unchanged_asserts(before)
         return
