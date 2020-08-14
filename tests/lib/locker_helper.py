@@ -40,9 +40,9 @@ class PopulatedLocker(EmptyLocker):
         super(PopulatedLocker, self).setup_method()
         for item_type in self.my_locker.registered_items.keys():
             content = (
-                f"here is some stuff"
-                f"password: HardHat"
-                f"{item_type}:{item_type}_name"
+                f"here is some stuff\n"
+                f"password: HardHat\n"
+                f"{item_type}:{item_type}_name\n"
             )
             pth = self.my_locker.get_item_path(
                 f"{item_type}", f"{item_type}_name"

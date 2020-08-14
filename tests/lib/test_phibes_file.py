@@ -95,3 +95,25 @@ class TestPhibesFile(object):
         assert result['timestamp'] == self.test_timestamp
         assert result['body'] == 'replacement'
 
+    def test_forbid_empty(self):
+        with pytest.raises(AttributeError):
+            phibes_file.write(
+                self.pth,
+                salt=self.test_salt,
+                timestamp=self.test_timestamp,
+                body=""
+            )
+
+    def test_allow_empty(self):
+        phibes_file.write(
+            self.pth,
+            salt=self.test_salt,
+            timestamp=self.test_timestamp,
+            body="",
+            allow_empty=True
+        )
+        result = phibes_file.read(self.pth)
+        assert result['salt'] == self.test_salt
+        assert result['timestamp'] == self.test_timestamp
+        assert result['body'] == ''
+

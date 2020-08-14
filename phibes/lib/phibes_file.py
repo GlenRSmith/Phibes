@@ -46,7 +46,8 @@ def write(
         salt: str,
         timestamp: str,
         body: str,
-        overwrite: bool = False
+        overwrite: bool = False,
+        allow_empty: bool = False
 ) -> None:
     """
     Write the salt, timestamp, and body to the specified pth file
@@ -55,15 +56,16 @@ def write(
     :param timestamp: timestamp
     :param body: body
     :param overwrite: whether to overwrite an existing file
+    :param allow_empty: whether to allow writing file with no/empty body
     :return: None
     """
     if pth.exists() and not overwrite:
         raise FileExistsError(
             f"file {pth} already exists, and overwrite is False"
         )
-    if not body:
+    if not body and not allow_empty:
         raise AttributeError(f"Record has no content!")
-    if "\n" in salt or "\n" in timestamp or "\n" in body:
+    if ("\n" in salt or "\n" in timestamp) or (body and "\n" in body):
         raise ValueError(
             f"File fields can not contain newline char\n"
             f"salt: {salt}\n"

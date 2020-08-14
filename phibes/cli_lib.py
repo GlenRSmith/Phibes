@@ -15,6 +15,28 @@ from . lib.item import Item
 from . lib.locker import Locker
 
 
+class PhibesCliError(Exception):
+
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
+        super().__init__(self.message)
+
+    def __str__(self):
+        msg = getattr(self, "message", "was raised")
+        return f"{self.__class__}: {msg}"
+
+
+class PhibesNotFoundError(PhibesCliError):
+    pass
+
+
+class PhibesExistsError(PhibesCliError):
+    pass
+
+
 def make_str_bool(bool_str: str) -> bool:
     return not bool_str.lower().startswith('f')
 
@@ -54,38 +76,71 @@ def edit_item(
     :param editor: Text editor to use
     :return:
     """
+    draft_content = ""
     my_locker = Locker.find(locker_name, password)
-    item = my_locker.get_item(item_name, item_type)
-    if item:
-        if not overwrite:
-            raise FileExistsError(
-                f"file for {item_type}:{item_name} already exists"
-                f"overwrite True must be specified to replace"
+    try:
+        item = my_locker.get_item(item_name, item_type)
+    except FileNotFoundError:
+        if overwrite:
+            raise PhibesNotFoundError(
+                f"can't overwrite non-existing {item_type}:{item_name}"
             )
         else:
-            if template_name:
-                template = my_locker.get_item(template_name, 'template')
-                item.content += (
-                        f"\nprevious content above\n"
-                        f"template {template_name} follows\n"
-                        f"{template.content}"
-                    )
-                my_locker.update_item(item)
+            item = None
+    if item:
+        if not overwrite:
+            raise PhibesExistsError(
+                f"file for {item_type}:{item_name} already exists\n"
+                f"overwrite=True must be specified to update\n"
+            )
+        else:
+            draft_content = item.content
+    if template_name:
+        try:
+            template = my_locker.get_item(template_name, "template")
+        except FileNotFoundError as err:
+            raise PhibesNotFoundError(
+                f"template {template_name} not found"
+            )
     else:
-        item = my_locker.create_item(
-            item_name=item_name,
-            item_type=item_type,
-            template_name=template_name
-        )
-        my_locker.add_item(item)
-    work_file = my_locker.path.joinpath(
-        f"{item_type}:{item_name}.tmp"
-    )
-    work_file.write_text(item.content)
-    os.system(f"{editor} {work_file}")
-    item.content = work_file.read_text()
-    my_locker.update_item(item)
-    work_file.unlink()
+        template = None
+    if template:
+        if item:
+            draft_content += (
+                f"\nprevious content above, "
+                f"template:{template_name} follows\n"
+            )
+        draft_content += template.content
+    else:
+        if template_name:
+            item = my_locker.create_item(
+                item_name=item_name,
+                item_type=item_type,
+                template_name=template_name
+            )
+            my_locker.add_item(item, allow_empty=True)
+        else:
+            item = my_locker.create_item(
+                item_name=item_name, item_type=item_type
+            )
+    work_file = my_locker.path.joinpath(f"{item_type}:{item_name}.tmp")
+    work_file.write_text(draft_content)
+    try:
+        os.system(f"{editor} {work_file}")
+        # avoid creating/changing item in storage until after this point,
+        # it would be 'astonishing' to the user to apply changes if
+        # e.g. there was an exception before they edit the item
+        if not item:
+            item = my_locker.create_item(item_name=item_name, item_type=item_type)
+        item.content = work_file.read_text()
+        if item:
+            my_locker.update_item(item)
+        else:
+            my_locker.add_item(item)
+    except Exception as err:
+        raise PhibesCliError(err)
+    finally:
+        work_file.unlink()
     return
 
 
@@ -96,8 +151,9 @@ def present_list_items(
     if item_type == 'all':
         item_type = None
     my_locker = Locker.find(locker, password)
+    if not my_locker:
+        raise FileNotFoundError(f"No locker {locker} found")
     items = my_locker.find_all(item_type, filter_include=True)
-    # items = Item.find_all(my_locker, item_type)
     if verbose:
         for sec in my_locker.list_items():
             ret_val += f"{sec}"
@@ -108,7 +164,7 @@ def present_list_items(
         ret_val += f"{'Item Type':>15}{'Item Name':>{longest+2}}\n"
         for sec in items:
             ret_val += (
-                f"{str(sec.item_type).rjust(4, '-'):>15}"
-                f"{str(sec.name):>{longest+2}}"
+                f"{str(sec.item_type).rjust(4, ' '):>15}"
+                f"{str(sec.name):>{longest+2}}\n"
             )
     return ret_val

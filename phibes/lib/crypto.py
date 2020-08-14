@@ -126,6 +126,25 @@ def get_name_hash(name: str) -> str:
 
 class CryptImpl(object):
 
+    @property
+    def salt(self):
+        """
+        salt property accessor
+        :return:
+        """
+        return self._salt
+
+    @salt.setter
+    def salt(self, new_salt: str):
+        """
+        salt property mutator
+        :param new_salt:
+        :return:
+        """
+        self._salt = new_salt
+        self._refresh_cipher(new_salt)
+        return
+
     def __init__(
             self,
             crypt_arg: str,
@@ -133,7 +152,7 @@ class CryptImpl(object):
             salt: str = make_salt_string()
     ):
         salt = (make_salt_string(), salt)[bool(salt)]
-        self.salt = salt
+        self._salt = salt
         if crypt_arg_is_key:
             self.key = crypt_arg
         else:
@@ -142,14 +161,29 @@ class CryptImpl(object):
         return
 
     def encrypt(self, plaintext: str) -> str:
-        cipherbytes = self.cipher.encrypt(plaintext.encode('utf-8'))
-        ret_val = base64.urlsafe_b64encode(cipherbytes).decode('utf-8')
-        self._refresh_cipher(self.salt)
+        # convert from str to bytes
+        plaintext_bytes = plaintext.encode('utf-8')
+        # run the actual encryption - it gets bytes, returns bytes
+        cipherbytes = self.cipher.encrypt(plaintext_bytes)
+        # substitute for chars that aren't file-system safe
+        # e.g. - instead of + and _ instead of /
+        # it gets bytes, returns bytes
+        fs_safe_cipherbytes = base64.urlsafe_b64encode(cipherbytes)
+        # convert the bytes to a utf-8 str
+        ret_val = fs_safe_cipherbytes.decode('utf-8')
+        self._refresh_cipher(self._salt)
         return ret_val
 
     def decrypt(self, ciphertext: str) -> str:
-        cipherbytes = base64.urlsafe_b64decode(ciphertext)
-        ret_val = self.cipher.decrypt(cipherbytes).decode()
+        # reverse the steps in `encrypt`
+        # convert from str to bytes
+        fs_safe_cipherbytes = ciphertext.encode('utf-8')
+        # char substitution back to + and /
+        cipherbytes = base64.urlsafe_b64decode(fs_safe_cipherbytes)
+        # run the actual decryption
+        plaintext_bytes = self.cipher.decrypt(cipherbytes)
+        # convert the bytes to utf-8 str
+        ret_val = plaintext_bytes.decode('utf-8')
         self._refresh_cipher(self.salt)
         return ret_val
 

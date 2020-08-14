@@ -67,6 +67,9 @@ class Item(object):
         self._salt = rec['salt']
         self._timestamp = rec['timestamp']
         self._ciphertext = rec['body']
+        # crypt_impl will have generated a random salt,
+        # need to set it to the correct one for this item
+        self.crypt_impl.salt = self._salt
 
     def __str__(self):
         ret_val = "Item\n"
@@ -76,7 +79,7 @@ class Item(object):
         ret_val += f"content follows (between lines)\n"
         ret_val += f"----------\n"
         ret_val += f"{self.content}"
-        ret_val += f"----------"
+        ret_val += f"\n----------\n"
         return ret_val
 
     @classmethod

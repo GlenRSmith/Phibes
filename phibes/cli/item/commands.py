@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 """
-Operation-centric command-line interface to phibes features
+Click interface to phibes items
 """
 
 # core library modules
@@ -11,79 +10,14 @@ import click
 # in-project modules
 from phibes.cli_lib import edit_item, present_list_items
 from phibes.cli_lib import make_str_bool
+from phibes.cli_lib import PhibesCliError, PhibesExistsError
+from phibes.cli_lib import PhibesNotFoundError
 from phibes.lib.config import Config
 from phibes.lib.item import Item
 from phibes.lib.locker import Locker, registered_items
 
 
-@click.group()
-def main():
-    pass
-
-
-@main.command()
-@click.option('--locker', prompt='Locker')
-@click.option('--password', prompt='Password', hide_input=True)
-@click.option(
-    '--item_type',
-    prompt='Type of item to list',
-    type=click.Choice(list(registered_items.keys()) + ['all']),
-    default='all'
-)
-@click.option('--verbose', prompt='Verbose', default=False)
-def ls(locker, password, item_type, verbose):
-    verbose = make_str_bool(verbose)
-    click.secho(
-        present_list_items(
-            locker, password, item_type, verbose
-        ),
-        fg='green'
-    )
-    return
-
-
-@main.command()
-@click.option('--locker', prompt='Name of Locker')
-@click.option(
-    '--password', prompt='New Locker password', hide_input=True,
-    confirmation_prompt=True
-)
-def create_locker(locker, password):
-    """
-    Create a new locker
-    :param locker: Name of locker to create
-    :param password: Password of locker to create
-    :return:
-    """
-    new_locker = Locker(locker, password, create=True)
-    click.echo(f"Locker created {locker}")
-    click.echo(f"Locker created {new_locker.path}")
-    return
-
-
-@main.command()
-@click.option('--locker', prompt='Locker Name')
-@click.option('--password', prompt='Locker password', hide_input=True,)
-def delete_locker(locker, password):
-    inst = Locker(locker, password)
-    if inst.lock_file.exists():
-        click.echo(f"confirmed lock file {inst.lock_file} exists")
-    if inst.path.exists():
-        click.echo(f"confirmed locker dir {inst.path} exists")
-    Locker.delete(locker, password)
-    if not inst.lock_file.exists():
-        click.echo(f"confirmed lock file {inst.lock_file} removed")
-    else:
-        click.echo(f"lock file {inst.lock_file} not removed")
-    if not inst.path.exists():
-        click.echo(f"confirmed locker dir {inst.path} removed")
-    else:
-        click.echo(f"locker dir {inst.path} not removed")
-    click.echo(f"Locker deleted {locker}")
-    return
-
-
-@main.command()
+@click.command()
 @click.option('--locker', prompt='Locker name')
 @click.option('--password', prompt='Password', hide_input=True)
 @click.option(
@@ -111,14 +45,29 @@ def delete_locker(locker, password):
 def edit(
         locker, password, item_type, item, editor, overwrite, template
 ):
-    if template == 'Empty':
-        template = None
-    return edit_item(
-        locker, password, item_type, item, overwrite, template, editor
-    )
+    """
+    Use your text editor to create or update an item in your locker
+    :param locker:
+    :param password:
+    :param item_type:
+    :param item:
+    :param editor:
+    :param overwrite:
+    :param template:
+    :return:
+    """
+    try:
+        if template == 'Empty':
+            template = None
+        return edit_item(
+            locker, password, item_type, item, overwrite, template, editor
+        )
+    except PhibesCliError as err:
+        click.echo(err)
+        exit(1)
 
 
-@main.command()
+@click.command()
 @click.option('--locker', prompt='Locker')
 @click.option('--password', prompt='Password', hide_input=True)
 @click.option(
@@ -144,7 +93,7 @@ def show_item(locker, password, item_type, item):
     click.echo(f"{my_item}")
 
 
-@main.command()
+@click.command()
 @click.option('--locker', prompt='Locker')
 @click.option('--password', prompt='Password', hide_input=True)
 @click.option(
@@ -172,7 +121,7 @@ def delete_item(locker, password, item_type, item):
     click.echo(f"{my_item}")
 
 
-@main.command()
+@click.command()
 @click.option('--locker', prompt='Locker')
 @click.option('--password', prompt='Password', hide_input=True)
 @click.option(
@@ -181,7 +130,7 @@ def delete_item(locker, password, item_type, item):
     type=click.Choice(list(registered_items.keys()) + ['all']),
     default='all'
 )
-@click.option('--verbose', prompt='Verbose', default=False)
+@click.option('--verbose', prompt='Verbose', default=False, type=bool)
 def list_items(locker, password, item_type, verbose):
     """
     Display the (unencrypted) names of all Secrets in the Locker
@@ -191,12 +140,27 @@ def list_items(locker, password, item_type, verbose):
     :param verbose:
     :return:
     """
-    verbose = make_str_bool(verbose)
+    # verbose = make_str_bool(verbose)
     click.echo(
         present_list_items(locker, password, item_type, verbose)
     )
     return
 
 
-if __name__ == '__main__':
-    main()
+@click.command()
+@click.option('--locker', prompt='Locker')
+@click.option('--password', prompt='Password', hide_input=True)
+@click.option(
+    '--item_type',
+    prompt='Type of item to list',
+    type=click.Choice(list(registered_items.keys()) + ['all']),
+    default='all'
+)
+@click.option('--verbose', prompt='Verbose', default=False, type=bool)
+def ls(locker, password, item_type, verbose):
+    # verbose = make_str_bool(verbose)
+    click.secho(
+        present_list_items(locker, password, item_type, verbose),
+        fg='green'
+    )
+    return
