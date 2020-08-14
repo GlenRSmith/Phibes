@@ -12,14 +12,7 @@ from click.testing import CliRunner
 
 # Local application/library specific imports
 from phibes import phibes_cli
-from phibes.lib.config import Config
 from tests.lib import locker_helper
-
-
-def copy_config(source, target):
-    my_conf = source.read()
-    Config.write_config(target, **json.loads(my_conf))
-    return
 
 
 class TestListItems(locker_helper.PopulatedLocker):
@@ -35,12 +28,6 @@ class TestListItems(locker_helper.PopulatedLocker):
         )
         my_item.content = f"{self.item_type}:{self.item_name}"
         self.my_locker.add_item(my_item)
-        self.common_args = [
-            "--locker", self.locker_name, "--password", self.password,
-            "--item_type", self.item_type,
-            "--verbose", False,
-        ]
-        self.runner = CliRunner()
         self.list_items = phibes_cli.main.commands[self.target_cmd_name]
         return
 
@@ -55,7 +42,19 @@ class TestListItems(locker_helper.PopulatedLocker):
         )
 
     def test_list_all_items(self, tmp_path, datadir):
-        copy_config(datadir["phibes-config.json"], tmp_path)
         result = self.invoke("all")
         assert result.exit_code == 0
+        for item_type in self.my_locker.registered_items.keys():
+            assert item_type in result.output
+        return
+
+    def test_list_by_item_type(self, tmp_path, datadir):
+        all_types = self.my_locker.registered_items.keys()
+        for target_type in all_types:
+            result = self.invoke(target_type)
+            assert result.exit_code == 0
+            assert target_type in result.output
+            for inner_type in all_types:
+                if inner_type != target_type:
+                    assert inner_type not in result.output
         return

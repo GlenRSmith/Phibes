@@ -12,14 +12,7 @@ from click.testing import CliRunner
 
 # Local application/library specific imports
 from phibes import phibes_cli
-from phibes.lib.config import Config
 from tests.lib import locker_helper
-
-
-def copy_config(source, target):
-    my_conf = source.read()
-    Config.write_config(target, **json.loads(my_conf))
-    return
 
 
 class TestDeleteItem(locker_helper.PopulatedLocker):
@@ -56,7 +49,6 @@ class TestDeleteItem(locker_helper.PopulatedLocker):
         )
 
     def test_delete_item(self, tmp_path, datadir):
-        copy_config(datadir["phibes-config.json"], tmp_path)
         result = self.invoke(self.delete_item_type, self.delete_item_name)
         assert result.exit_code == 0
         # assert "deleted" in result.output
