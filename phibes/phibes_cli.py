@@ -35,9 +35,6 @@ main.add_command(item_edit_cmd)
 main.add_command(item_get_cmd)
 main.add_command(item_delete_cmd)
 main.add_command(item_list_cmd)
-# main.add_command(item_group.list_items)
-# main.add_command(item_group.ls)
-# main.add_command(item_group.delete_item)
 
 if __name__ == '__main__':
     main()
