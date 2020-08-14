@@ -26,6 +26,7 @@ class TestListItems(locker_helper.PopulatedLocker):
 
     item_name = 'list_this'
     item_type = 'secret'
+    target_cmd_name = 'list'
 
     def setup_method(self):
         super(TestListItems, self).setup_method()
@@ -40,14 +41,21 @@ class TestListItems(locker_helper.PopulatedLocker):
             "--verbose", False,
         ]
         self.runner = CliRunner()
-        self.list_items = phibes_cli.main.commands['list']
+        self.list_items = phibes_cli.main.commands[self.target_cmd_name]
         return
+
+    def invoke(self, item_type: str):
+        return CliRunner().invoke(
+            self.list_items, [
+                "--locker", self.locker_name, "--password", self.password,
+                "--item_type", self.item_type,
+                "--verbose", False,
+                "--item_type", item_type
+            ]
+        )
 
     def test_list_all_items(self, tmp_path, datadir):
         copy_config(datadir["phibes-config.json"], tmp_path)
-        runner = CliRunner()
-        result = runner.invoke(
-            self.list_items, self.common_args + ["--item_type", "all"]
-        )
+        result = self.invoke("all")
         assert result.exit_code == 0
         return

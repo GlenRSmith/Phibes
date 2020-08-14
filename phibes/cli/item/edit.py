@@ -8,8 +8,8 @@ Click command for `edit`
 import click
 
 # in-project modules
+from phibes.cli.lib import catch_phibes_cli
 from phibes.cli.lib import edit_item
-from phibes.cli.lib import PhibesCliError
 from phibes.lib.config import Config
 from phibes.lib.locker import registered_items
 
@@ -39,6 +39,7 @@ from phibes.lib.locker import registered_items
     prompt='Editor',
     default=Config('.').editor
 )
+@catch_phibes_cli
 def edit(
         locker, password, item_type, item, editor, overwrite, template
 ):
@@ -53,12 +54,8 @@ def edit(
     :param template:
     :return:
     """
-    try:
-        if template == 'Empty':
-            template = None
-        return edit_item(
-            locker, password, item_type, item, overwrite, template, editor
-        )
-    except PhibesCliError as err:
-        click.echo(err)
-        exit(1)
+    if template == 'Empty':
+        template = None
+    return edit_item(
+        locker, password, item_type, item, overwrite, template, editor
+    )

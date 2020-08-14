@@ -29,6 +29,22 @@ def catch_phibes_cli(func):
             exit(1)
     return inner_function
 
+
+def get_locker(locker_name, password):
+    """
+    locally-used convenience function
+    :param locker_name:
+    :param password:
+    :return:
+    """
+    try:
+        return Locker.find(locker_name, password)
+    except FileNotFoundError:
+        raise PhibesNotFoundError(
+            f"can't find locker {locker_name} (could be password error)"
+        )
+
+
 class PhibesCliError(Exception):
 
     def __init__(self, *args):
@@ -91,7 +107,7 @@ def edit_item(
     :return:
     """
     draft_content = ""
-    my_locker = Locker.find(locker_name, password)
+    my_locker = get_locker(locker_name, password)
     try:
         item = my_locker.get_item(item_name, item_type)
     except FileNotFoundError:
@@ -164,9 +180,7 @@ def present_list_items(
     ret_val = f""
     if item_type == 'all':
         item_type = None
-    my_locker = Locker.find(locker, password)
-    if not my_locker:
-        raise FileNotFoundError(f"No locker {locker} found")
+    my_locker = get_locker(locker, password)
     items = my_locker.find_all(item_type, filter_include=True)
     if verbose:
         for sec in my_locker.list_items():
@@ -184,13 +198,29 @@ def present_list_items(
     return ret_val
 
 
+def get_item(
+        locker_name: str,
+        password: str,
+        item_type: str,
+        item_name: str
+):
+    my_locker = get_locker(locker_name, password)
+    try:
+        my_locker.get_item(item_name, item_type)
+    except FileNotFoundError:
+        raise PhibesNotFoundError(
+            f"can't find {item_type}:{item_name}"
+        )
+    return
+
+
 def delete_item(
         locker_name: str,
         password: str,
         item_type: str,
         item_name: str
 ):
-    my_locker = Locker.find(locker_name, password)
+    my_locker = get_locker(locker_name, password)
     try:
         my_locker.delete_item(item_name, item_type)
     except FileNotFoundError:
