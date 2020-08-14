@@ -296,8 +296,8 @@ class Locker(object):
         item.save(pth, overwrite=True)
         return
 
-    def delete_item(self, item: Item) -> None:
-        self.get_item_path(item.get_type_name(), item.name).unlink()
+    def delete_item(self, item_name: str, item_type: str) -> None:
+        self.get_item_path(item_type, item_name).unlink()
 
     def list_items(self, item_type=None) -> ItemList:
         """
