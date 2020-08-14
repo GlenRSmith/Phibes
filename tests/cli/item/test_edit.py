@@ -28,6 +28,7 @@ class TestEditNew(locker_helper.PopulatedLocker):
     test_item_type = 'secret'
     good_template_name = 'good_template'
     bad_template_name = 'bad_template'
+    target_cmd_name = 'edit'
 
     def setup_method(self):
         super(TestEditNew, self).setup_method()
@@ -45,9 +46,49 @@ class TestEditNew(locker_helper.PopulatedLocker):
         self.runner = CliRunner()
         try:
             self.edit = phibes_cli.main.commands['edit']
+            self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
         except KeyError as err:
             commands = list(phibes_cli.main.commands.keys())
             raise KeyError(f"'edit' not found in {commands}")
+        return
+
+    def invoke(self, overwrite: bool, template: str = None):
+        """
+        Helper method for often repeated code in test methods
+        :param overwrite:
+        :param template:
+        :return:
+        """
+        args = [
+                "--locker", self.locker_name,
+                "--password", self.password,
+                "--item_type", self.test_item_type,
+                "--item", self.test_item_name,
+                "--editor", "echo 'happyclappy' >> ",
+                "--overwrite", overwrite
+            ]
+        if template:
+            args += ["--template", template]
+        return CliRunner().invoke(self.target_cmd, args)
+
+    def common_neg_asserts(self, result):
+        assert result.exit_code == 1
+        assert "phibes" in result.output.lower()
+        assert "error" in result.output.lower()
+        assert result.exception
+        with pytest.raises(FileNotFoundError):
+            self.my_locker.get_item(
+                self.test_item_name, self.test_item_type
+            )
+        return
+
+    def common_pos_asserts(self, result, expected_content):
+        assert result.exit_code == 0
+        inst = self.my_locker.get_item(
+            self.test_item_name, self.test_item_type
+        )
+        assert inst
+        assert inst.content == expected_content
         return
 
     @pytest.mark.positive
@@ -60,36 +101,8 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :return:
         """
         copy_config(datadir["phibes-config.json"], tmp_path)
-        result = self.runner.invoke(
-            self.edit, self.common_args + ["--overwrite", False]
-        )
-        assert result.exit_code == 0
-        inst = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
-        assert inst
-        assert inst.content == 'happyclappy\n'
-        return
-
-    @pytest.mark.positive
-    def test_top(self, tmp_path, datadir):
-        """
-        Simple case: create a new item, no template used,
-        overwrite not specified
-        :param tmp_path: pytest plugin injected
-        :param datadir: pytest plugin injected
-        :return:
-        """
-        copy_config(datadir["phibes-config.json"], tmp_path)
-        result = self.runner.invoke(
-            self.edit, self.common_args + ["--overwrite", False]
-        )
-        assert result.exit_code == 0
-        inst = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
-        assert inst
-        assert inst.content == 'happyclappy\n'
+        result = self.invoke(False)
+        self.common_pos_asserts(result, 'happyclappy\n')
         return
 
     @pytest.mark.negative
@@ -101,17 +114,8 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :return:
         """
         copy_config(datadir["phibes-config.json"], tmp_path)
-        result = self.runner.invoke(
-            self.edit, self.common_args + ["--overwrite", True]
-        )
-        assert result.exit_code == 1
-        assert "phibes" in result.output.lower()
-        assert "error" in result.output.lower()
-        assert result.exception
-        with pytest.raises(FileNotFoundError):
-            self.my_locker.get_item(
-                self.test_item_name, self.test_item_type
-            )
+        result = self.invoke(True)
+        self.common_neg_asserts(result)
         return
 
     @pytest.mark.positive
@@ -123,20 +127,10 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :return:
         """
         copy_config(datadir["phibes-config.json"], tmp_path)
-        result = self.runner.invoke(
-            self.edit, self.common_args +
-                [
-                  "--overwrite", False,
-                  "--template", self.good_template_name
-                ]
+        result = self.invoke(False, self.good_template_name)
+        self.common_pos_asserts(
+            result, 'good_template:templatehappyclappy\n'
         )
-        assert result.exit_code == 0
-        inst = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
-        assert inst
-        assert 'happyclappy' in inst.content
-        assert self.good_template_name in inst.content
         return
 
     @pytest.mark.negative
@@ -148,21 +142,8 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :return:
         """
         copy_config(datadir["phibes-config.json"], tmp_path)
-        result = self.runner.invoke(
-            self.edit, self.common_args +
-                  [
-                      "--overwrite", True,
-                      "--template", self.good_template_name
-                  ]
-        )
-        assert result.exit_code == 1
-        assert "phibes" in result.output.lower()
-        assert "error" in result.output.lower()
-        assert result.exception
-        with pytest.raises(FileNotFoundError):
-            self.my_locker.get_item(
-                self.test_item_name, self.test_item_type
-            )
+        result = self.invoke(True, self.good_template_name)
+        self.common_neg_asserts(result)
         return
 
     @pytest.mark.negative
@@ -174,21 +155,8 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :return:
         """
         copy_config(datadir["phibes-config.json"], tmp_path)
-        result = self.runner.invoke(
-            self.edit, self.common_args +
-                  [
-                      "--overwrite", False,
-                      "--template", self.bad_template_name
-                  ]
-        )
-        assert result.exit_code == 1
-        assert "phibes" in result.output.lower()
-        assert "error" in result.output.lower()
-        assert result.exception
-        with pytest.raises(FileNotFoundError):
-            self.my_locker.get_item(
-                self.test_item_name, self.test_item_type
-            )
+        result = self.invoke(False, self.bad_template_name)
+        self.common_neg_asserts(result)
         return
 
     @pytest.mark.negative
@@ -201,21 +169,8 @@ class TestEditNew(locker_helper.PopulatedLocker):
         :return:
         """
         copy_config(datadir["phibes-config.json"], tmp_path)
-        result = self.runner.invoke(
-            self.edit, self.common_args +
-                  [
-                      "--overwrite", True,
-                      "--template", self.bad_template_name
-                  ]
-        )
-        assert result.exit_code == 1
-        assert "phibes" in result.output.lower()
-        assert "error" in result.output.lower()
-        assert result.exception
-        with pytest.raises(FileNotFoundError):
-            self.my_locker.get_item(
-                self.test_item_name, self.test_item_type
-            )
+        result = self.invoke(True, self.bad_template_name)
+        self.common_neg_asserts(result)
         return
 
 
