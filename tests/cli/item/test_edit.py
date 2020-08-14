@@ -43,7 +43,11 @@ class TestEditNew(locker_helper.PopulatedLocker):
             "--editor", "echo 'happyclappy' >> "
         ]
         self.runner = CliRunner()
-        self.edit = phibes_cli.main.commands['edit']
+        try:
+            self.edit = phibes_cli.main.commands['edit']
+        except KeyError as err:
+            commands = list(phibes_cli.main.commands.keys())
+            raise KeyError(f"'edit' not found in {commands}")
         return
 
     @pytest.mark.positive
@@ -101,8 +105,8 @@ class TestEditNew(locker_helper.PopulatedLocker):
             self.edit, self.common_args + ["--overwrite", True]
         )
         assert result.exit_code == 1
-        assert "Phibes" in result.output
-        assert "Error" in result.output
+        assert "phibes" in result.output.lower()
+        assert "error" in result.output.lower()
         assert result.exception
         with pytest.raises(FileNotFoundError):
             self.my_locker.get_item(
@@ -152,8 +156,8 @@ class TestEditNew(locker_helper.PopulatedLocker):
                   ]
         )
         assert result.exit_code == 1
-        assert "Phibes" in result.output
-        assert "Error" in result.output
+        assert "phibes" in result.output.lower()
+        assert "error" in result.output.lower()
         assert result.exception
         with pytest.raises(FileNotFoundError):
             self.my_locker.get_item(
@@ -178,8 +182,8 @@ class TestEditNew(locker_helper.PopulatedLocker):
                   ]
         )
         assert result.exit_code == 1
-        assert "Phibes" in result.output
-        assert "Error" in result.output
+        assert "phibes" in result.output.lower()
+        assert "error" in result.output.lower()
         assert result.exception
         with pytest.raises(FileNotFoundError):
             self.my_locker.get_item(
@@ -205,8 +209,8 @@ class TestEditNew(locker_helper.PopulatedLocker):
                   ]
         )
         assert result.exit_code == 1
-        assert "Phibes" in result.output
-        assert "Error" in result.output
+        assert "phibes" in result.output.lower()
+        assert "error" in result.output.lower()
         assert result.exception
         with pytest.raises(FileNotFoundError):
             self.my_locker.get_item(
@@ -267,8 +271,8 @@ class TestEditExists(locker_helper.PopulatedLocker):
             self.edit, self.common_args + ["--overwrite", False]
         )
         assert result.exit_code == 1
-        assert "Phibes" in result.output
-        assert "Error" in result.output
+        assert "phibes" in result.output.lower()
+        assert "error" in result.output.lower()
         assert "template" in result.output
         assert result.exception
         after = self.my_locker.get_item(
@@ -323,8 +327,8 @@ class TestEditExists(locker_helper.PopulatedLocker):
             ]
         )
         assert result.exit_code == 1
-        assert "Phibes" in result.output
-        assert "Error" in result.output
+        assert "phibes" in result.output.lower()
+        assert "error" in result.output.lower()
         assert f"{self.test_item_type}" in result.output
         assert result.exception
         after = self.my_locker.get_item(
@@ -382,8 +386,8 @@ class TestEditExists(locker_helper.PopulatedLocker):
             ]
         )
         assert result.exit_code == 1
-        assert "Phibes" in result.output
-        assert "Error" in result.output
+        assert "phibes" in result.output.lower()
+        assert "error" in result.output.lower()
         assert result.exception
         after = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
@@ -413,8 +417,8 @@ class TestEditExists(locker_helper.PopulatedLocker):
             ]
         )
         assert result.exit_code == 1
-        assert "Phibes" in result.output
-        assert "Error" in result.output
+        assert "phibes" in result.output.lower()
+        assert "error" in result.output.lower()
         assert "template" in result.output
         assert result.exception
         after = self.my_locker.get_item(
