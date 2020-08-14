@@ -13,7 +13,7 @@ from phibes.cli.lib import get_item as help_get_item
 from phibes.lib.locker import registered_items
 
 
-@click.command()
+@click.command(name='get')
 @click.option('--locker', prompt='Locker')
 @click.option('--password', prompt='Password', hide_input=True)
 @click.option(

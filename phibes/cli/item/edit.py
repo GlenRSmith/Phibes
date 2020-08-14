@@ -14,7 +14,7 @@ from phibes.lib.config import Config
 from phibes.lib.locker import registered_items
 
 
-@click.command()
+@click.command(name='edit')
 @click.option('--locker', prompt='Locker name')
 @click.option('--password', prompt='Password', hide_input=True)
 @click.option(
