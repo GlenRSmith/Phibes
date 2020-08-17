@@ -8,7 +8,7 @@ pytest module for lib.secret
 
 # Local application/library specific imports
 from phibes.lib.secret import Secret
-from locker_helper import EmptyLocker
+from tests.lib.locker_helper import EmptyLocker
 
 
 class TestSecrets(EmptyLocker):

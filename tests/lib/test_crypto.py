@@ -10,7 +10,7 @@ import pytest
 # Local application/library specific imports
 from phibes.lib import crypto
 from phibes.lib import locker
-from locker_helper import EmptyLocker
+from tests.lib.locker_helper import EmptyLocker
 
 
 class TestCryptImpl(object):

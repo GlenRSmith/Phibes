@@ -10,7 +10,7 @@ import pytest
 
 # Local application/library specific imports
 from phibes.lib.item import Item
-from locker_helper import EmptyLocker
+from tests.lib.locker_helper import EmptyLocker
 
 
 class TestCreate(EmptyLocker):
