@@ -20,3 +20,4 @@ python_version = "3.8"
 [scripts]
 test = "pytest --basetemp=./basetemp --verbose --capture=no"
 cov = "pytest --cov=phibes tests --cov-fail-under=60"
+flake = "flake8 phibes"
