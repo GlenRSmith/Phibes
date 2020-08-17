@@ -18,5 +18,5 @@ colorama = "*"
 python_version = "3.8"
 
 [scripts]
-test = "pytest --basetemp=./basetemp --verbose --capture=no $1"
+test = "pytest --basetemp=./basetemp --verbose --capture=no"
 cov = "pytest --cov=phibes tests --cov-fail-under=60"
