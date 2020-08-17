@@ -75,11 +75,9 @@ def get_user_editor():
     editor = Config().editor
     if not editor:
         print(
-            Style.RESET_ALL
-            + Style.BRIGHT
-            + Fore.RED
-            + "ERROR, NO EDITOR FOUND!\n"
-            + Style.RESET_ALL
+            f"{Style.RESET_ALL}{Style.BRIGHT}{Fore.RED}"
+            f"ERROR, NO EDITOR FOUND!\n"
+            f"{Style.RESET_ALL}"
         )
         print("Please set an editor.")
         sys.exit(1)
@@ -128,9 +126,9 @@ def edit_item(
     if template_name:
         try:
             template = my_locker.get_item(template_name, "template")
-        except FileNotFoundError as err:
+        except FileNotFoundError:
             raise PhibesNotFoundError(
-                f"template {template_name} not found"
+                f"template:{template_name} not found"
             )
     else:
         template = None
@@ -161,7 +159,9 @@ def edit_item(
         # it would be 'astonishing' to the user to apply changes if
         # e.g. there was an exception before they edit the item
         if not item:
-            item = my_locker.create_item(item_name=item_name, item_type=item_type)
+            item = my_locker.create_item(
+                item_name=item_name, item_type=item_type
+            )
         item.content = work_file.read_text()
         if item:
             my_locker.update_item(item)

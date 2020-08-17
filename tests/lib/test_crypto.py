@@ -80,5 +80,3 @@ class TestCrypto(EmptyLocker):
         assert locker.Locker(
             self.locker_name, self.password, create=False
         )
-
-

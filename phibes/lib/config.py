@@ -134,7 +134,9 @@ class Config(object):
                 if 'hash_locker_names' in conf_dict:
                     temp_val = conf_dict.get('hash_locker_names')
                     if type(temp_val) is str:
-                        self.hash_locker_names = temp_val.lower() not in ["false", "f"]
+                        self.hash_locker_names = temp_val.lower() not in [
+                            "false", "f"
+                        ]
                 else:
                     failed = True
                     msg += f"hash_locker_names missing\n"

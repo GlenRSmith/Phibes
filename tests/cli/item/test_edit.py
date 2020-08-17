@@ -3,8 +3,6 @@ pytest module for phibes_cli edit (item) command
 """
 
 # Standard library imports
-# import shutil
-import json
 
 # Related third party imports
 import pytest
@@ -32,7 +30,7 @@ class TestEditBase(locker_helper.PopulatedLocker):
         self.my_locker.add_item(my_item)
         try:
             self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
-        except KeyError as err:
+        except KeyError:
             commands = list(phibes_cli.main.commands.keys())
             raise KeyError(
                 f"{self.target_cmd_name} not found in {commands}"
@@ -47,13 +45,13 @@ class TestEditBase(locker_helper.PopulatedLocker):
         :return:
         """
         args = [
-                "--locker", self.locker_name,
-                "--password", self.password,
-                "--item_type", self.test_item_type,
-                "--item", self.test_item_name,
-                "--editor", "echo 'happyclappy' >> ",
-                "--overwrite", overwrite
-            ]
+            "--locker", self.locker_name,
+            "--password", self.password,
+            "--item_type", self.test_item_type,
+            "--item", self.test_item_name,
+            "--editor", "echo 'happyclappy' >> ",
+            "--overwrite", overwrite
+        ]
         if template:
             args += ["--template", template]
         return CliRunner().invoke(self.target_cmd, args)
@@ -185,7 +183,9 @@ class TestEditExists(TestEditBase):
         return
 
     def common_pos_asserts(self, result, expected_content):
-        super(TestEditExists, self).common_pos_asserts(result, expected_content)
+        super(TestEditExists, self).common_pos_asserts(
+            result, expected_content
+        )
         return
 
     def item_unchanged_asserts(self, before_item):

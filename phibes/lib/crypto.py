@@ -6,7 +6,7 @@ Cryptography support
 import base64
 import hashlib
 import secrets
-from typing import Optional, Tuple
+from typing import Optional
 
 # Third party packages
 from Cryptodome.Cipher import AES
@@ -109,7 +109,9 @@ def get_password_hash(password: str, salt: str) -> str:
     :return:
     """
     try:
-        ret_val = get_strong_hash(password, AUTH_KEY_ROUNDS, salt, length=KEY_BYTES)
+        ret_val = get_strong_hash(
+            password, AUTH_KEY_ROUNDS, salt, length=KEY_BYTES
+        )
     except TypeError as err:
         raise err
     return ret_val

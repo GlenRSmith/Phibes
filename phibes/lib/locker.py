@@ -352,7 +352,9 @@ class Locker(object):
             elif type(item_type_filter) is str:
                 item_type_filter = {item_type_filter}
             else:
-                raise TypeError(f"unexpected arg type {type(item_type_filter)}")
+                raise TypeError(
+                    f"unexpected arg type {type(item_type_filter)}"
+                )
         if not item_type_filter <= set(Locker.registered_items):
             unknown_types = item_type_filter - set(Locker.registered_items)
             raise ValueError(

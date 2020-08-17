@@ -8,7 +8,7 @@ pytest module for lib.locker
 import pytest
 
 # Local application/library specific imports
-from locker_helper import EmptyLocker, PopulatedLocker
+from tests.lib.locker_helper import EmptyLocker, PopulatedLocker
 from phibes.lib.locker import Locker
 
 

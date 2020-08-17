@@ -10,7 +10,7 @@ import json
 # Local application/library specific imports
 from phibes.lib.secret import Secret
 from phibes.lib.template import Template
-from locker_helper import EmptyLocker
+from tests.lib.locker_helper import EmptyLocker
 
 
 class TestTemplate(EmptyLocker):
