@@ -109,7 +109,9 @@ def get_password_hash(password: str, salt: str) -> str:
     :return:
     """
     try:
-        ret_val = get_strong_hash(password, AUTH_KEY_ROUNDS, salt, length=KEY_BYTES)
+        ret_val = get_strong_hash(
+            password, AUTH_KEY_ROUNDS, salt, length=KEY_BYTES
+        )
     except TypeError as err:
         raise err
     return ret_val

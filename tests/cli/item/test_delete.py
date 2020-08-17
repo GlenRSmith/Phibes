@@ -48,6 +48,7 @@ class TestDeleteItem(locker_helper.PopulatedLocker):
             ]
         )
 
+    @pytest.mark.positive
     def test_delete_item(self, tmp_path, datadir):
         result = self.invoke(self.delete_item_type, self.delete_item_name)
         assert result.exit_code == 0

@@ -116,4 +116,3 @@ class TestPhibesFile(object):
         assert result['salt'] == self.test_salt
         assert result['timestamp'] == self.test_timestamp
         assert result['body'] == ''
-

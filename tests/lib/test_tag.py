@@ -9,7 +9,7 @@ import pytest
 
 # Local application/library specific imports
 from phibes.lib.tag import Tag
-from locker_helper import EmptyLocker
+from tests.lib.locker_helper import EmptyLocker
 
 
 class TestTags(EmptyLocker):
