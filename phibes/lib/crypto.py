@@ -6,7 +6,7 @@ Cryptography support
 import base64
 import hashlib
 import secrets
-from typing import Optional, Tuple
+from typing import Optional
 
 # Third party packages
 from Cryptodome.Cipher import AES

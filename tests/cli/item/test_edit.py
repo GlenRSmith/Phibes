@@ -30,7 +30,7 @@ class TestEditBase(locker_helper.PopulatedLocker):
         self.my_locker.add_item(my_item)
         try:
             self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
-        except KeyError as err:
+        except KeyError:
             commands = list(phibes_cli.main.commands.keys())
             raise KeyError(
                 f"{self.target_cmd_name} not found in {commands}"

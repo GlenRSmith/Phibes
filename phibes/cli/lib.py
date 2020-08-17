@@ -75,11 +75,9 @@ def get_user_editor():
     editor = Config().editor
     if not editor:
         print(
-            Style.RESET_ALL
-            + Style.BRIGHT
-            + Fore.RED
-            + "ERROR, NO EDITOR FOUND!\n"
-            + Style.RESET_ALL
+            f"{Style.RESET_ALL}{Style.BRIGHT}{Fore.RED}"
+            f"ERROR, NO EDITOR FOUND!\n"
+            f"{Style.RESET_ALL}"
         )
         print("Please set an editor.")
         sys.exit(1)
