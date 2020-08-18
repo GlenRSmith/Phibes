@@ -67,6 +67,10 @@ class PhibesExistsError(PhibesCliError):
     pass
 
 
+class PhibesPasswordError(PhibesCliError):
+    pass
+
+
 def make_str_bool(bool_str: str) -> bool:
     return not bool_str.lower().startswith('f')
 
