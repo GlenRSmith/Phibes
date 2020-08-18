@@ -4,6 +4,7 @@ Click-based command-line interface to phibes
 """
 
 # core library modules
+import getpass
 import pathlib
 
 # third party packages
@@ -32,7 +33,7 @@ class NaturalOrderGroup(click.Group):
     prompt='config path',
     default=pathlib.Path.home().joinpath('.phibes.cfg')
 )
-@click.option('--locker', prompt='Locker')
+@click.option('--locker', prompt='Locker', default=getpass.getuser())
 @click.option('--password', prompt='Password', hide_input=True)
 @click.pass_context
 def main(ctx, config, locker, password):
