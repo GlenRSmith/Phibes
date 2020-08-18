@@ -49,4 +49,5 @@ def delete(config, locker, password):
     click.echo(f"Locker deleted {locker}")
     return
 
+
 delete_locker_cmd = make_click_command('delete-locker', delete, options)
