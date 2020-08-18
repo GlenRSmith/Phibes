@@ -161,7 +161,9 @@ class Locker(object):
         try:
             inst = Locker(name, password, create=False)
         except FileNotFoundError:
-            return None
+            raise FileNotFoundError(
+                f"Locker {name} not found"
+            )
         return inst
 
     @classmethod
