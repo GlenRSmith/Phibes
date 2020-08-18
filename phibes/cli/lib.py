@@ -3,7 +3,10 @@ Support functions for command-line interface modules.
 """
 
 # core library modules
+import copy
+import getpass
 import os
+import pathlib
 import sys
 
 # third party packages
@@ -15,19 +18,40 @@ from phibes.lib.config import Config
 from phibes.lib.locker import Locker
 
 
-def catch_phibes_cli(func):
-    """
-    decorator for command-line function error handling
-    :param func: command-line function
-    :return:
-    """
-    def inner_function(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except PhibesCliError as err:
-            click.echo(err.message)
-            exit(1)
-    return inner_function
+COMMON_OPTIONS = {
+    'config': click.option(
+        '--config',
+        default=pathlib.Path.home().joinpath('.phibes.cfg'),
+        help="Path to config file `.phibes.cfg`, defaults to user home",
+        show_envvar=True
+    ),
+    'locker': click.option(
+        '--locker',
+        prompt='Locker',
+        default=getpass.getuser(),
+        help="Name of locker, defaults to local OS username"
+    ),
+    'password': click.option(
+        '--password',
+        prompt='Password',
+        hide_input=True
+    ),
+}
+
+
+def apply_options(options):
+    def decorator(f):
+        for option in reversed(options):
+            option(f)
+        return f
+    return decorator
+
+
+def make_click_command(cmd_name, func, initial_options: dict):
+    options = copy.deepcopy(COMMON_OPTIONS)
+    options.update(initial_options)
+    apply_options(options.values())(func)
+    return click.command(cmd_name)(func)
 
 
 def get_locker(locker_name, password):
