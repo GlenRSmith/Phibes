@@ -3,7 +3,10 @@ Support functions for command-line interface modules.
 """
 
 # core library modules
+import copy
+import getpass
 import os
+import pathlib
 import sys
 
 # third party packages
@@ -15,19 +18,43 @@ from phibes.lib.config import Config
 from phibes.lib.locker import Locker
 
 
-def catch_phibes_cli(func):
-    """
-    decorator for command-line function error handling
-    :param func: command-line function
-    :return:
-    """
-    def inner_function(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except PhibesCliError as err:
-            click.echo(err.message)
-            exit(1)
-    return inner_function
+COMMON_OPTIONS = {
+    'config': click.option(
+        '--config',
+        default=pathlib.Path.home().joinpath('.phibes.cfg'),
+        type=pathlib.Path,
+        help="Path to config file `.phibes.cfg`, defaults to user home",
+        show_envvar=True
+    ),
+    'locker': click.option(
+        '--locker',
+        prompt='Locker',
+        type=str,
+        default=getpass.getuser(),
+        help="Name of locker, defaults to local OS username"
+    ),
+    'password': click.option(
+        '--password',
+        prompt='Password',
+        help='Password used when Locker was created',
+        hide_input=True
+    ),
+}
+
+
+def apply_options(options):
+    def decorator(f):
+        for option in reversed(options):
+            option(f)
+        return f
+    return decorator
+
+
+def make_click_command(cmd_name, func, initial_options: dict):
+    options = copy.deepcopy(COMMON_OPTIONS)
+    options.update(initial_options)
+    apply_options(options.values())(func)
+    return click.command(cmd_name)(func)
 
 
 def get_locker(locker_name, password):
@@ -42,6 +69,15 @@ def get_locker(locker_name, password):
     except FileNotFoundError:
         raise PhibesNotFoundError(
             f"can't find locker {locker_name} (could be password error)"
+        )
+
+
+def get_config(config):
+    try:
+        return Config(config)
+    except FileNotFoundError:
+        raise PhibesNotFoundError(
+            f"config file not found at {config}"
         )
 
 
@@ -64,6 +100,10 @@ class PhibesNotFoundError(PhibesCliError):
 
 
 class PhibesExistsError(PhibesCliError):
+    pass
+
+
+class PhibesPasswordError(PhibesCliError):
     pass
 
 
@@ -220,7 +260,12 @@ def delete_item(
         item_type: str,
         item_name: str
 ):
-    my_locker = get_locker(locker_name, password)
+    try:
+        my_locker = Locker(locker_name, password)
+    except FileNotFoundError:
+        raise PhibesNotFoundError(
+            f"Locker {locker_name} not found"
+        )
     try:
         my_locker.delete_item(item_name, item_type)
     except FileNotFoundError:

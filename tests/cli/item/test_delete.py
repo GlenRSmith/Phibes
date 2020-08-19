@@ -19,7 +19,7 @@ class TestDeleteItem(locker_helper.PopulatedLocker):
 
     delete_item_name = 'gonna_delete'
     delete_item_type = 'secret'
-    target_cmd_name = 'delete'
+    target_cmd_name = 'delete-item'
 
     def setup_method(self):
         super(TestDeleteItem, self).setup_method()

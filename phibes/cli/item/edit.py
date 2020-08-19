@@ -8,43 +8,55 @@ Click command for `edit`
 import click
 
 # in-project modules
-from phibes.cli.lib import catch_phibes_cli
+from phibes.cli.lib import get_config
+from phibes.cli.lib import make_click_command
 from phibes.cli.lib import edit_item
 from phibes.lib.config import Config
 from phibes.lib.locker import registered_items
 
 
-@click.command(name='edit')
-@click.option('--locker', prompt='Locker name')
-@click.option('--password', prompt='Password', hide_input=True)
-@click.option(
-    '--item_type',
-    prompt='Type of item to edit',
-    type=click.Choice(registered_items.keys()),
-    default='secret'
-)
-@click.option('--item', prompt='Item name')
-@click.option(
-    '--overwrite',
-    prompt='Should any existing item be overwritten?',
-    default=False
-)
-@click.option(
-    '--template',
-    prompt='Name of template to start with',
-    default='Empty'
-)
-@click.option(
-    '--editor',
-    prompt='Editor',
-    default=Config('.').editor
-)
-@catch_phibes_cli
+options = {
+    'item_type': click.option(
+        '--item_type',
+        prompt='Type of item to edit',
+        help='Type of item to edit',
+        type=click.Choice(registered_items.keys()),
+        default='secret'
+    ),
+    'item': click.option(
+        '--item',
+        prompt='Item name',
+        help='Name of item to edit',
+    ),
+    'overwrite': click.option(
+        '--overwrite',
+        type=bool,
+        prompt='Should any existing item be overwritten?',
+        help='Whether to overwrite existing item',
+        default=False
+    ),
+    'template': click.option(
+        '--template',
+        prompt='Name of template to start with',
+        help='Name of template to start with',
+        default='Empty'
+    ),
+    'editor': click.option(
+        '--editor',
+        prompt='Editor',
+        help='Editor to use (Phibes will attempt to launch)',
+        default=Config('.').editor
+    )
+}
+
+
 def edit(
-        locker, password, item_type, item, editor, overwrite, template
+        config, locker, password, item_type, item, editor, overwrite, template
 ):
     """
-    Use your text editor to create or update an item in your locker
+    Launch editor to create/update an item in a locker
+
+    :param config:
     :param locker:
     :param password:
     :param item_type:
@@ -54,8 +66,12 @@ def edit(
     :param template:
     :return:
     """
+    user_config = get_config(config)
     if template == 'Empty':
         template = None
     return edit_item(
         locker, password, item_type, item, overwrite, template, editor
     )
+
+
+edit_item_cmd = make_click_command('edit', edit, options)
