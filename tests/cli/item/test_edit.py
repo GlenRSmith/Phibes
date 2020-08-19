@@ -10,6 +10,7 @@ from click.testing import CliRunner
 
 # Local application/library specific imports
 from phibes import phibes_cli
+from phibes.cli.lib import PhibesCliError, PhibesNotFoundError
 from tests.lib import locker_helper
 
 
@@ -58,9 +59,8 @@ class TestEditBase(locker_helper.PopulatedLocker):
 
     def common_neg_asserts(self, result):
         assert result.exit_code == 1
-        assert "phibes" in result.output.lower()
-        assert "error" in result.output.lower()
         assert result.exception
+        assert isinstance(result.exception, PhibesCliError)
         return
 
     def common_pos_asserts(self, result, expected_content):
@@ -248,7 +248,7 @@ class TestEditExists(TestEditBase):
         )
         result = self.invoke(False, self.good_template_name)
         self.common_neg_asserts(result)
-        assert f"{self.test_item_type}" in result.output
+        assert f"{self.test_item_type}" in result.exception.message.lower()
         self.item_unchanged_asserts(before)
         return
 
@@ -301,6 +301,7 @@ class TestEditExists(TestEditBase):
         )
         result = self.invoke(True, self.bad_template_name)
         self.common_neg_asserts(result)
-        assert "template" in result.output
+        assert "template" in result.exception.message.lower()
+        assert isinstance(result.exception, PhibesNotFoundError)
         self.item_unchanged_asserts(before)
         return

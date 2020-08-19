@@ -22,18 +22,21 @@ COMMON_OPTIONS = {
     'config': click.option(
         '--config',
         default=pathlib.Path.home().joinpath('.phibes.cfg'),
+        type=pathlib.Path,
         help="Path to config file `.phibes.cfg`, defaults to user home",
         show_envvar=True
     ),
     'locker': click.option(
         '--locker',
         prompt='Locker',
+        type=str,
         default=getpass.getuser(),
         help="Name of locker, defaults to local OS username"
     ),
     'password': click.option(
         '--password',
         prompt='Password',
+        help='Password used when Locker was created',
         hide_input=True
     ),
 }
@@ -66,6 +69,15 @@ def get_locker(locker_name, password):
     except FileNotFoundError:
         raise PhibesNotFoundError(
             f"can't find locker {locker_name} (could be password error)"
+        )
+
+
+def get_config(config):
+    try:
+        return Config(config)
+    except FileNotFoundError:
+        raise PhibesNotFoundError(
+            f"config file not found at {config}"
         )
 
 
@@ -248,7 +260,12 @@ def delete_item(
         item_type: str,
         item_name: str
 ):
-    my_locker = get_locker(locker_name, password)
+    try:
+        my_locker = Locker(locker_name, password)
+    except FileNotFoundError:
+        raise PhibesNotFoundError(
+            f"Locker {locker_name} not found"
+        )
     try:
         my_locker.delete_item(item_name, item_type)
     except FileNotFoundError:

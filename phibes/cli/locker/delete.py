@@ -8,9 +8,9 @@ Click interface to delete Locker
 import click
 
 # in-project modules
+from phibes.cli.lib import get_config
+from phibes.cli.lib import get_locker
 from phibes.cli.lib import make_click_command
-from phibes.cli.lib import PhibesNotFoundError
-from phibes.lib.config import Config
 from phibes.lib.locker import Locker
 
 
@@ -21,18 +21,8 @@ def delete(config, locker, password):
     """
     Delete a locker
     """
-    try:
-        user_config = Config(config)
-    except FileNotFoundError:
-        raise PhibesNotFoundError(
-            f"config file not found at {config}"
-        )
-    try:
-        inst = Locker(locker, password)
-    except FileNotFoundError:
-        raise PhibesNotFoundError(
-            f"locker {locker} not found"
-        )
+    user_config = get_config(config)
+    inst = get_locker(locker, password)
     if inst.lock_file.exists():
         click.echo(f"confirmed lock file {inst.lock_file} exists")
     if inst.path.exists():
