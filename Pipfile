@@ -8,11 +8,13 @@ pytest = "*"
 pytest-cov = "*"
 pytest-datadir-ng = "*"
 flake8 = "*"
+pipenv = "*"
 
 [packages]
 click = "*"
 pycryptodomex = "*"
 colorama = "*"
+phibes = {editable = true, path = "."}
 
 [requires]
 python_version = "3.8"
@@ -21,3 +23,4 @@ python_version = "3.8"
 test = "pytest --basetemp=./basetemp --verbose --capture=no"
 cov = "pytest --cov=phibes tests --cov-fail-under=60"
 flake = "flake8 phibes"
+list = "./pipenv_list_scripts.py"
