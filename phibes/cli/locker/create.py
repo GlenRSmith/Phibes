@@ -8,9 +8,9 @@ Click interface to create Locker
 import click
 
 # in-project modules
-from phibes.cli.lib import get_config
 from phibes.cli.lib import make_click_command
 from phibes.cli.lib import PhibesExistsError
+from phibes.lib.config import load_config
 from phibes.lib.locker import Locker
 
 
@@ -28,12 +28,14 @@ def create(config, locker, password):
     """
     Create a new Locker
     """
-    user_config = get_config(config)
+    # import pdb
+    # pdb.set_trace()
+    load_config(config)
     try:
         new_locker = Locker(locker, password, create=True)
-    except FileExistsError:
+    except FileExistsError as err:
         raise PhibesExistsError(
-            f"Locker {locker} already exists"
+            f"Locker {locker} already exists\n{err}"
         )
     click.echo(f"Locker created {locker}")
     click.echo(f"Locker created {new_locker.path}")
