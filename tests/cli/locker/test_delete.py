@@ -49,14 +49,14 @@ class TestDeleteLocker(BaseTestClass):
         "command_instance", [delete_locker_cmd, main.commands['delete-locker']]
     )
     def test_delete_locker_main(
-            self, setup_and_teardown, tmp_path, command_instance
+            self, setup_and_teardown, command_instance
     ):
         inst = Locker(self.name, self.pw)
         assert inst
         result = CliRunner().invoke(
             command_instance,
             [
-                "--config", tmp_path,
+                "--config", self.test_path,
                 "--locker", self.name,
                 "--password", self.pw
             ]

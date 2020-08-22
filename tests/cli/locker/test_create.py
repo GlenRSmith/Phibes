@@ -48,13 +48,13 @@ class TestCreateLocker(BaseTestClass):
     @pytest.mark.parametrize(
         "command_instance", [create_locker_cmd, main.commands['create-locker']]
     )
-    def test_create_locker2(
-            self, setup_and_teardown, tmp_path, command_instance
+    def test_create_locker(
+            self, setup_and_teardown, command_instance
     ):
         result = CliRunner().invoke(
             command_instance,
             [
-                "--config", tmp_path,
+                "--config", self.test_path,
                 "--locker", self.name,
                 "--password", self.pw
             ]

@@ -8,32 +8,38 @@ Click interface to get Locker
 import click
 
 # in-project modules
+from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import get_locker
-from phibes.cli.lib import make_click_command
-from phibes.lib.config import load_config
+
+
+class GetLockerCmd(ConfigFileLoadingCmd):
+
+    def __init__(self):
+        super(GetLockerCmd, self).__init__()
+        return
+
+    @staticmethod
+    def handle(config, locker, password, verbose, *args, **kwargs):
+        super(GetLockerCmd, GetLockerCmd).handle(
+            config, *args, **kwargs
+        )
+        inst = get_locker(locker, password)
+        if inst.lock_file.exists():
+            click.echo(f"confirmed lock file {inst.lock_file} exists")
+        if inst.path.exists():
+            click.echo(f"confirmed locker dir {inst.path} exists")
+        print(f"{inst} verbose: {verbose} todo")
+        return inst
 
 
 options = {
-    '--verbose': click.option(
+    'verbose': click.option(
         '--verbose',
         help="Do you want a verbose report?",
         prompt="verbose", default=False, type=bool
     )
 }
 
-
-def get(config, locker, password, verbose):
-    """
-
-    """
-    load_config(config)
-    inst = get_locker(locker, password)
-    if inst.lock_file.exists():
-        click.echo(f"confirmed lock file {inst.lock_file} exists")
-    if inst.path.exists():
-        click.echo(f"confirmed locker dir {inst.path} exists")
-    print(f"{inst} verbose: {verbose} todo")
-    return inst
-
-
-get_locker_cmd = make_click_command('get-locker', get, options)
+get_locker_cmd = GetLockerCmd.make_click_command(
+    'get-locker', options, exclude_common=False
+)
