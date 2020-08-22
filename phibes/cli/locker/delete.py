@@ -10,7 +10,6 @@ import click
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import get_locker
-from phibes.cli.lib import make_click_command
 from phibes.lib.locker import Locker
 
 
