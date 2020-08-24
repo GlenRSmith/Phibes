@@ -3,6 +3,7 @@ pytest module for phibes_cli edit (item) command
 """
 
 # Standard library imports
+from os import environ
 
 # Related third party imports
 import pytest
@@ -11,19 +12,20 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes import phibes_cli
 from phibes.cli.lib import PhibesCliError, PhibesNotFoundError
-from tests.lib import locker_helper
+from tests.lib.locker_helper import PopulatedLocker, setup_and_teardown
 
 
-class TestEditBase(locker_helper.PopulatedLocker):
+class TestEditBase(PopulatedLocker):
 
     test_item_name = 'gonna_edit'
     test_item_type = 'secret'
     good_template_name = 'good_template'
     bad_template_name = 'bad_template'
     target_cmd_name = 'edit'
+    target_cmd = None
 
-    def setup_method(self):
-        super(TestEditBase, self).setup_method()
+    def custom_setup(self, tmp_path):
+        super(TestEditBase, self).custom_setup(tmp_path)
         my_item = self.my_locker.create_item(
             self.good_template_name, "template"
         )
@@ -64,6 +66,8 @@ class TestEditBase(locker_helper.PopulatedLocker):
         return
 
     def common_pos_asserts(self, result, expected_content):
+        import pdb
+        pdb.set_trace()
         assert result.exit_code == 0
         inst = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
@@ -75,8 +79,8 @@ class TestEditBase(locker_helper.PopulatedLocker):
 
 class TestEditNew(TestEditBase):
 
-    def setup_method(self):
-        super(TestEditNew, self).setup_method()
+    def custom_setup(self, tmp_path):
+        super(TestEditNew, self).custom_setup(tmp_path)
 
     def common_neg_asserts(self, result):
         super(TestEditNew, self).common_neg_asserts(result)
@@ -91,12 +95,11 @@ class TestEditNew(TestEditBase):
         return
 
     @pytest.mark.positive
-    def test_notemplate(self, tmp_path, datadir):
+    def test_notemplate(self, setup_and_teardown):
         """
         Simple case: create a new item, no template used,
         overwrite not specified
-        :param tmp_path: pytest plugin injected
-        :param datadir: pytest plugin injected
+        :param setup_and_teardown: injected fixture
         :return:
         """
         result = self.invoke(False)

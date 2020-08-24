@@ -12,17 +12,15 @@ import pathlib
 import click
 
 # in-project modules
-from phibes.lib.config import ConfigFile, load_config
+from phibes.lib.config import CONFIG_FILE_NAME, load_config_file, get_home_dir
 
 
 config_option = click.option(
         '--config',
-        default=pathlib.Path.home().joinpath(
-            ConfigFile.default_file_name
-        ),
+        default=get_home_dir().joinpath(CONFIG_FILE_NAME),
         type=pathlib.Path,
         help=(
-            f"Path to config file `{ConfigFile.default_file_name}`, "
+            f"Path to config file `{CONFIG_FILE_NAME}`, "
             f"defaults to user home"
         ),
         show_envvar=True,
@@ -111,5 +109,5 @@ class ConfigFileLoadingCmd(PhibesCommandBase):
         super(ConfigFileLoadingCmd, ConfigFileLoadingCmd).handle(
             *args, **kwargs
         )
-        load_config(config_file)
+        load_config_file(config_file)
         return
