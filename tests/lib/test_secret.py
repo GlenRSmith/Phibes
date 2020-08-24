@@ -8,12 +8,15 @@ pytest module for lib.secret
 
 # Local application/library specific imports
 from phibes.lib.secret import Secret
+
+# Local test imports
 from tests.lib.locker_helper import EmptyLocker
+from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestSecrets(EmptyLocker):
 
-    def test_secrets(self):
+    def test_secrets(self, setup_and_teardown):
         # create some secrets
         pth = self.my_locker.get_item_path("secret", "facebook")
         s1 = Secret(self.my_locker.crypt_key, "facebook")

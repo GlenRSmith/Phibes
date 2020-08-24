@@ -9,13 +9,16 @@ import pytest
 
 # Local application/library specific imports
 from phibes.lib.tag import Tag
+
+# Local test imports
 from tests.lib.locker_helper import EmptyLocker
+from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestTags(EmptyLocker):
 
     @pytest.mark.positive
-    def test_tags(self):
+    def test_tags(self, setup_and_teardown):
         # create some secrets
         s1 = self.my_locker.create_item("facebook", "secret")
         s2 = self.my_locker.create_item("twitter", "secret")

@@ -10,7 +10,10 @@ import pytest
 # Local application/library specific imports
 from phibes.lib import crypto
 from phibes.lib import locker
+
+# Local test imports
 from tests.lib.locker_helper import EmptyLocker
+from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestCryptImpl(object):
@@ -76,7 +79,7 @@ class TestCrypto(EmptyLocker):
             )
 
     @pytest.mark.positive
-    def test_good_auth(self):
+    def test_good_auth(self, tmp_path, setup_and_teardown):
         assert locker.Locker(
             self.locker_name, self.password, create=False
         )
