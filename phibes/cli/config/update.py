@@ -12,11 +12,16 @@ import click
 from phibes.cli.command_base import PhibesCommandBase
 from phibes.cli.lib import PhibesExistsError, PhibesCliError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
-from phibes.lib.config import get_home_dir, load_config_file
+from phibes.lib.config import get_home_dir, load_config_file, write_config_file
 from phibes.lib.config import write_config_file
 
+try:
+    load_config_file(get_home_dir().joinpath(CONFIG_FILE_NAME))
+except FileNotFoundError:
+    conf = ConfigModel(store_path='.', editor='vi', hash_names=True)
+    write_config_file(get_home_dir().joinpath(CONFIG_FILE_NAME), conf)
 
-load_config_file(get_home_dir().joinpath(CONFIG_FILE_NAME))
+
 current_conf = ConfigModel()
 
 
