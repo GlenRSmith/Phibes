@@ -9,10 +9,44 @@ import pathlib
 import click
 
 # in-project modules
-from phibes.cli.lib import make_click_command
+from phibes.cli.command_base import PhibesCommandBase
 from phibes.cli.lib import PhibesExistsError, PhibesCliError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import write_config_file
+
+
+class CreateConfigCmd(PhibesCommandBase):
+
+    def __int__(self):
+        super(CreateConfigCmd, self).__init__()
+        return
+
+    @staticmethod
+    def handle(
+            path: pathlib.Path,
+            store_path: pathlib.Path,
+            editor: str,
+            hash: bool,
+            *args, **kwargs
+    ):
+        """
+        Create a new Configuration file
+        """
+        super(CreateConfigCmd, CreateConfigCmd).handle(
+            *args, **kwargs
+        )
+        try:
+            new_config = ConfigModel(
+                store_path=store_path, editor=editor, hash_names=hash
+            )
+            new_config.validate()
+            write_config_file(path, new_config)
+        except ValueError as err:
+            raise PhibesCliError(err)
+        except FileExistsError as err:
+            raise PhibesExistsError(err)
+        return
+
 
 options = {
     'path': click.option(
@@ -45,28 +79,6 @@ options = {
 }
 
 
-def create(
-        path: pathlib.Path,
-        store_path: pathlib.Path,
-        editor: str,
-        hash: bool
-):
-    """
-    Create a new Configuration file
-    """
-    try:
-        new_config = ConfigModel(
-            store_path=store_path, editor=editor, hash_names=hash
-        )
-        new_config.validate()
-        write_config_file(path, new_config)
-    except ValueError as err:
-        raise PhibesCliError(err)
-    except FileExistsError as err:
-        raise PhibesExistsError(err)
-    return
-
-
-create_config_cmd = make_click_command(
-    'create-config', create, options, exclude_common=True
+create_config_cmd = CreateConfigCmd.make_click_command(
+    'create-config', options
 )
