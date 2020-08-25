@@ -80,5 +80,5 @@ options = {
 
 
 create_config_cmd = CreateConfigCmd.make_click_command(
-    'create-config', options
+    'create-config', options, exclude_common=True
 )
