@@ -8,11 +8,48 @@ Click command for `edit`
 import click
 
 # in-project modules
-from phibes.cli.lib import get_config
-from phibes.cli.lib import make_click_command
+from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import edit_item
-from phibes.lib.config import Config
 from phibes.lib.locker import registered_items
+
+
+class EditItemCmd(ConfigFileLoadingCmd):
+
+    def __init__(self):
+        super(EditItemCmd, self).__init__()
+        return
+
+    @staticmethod
+    def handle(
+            config,
+            locker,
+            password,
+            item_type,
+            item,
+            overwrite,
+            template,
+            *args, **kwargs
+    ):
+        """
+        Launch editor to create/update an item in a locker
+
+        :param config:
+        :param locker:
+        :param password:
+        :param item_type:
+        :param item:
+        :param overwrite:
+        :param template:
+        :return:
+        """
+        super(EditItemCmd, EditItemCmd).handle(
+            config, *args, **kwargs
+        )
+        if template == 'Empty':
+            template = None
+        return edit_item(
+            locker, password, item_type, item, overwrite, template
+        )
 
 
 options = {
@@ -40,38 +77,8 @@ options = {
         prompt='Name of template to start with',
         help='Name of template to start with',
         default='Empty'
-    ),
-    'editor': click.option(
-        '--editor',
-        prompt='Editor',
-        help='Editor to use (Phibes will attempt to launch)',
-        default=Config('.').editor
     )
 }
 
 
-def edit(
-        config, locker, password, item_type, item, editor, overwrite, template
-):
-    """
-    Launch editor to create/update an item in a locker
-
-    :param config:
-    :param locker:
-    :param password:
-    :param item_type:
-    :param item:
-    :param editor:
-    :param overwrite:
-    :param template:
-    :return:
-    """
-    user_config = get_config(config)
-    if template == 'Empty':
-        template = None
-    return edit_item(
-        locker, password, item_type, item, overwrite, template, editor
-    )
-
-
-edit_item_cmd = make_click_command('edit', edit, options)
+edit_item_cmd = EditItemCmd.make_click_command('edit', options)

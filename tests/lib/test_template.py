@@ -10,12 +10,15 @@ import json
 # Local application/library specific imports
 from phibes.lib.secret import Secret
 from phibes.lib.template import Template
+
+# Local test imports
 from tests.lib.locker_helper import EmptyLocker
+from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestTemplate(EmptyLocker):
 
-    def test_template(self):
+    def test_template(self, setup_and_teardown):
         # create a template
         t1 = self.my_locker.create_item("basic", "template")
         form = {

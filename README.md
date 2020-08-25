@@ -6,7 +6,7 @@ As this is an early work-in-progress, I would discourage the use of it as an act
 
 At this time, the app isn't available through PyPi, so you'll have to install from github.
 
-Clone the repository and install it in a virtual environment (python 3.8).
+Clone the repository and install it in a virtual environment (python 3.8) using pipenv.
 
 ## Setup/Config
 
@@ -16,44 +16,39 @@ With your virtual environment activated and phibes installed, you can run the `c
 - editor [default is from $EDITOR if it is set]
 - storage location [default is current working directory]
 
-The file, `.phibes-conf.json`, is a simple json file that you can also edit directly.
+The file, `.phibes.cfg`, is a simple json file that you can also edit directly.
 
 Each time you issue a command, the app will search for a config file as follows:
 
-- path provided as part of the command
-- environment variable "PHIBES_CONFIG"
-- current working directory
+- path provided as part of the command (`--config`)
 - user home directory
 
 ### Editor
 
 In the command-line client, addition/update of Items to a Locker is done by executing the `edit` command, which will launch an editor and store the encrypted contents of the file when you save and exit. (Some editors, like Atom, are problematic because they don't block python when they are invoked. I recommend configuring vim, emacs, or nano.)
 
-When you issue the edit command, the editor to use will be the first of:
-- `editor` specified as part of the command
-- `editor` specified in discovered config file (see above)
-- environment variable `PHIBES_EDIT`
+When you issue the edit command, phibes will attempt to launch the editor you have specified in your config.
+There is no attempt made to validate that what you've configured is valid prior to this execution.
 
 ### Storage Path
 
 This will be where the data you add is stored.
-When you issue a command, the app will determine the storage path as follows:
-- `storage_path` specified as part of the command
-- `storage_path` specified in discovered config file (see above)
-- environment variable `PHIBES_STORE`
+When you issue a command, the app will use the storage from your configuration file.
+
+When you use the CLI to create a config file, the default storage path is in the directory `.phibes` in the user's home directory.
 
 ## Usage
 
-The command-line interface follows the approach `./ppp.py <item> <action>` followed by prompts for necessary information.
+The command-line interface follows the approach `phibes.py <command>` followed by prompts for options. You may also provide these options as part of the command line.
 
 - Create a Locker for all of your Secrets
 
 ```
-> ./phibes_cli.py locker create
+> ./phibes_cli.py  create-locker
 ```
 
 You will then be prompted for a locker name and a password.
-It is important to never forget/lose these, as they are irretrievable, and without them, nothing in your Locker will be accessible.
+**It is crucial to never forget/lose these, as they are irretrievable, and without them, nothing in your Locker will be accessible.**
 
 For each of the operations below, you will be prompted for the name and password of the Locker.
 

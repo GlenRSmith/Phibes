@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 # Third party packages
 
 # In-project modules
-from . config import Config
+from . config import ConfigModel
 from . crypto import CryptImpl, get_name_hash
 from . item import FILE_EXT, Item
 from . import phibes_file
@@ -90,25 +90,24 @@ class Locker(object):
           - this method should try to open the locker on disk
         :param name: The name of the locker. Must be unique in storage
         """
-        self.conf = Config('.')
+        self.conf = ConfigModel()
         self._salt = None
         self._ciphertext = None
-        # TODO: should this be abstracted to "confirm installed" or something?
-        self.conf.assure_users_dir()
         if self.conf.hash_locker_names:
-            self.path = self.conf.users_path.joinpath(get_name_hash(name))
+            self.path = self.conf.store_path.joinpath(get_name_hash(name))
         else:
-            self.path = self.conf.users_path.joinpath(name)
+            self.path = self.conf.store_path.joinpath(name)
         self.lock_file = self.path.joinpath(".locker.cfg")
         if not self.lock_file.exists() and not create:
             raise FileNotFoundError(
-                f"Matching locker {self.lock_file} not found\n"
+                f"Matching locker {self.lock_file.resolve()} not found\n"
                 f"Did you mean to pass create=True?"
             )
         if self.lock_file.exists() and create:
             raise FileExistsError(
-                f"Matching locker {self.lock_file} already exists\n"
+                f"Matching locker {self.lock_file} already exists"
                 f"Did you mean to pass create=False?"
+                f"{self.conf}"
             )
         if create and not Locker.can_create(self.path):
             raise ValueError(f"could not create {name}")
@@ -147,7 +146,8 @@ class Locker(object):
             shutil.rmtree(inst.path)
         else:
             raise FileNotFoundError(
-                f"Locker {name} not found to delete!"
+                f"Locker {name} not found to delete!\n"
+                f"{ConfigModel()}"
             )
 
     @classmethod
@@ -160,9 +160,10 @@ class Locker(object):
         """
         try:
             inst = Locker(name, password, create=False)
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             raise FileNotFoundError(
                 f"Locker {name} not found"
+                f"{err}"
             )
         return inst
 

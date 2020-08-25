@@ -13,6 +13,7 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes import phibes_cli
 from tests.lib import locker_helper
+from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestListItems(locker_helper.PopulatedLocker):
@@ -20,9 +21,10 @@ class TestListItems(locker_helper.PopulatedLocker):
     item_name = 'list_this'
     item_type = 'secret'
     target_cmd_name = 'list'
+    test_path = None
 
-    def setup_method(self):
-        super(TestListItems, self).setup_method()
+    def custom_setup(self, tmp_path):
+        super(TestListItems, self).custom_setup(tmp_path)
         my_item = self.my_locker.create_item(
             self.item_name, self.item_type
         )
@@ -31,9 +33,15 @@ class TestListItems(locker_helper.PopulatedLocker):
         self.list_items = phibes_cli.main.commands[self.target_cmd_name]
         return
 
+    def custom_teardown(self, tmp_path):
+        self.my_locker.delete_item(self.item_name, self.item_type)
+        super(TestListItems, self).custom_teardown(tmp_path)
+        return
+
     def invoke(self, item_type: str):
         return CliRunner().invoke(
             self.list_items, [
+                "--config", self.test_path,
                 "--locker", self.locker_name, "--password", self.password,
                 "--item_type", self.item_type,
                 "--verbose", False,
@@ -41,14 +49,14 @@ class TestListItems(locker_helper.PopulatedLocker):
             ]
         )
 
-    def test_list_all_items(self, tmp_path, datadir):
+    def test_list_all_items(self, setup_and_teardown):
         result = self.invoke("all")
         assert result.exit_code == 0
         for item_type in self.my_locker.registered_items.keys():
             assert item_type in result.output
         return
 
-    def test_list_by_item_type(self, tmp_path, datadir):
+    def test_list_by_item_type(self, setup_and_teardown):
         all_types = self.my_locker.registered_items.keys()
         for target_type in all_types:
             result = self.invoke(target_type)

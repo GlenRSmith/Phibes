@@ -7,24 +7,28 @@ import copy
 import getpass
 import os
 import pathlib
-import sys
+from typing import Callable
 
 # third party packages
 import click
-from colorama import Fore, Style
 
 # in-project modules
-from phibes.lib.config import Config
+from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
+from phibes.lib.config import get_home_dir
 from phibes.lib.locker import Locker
 
 
 COMMON_OPTIONS = {
     'config': click.option(
         '--config',
-        default=pathlib.Path.home().joinpath('.phibes.cfg'),
+        default=get_home_dir().joinpath(CONFIG_FILE_NAME),
         type=pathlib.Path,
-        help="Path to config file `.phibes.cfg`, defaults to user home",
-        show_envvar=True
+        help=(
+            f"Path to config file `{CONFIG_FILE_NAME}`, "
+            f"defaults to user home"
+        ),
+        show_envvar=True,
+        envvar="PHIBES_CONFIG",
     ),
     'locker': click.option(
         '--locker',
@@ -42,19 +46,32 @@ COMMON_OPTIONS = {
 }
 
 
-def apply_options(options):
-    def decorator(f):
-        for option in reversed(options):
-            option(f)
-        return f
-    return decorator
-
-
-def make_click_command(cmd_name, func, initial_options: dict):
-    options = copy.deepcopy(COMMON_OPTIONS)
-    options.update(initial_options)
-    apply_options(options.values())(func)
-    return click.command(cmd_name)(func)
+def make_click_command(
+        cmd_name: str,
+        func: Callable,
+        initial_options: dict,
+        exclude_common: bool = False
+) -> click.command:
+    """
+    Creates a click command with common options and specific options.
+    Takes a command name, a python function, and a dict of options,
+    and returns a named click.command
+    """
+    if not exclude_common:
+        # Being careful not to mutate the module-level dict
+        options = copy.deepcopy(COMMON_OPTIONS)
+        # Merge the passed-in options dict into the common options dict.
+        # This exposes the ability to override any of the common options,
+        # such as making the `password` option issue a confirmation prompt.
+        options.update(initial_options)
+    else:
+        options = initial_options
+    # Apply all the options to the func, the way the decorators would do
+    for option in reversed(options.values()):
+        option(func)
+    return click.command(
+        cmd_name, context_settings=dict(max_content_width=120)
+    )(func)
 
 
 def get_locker(locker_name, password):
@@ -66,18 +83,10 @@ def get_locker(locker_name, password):
     """
     try:
         return Locker.find(locker_name, password)
-    except FileNotFoundError:
+    except FileNotFoundError as err:
         raise PhibesNotFoundError(
             f"can't find locker {locker_name} (could be password error)"
-        )
-
-
-def get_config(config):
-    try:
-        return Config(config)
-    except FileNotFoundError:
-        raise PhibesNotFoundError(
-            f"config file not found at {config}"
+            f"\n{err}\n"
         )
 
 
@@ -111,27 +120,13 @@ def make_str_bool(bool_str: str) -> bool:
     return not bool_str.lower().startswith('f')
 
 
-def get_user_editor():
-    editor = Config().editor
-    if not editor:
-        print(
-            f"{Style.RESET_ALL}{Style.BRIGHT}{Fore.RED}"
-            f"ERROR, NO EDITOR FOUND!\n"
-            f"{Style.RESET_ALL}"
-        )
-        print("Please set an editor.")
-        sys.exit(1)
-    return editor
-
-
 def edit_item(
         locker_name,
         password,
         item_type,
         item_name,
         overwrite,
-        template_name,
-        editor
+        template_name
 ):
     """
     Open a text editor to edit a new or existing item in a locker
@@ -141,7 +136,6 @@ def edit_item(
     :param item_name: Name of item to edit
     :param overwrite: Whether an existing item should be replaced
     :param template_name: Name of text template to start item with
-    :param editor: Text editor to use
     :return:
     """
     draft_content = ""
@@ -194,7 +188,7 @@ def edit_item(
     work_file = my_locker.path.joinpath(f"{item_type}:{item_name}.tmp")
     work_file.write_text(draft_content)
     try:
-        os.system(f"{editor} {work_file}")
+        os.system(f"{ConfigModel().editor} {work_file}")
         # avoid creating/changing item in storage until after this point,
         # it would be 'astonishing' to the user to apply changes if
         # e.g. there was an exception before they edit the item

@@ -8,9 +8,36 @@ Click interface to phibes items
 import click
 
 # in-project modules
-from phibes.cli.lib import get_config, get_locker, make_click_command
+from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import present_list_items
 from phibes.lib.locker import registered_items
+
+
+class ListItemsCmd(ConfigFileLoadingCmd):
+
+    def __init__(self):
+        super(ListItemsCmd, self).__init__()
+        return
+
+    @staticmethod
+    def handle(
+            config, locker, password, item_type, verbose, *args, **kwargs
+    ):
+        """
+        Display the (unencrypted) names of all matching Items in the Locker
+        :param config:
+        :param locker:
+        :param password:
+        :param item_type: Optional filter on type of item to display
+        :param verbose: Include unencrypted item content in the report
+        :return:
+        """
+        super(ListItemsCmd, ListItemsCmd).handle(
+            config, *args, **kwargs
+        )
+        click.echo(
+            present_list_items(locker, password, item_type, verbose)
+        )
 
 
 options = {
@@ -31,44 +58,4 @@ options = {
 }
 
 
-# @click.command(name='list')
-# @click.option(
-#     '--item_type',
-#     prompt='Type of item to list',
-#     type=click.Choice(list(registered_items.keys()) + ['all']),
-#     default='all'
-# )
-# @click.option('--verbose', prompt='Verbose', default=False, type=bool)
-def list_items(config, locker, password, item_type, verbose):
-    """
-    Display the (unencrypted) names of all Secrets in the Locker
-    :param item_type:
-    :param verbose:
-    :return:
-    """
-    user_config = get_config(config)
-    click.echo(
-        present_list_items(locker, password, item_type, verbose)
-    )
-    return
-
-
-list_items_cmd = make_click_command('list', list_items, options)
-
-
-@click.command()
-@click.option('--locker', prompt='Locker')
-@click.option('--password', prompt='Password', hide_input=True)
-@click.option(
-    '--item_type',
-    prompt='Type of item to list',
-    type=click.Choice(list(registered_items.keys()) + ['all']),
-    default='all'
-)
-@click.option('--verbose', prompt='Verbose', default=False, type=bool)
-def ls(locker, password, item_type, verbose):
-    click.secho(
-        present_list_items(locker, password, item_type, verbose),
-        fg='green'
-    )
-    return
+list_items_cmd = ListItemsCmd.make_click_command('list', options)
