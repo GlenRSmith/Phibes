@@ -17,10 +17,10 @@ from phibes.phibes_cli import main
 
 # Local test imports
 from tests.lib.locker_helper import BaseTestClass
-from tests.lib.locker_helper import setup_and_teardown
+# from tests.lib.locker_helper import setup_and_teardown
 
 
-used = setup_and_teardown
+# used = setup_and_teardown
 
 
 class TestCreateConfig(BaseTestClass):

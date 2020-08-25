@@ -17,10 +17,6 @@ from phibes.phibes_cli import main
 
 # Local test imports
 from tests.lib.locker_helper import ConfigLoadingTestClass
-from tests.lib.locker_helper import setup_and_teardown
-
-
-used = setup_and_teardown
 
 
 class TestUpdateConfig(ConfigLoadingTestClass):

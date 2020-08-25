@@ -11,7 +11,6 @@ from phibes.lib.secret import Secret
 
 # Local test imports
 from tests.lib.locker_helper import EmptyLocker
-from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestSecrets(EmptyLocker):

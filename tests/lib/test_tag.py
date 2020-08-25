@@ -12,7 +12,6 @@ from phibes.lib.tag import Tag
 
 # Local test imports
 from tests.lib.locker_helper import EmptyLocker
-from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestTags(EmptyLocker):

@@ -12,8 +12,7 @@ import pytest
 from phibes.lib.item import Item
 
 # Local test imports
-# from tests.cli.click_test_helpers import update_config_option_default
-from tests.lib.locker_helper import EmptyLocker, setup_and_teardown
+from tests.lib.locker_helper import EmptyLocker
 
 
 class TestCreate(EmptyLocker):

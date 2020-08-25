@@ -15,7 +15,6 @@ from phibes import phibes_cli
 
 # Local test imports
 from tests.lib.locker_helper import PopulatedLocker
-from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestDeleteItem(PopulatedLocker):

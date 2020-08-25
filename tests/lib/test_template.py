@@ -8,12 +8,9 @@ import json
 # Related third party imports
 
 # Local application/library specific imports
-from phibes.lib.secret import Secret
-from phibes.lib.template import Template
 
 # Local test imports
 from tests.lib.locker_helper import EmptyLocker
-from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestTemplate(EmptyLocker):
