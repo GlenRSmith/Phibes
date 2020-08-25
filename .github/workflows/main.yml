@@ -18,6 +18,6 @@ jobs:
           pip install pipenv
           pipenv install --deploy --dev
 
-      - run: pipenv run pytest --basetemp=./basetemp
+      - run: pipenv run pytest
       - run: pipenv run flake8
       - run: pipenv run pytest --cov=phibes --cov-fail-under=60
