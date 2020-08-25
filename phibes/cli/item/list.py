@@ -8,8 +8,9 @@ Click interface to phibes items
 import click
 
 # in-project modules
-from phibes.cli.lib import get_config, get_locker, make_click_command
+from phibes.cli.lib import make_click_command
 from phibes.cli.lib import present_list_items
+from phibes.lib.config import load_config_file
 from phibes.lib.locker import registered_items
 
 
@@ -31,22 +32,17 @@ options = {
 }
 
 
-# @click.command(name='list')
-# @click.option(
-#     '--item_type',
-#     prompt='Type of item to list',
-#     type=click.Choice(list(registered_items.keys()) + ['all']),
-#     default='all'
-# )
-# @click.option('--verbose', prompt='Verbose', default=False, type=bool)
 def list_items(config, locker, password, item_type, verbose):
     """
     Display the (unencrypted) names of all Secrets in the Locker
+    :param config:
+    :param locker:
+    :param password:
     :param item_type:
     :param verbose:
     :return:
     """
-    user_config = get_config(config)
+    load_config_file(config)
     click.echo(
         present_list_items(locker, password, item_type, verbose)
     )
@@ -54,21 +50,3 @@ def list_items(config, locker, password, item_type, verbose):
 
 
 list_items_cmd = make_click_command('list', list_items, options)
-
-
-@click.command()
-@click.option('--locker', prompt='Locker')
-@click.option('--password', prompt='Password', hide_input=True)
-@click.option(
-    '--item_type',
-    prompt='Type of item to list',
-    type=click.Choice(list(registered_items.keys()) + ['all']),
-    default='all'
-)
-@click.option('--verbose', prompt='Verbose', default=False, type=bool)
-def ls(locker, password, item_type, verbose):
-    click.secho(
-        present_list_items(locker, password, item_type, verbose),
-        fg='green'
-    )
-    return

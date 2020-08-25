@@ -10,13 +10,16 @@ import pytest
 
 # Local application/library specific imports
 from phibes.lib.item import Item
-from tests.lib.locker_helper import EmptyLocker
+
+# Local test imports
+# from tests.cli.click_test_helpers import update_config_option_default
+from tests.lib.locker_helper import EmptyLocker, setup_and_teardown
 
 
 class TestCreate(EmptyLocker):
 
     @pytest.mark.negative
-    def test_create_empty_items(self):
+    def test_create_empty_items(self, setup_and_teardown):
         for item_type in self.my_locker.registered_items.keys():
             pth = self.my_locker.get_item_path(
                 f"{item_type}", f"{item_type}_name"
@@ -32,7 +35,7 @@ class TestCreate(EmptyLocker):
 class TestCreateAndSave(EmptyLocker):
 
     @pytest.mark.positive
-    def test_create_items(self):
+    def test_create_items(self, setup_and_teardown):
         for item_type in self.my_locker.registered_items.keys():
             content = (
                 f"here is some stuff"
@@ -61,7 +64,7 @@ class TestCreateAndSave(EmptyLocker):
             assert found
 
     @pytest.mark.positive
-    def test_create_item(self):
+    def test_create_item(self, setup_and_teardown):
         content = (
             f"here is some stuff"
             f"password: HardHat"
@@ -84,7 +87,7 @@ class TestCreateAndSave(EmptyLocker):
         assert found
 
     @pytest.mark.positive
-    def test_content(self):
+    def test_content(self, setup_and_teardown):
         k = self.my_locker
         content = f"does content work?"
         new_item = self.my_locker.create_item('any name', 'secret')
@@ -94,7 +97,7 @@ class TestCreateAndSave(EmptyLocker):
         assert content == found.content
 
     @pytest.mark.positive
-    def test_timestamp(self):
+    def test_timestamp(self, setup_and_teardown):
         k = self.my_locker
         content = f"do timestamps work?"
         new_item = self.my_locker.create_item('any name', 'secret')
@@ -116,7 +119,7 @@ class TestCreateAndSave(EmptyLocker):
 class TestItems(EmptyLocker):
 
     @pytest.mark.positive
-    def test_string_add_content(self):
+    def test_string_add_content(self, setup_and_teardown):
         # can I += the content field?
         k = self.my_locker
         s1 = k.create_item("facebook", "secret")

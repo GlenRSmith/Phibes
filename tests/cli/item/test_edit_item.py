@@ -3,7 +3,6 @@ pytest module for phibes_cli edit (item) command
 """
 
 # Standard library imports
-from os import environ
 
 # Related third party imports
 import pytest
@@ -12,6 +11,10 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes import phibes_cli
 from phibes.cli.lib import PhibesCliError, PhibesNotFoundError
+from phibes.lib.config import set_editor, write_config_file
+
+# Local test imports
+from tests.cli.click_test_helpers import update_config_option_default
 from tests.lib.locker_helper import PopulatedLocker, setup_and_teardown
 
 
@@ -31,6 +34,8 @@ class TestEditBase(PopulatedLocker):
         )
         my_item.content = f"{self.good_template_name}:template"
         self.my_locker.add_item(my_item)
+        set_editor("echo 'happyclappy' >> ")
+        write_config_file(tmp_path)
         try:
             self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
         except KeyError:
@@ -38,6 +43,7 @@ class TestEditBase(PopulatedLocker):
             raise KeyError(
                 f"{self.target_cmd_name} not found in {commands}"
             )
+        update_config_option_default(self.target_cmd, tmp_path)
         return
 
     def invoke(self, overwrite: bool, template: str = None):
@@ -52,7 +58,6 @@ class TestEditBase(PopulatedLocker):
             "--password", self.password,
             "--item_type", self.test_item_type,
             "--item", self.test_item_name,
-            "--editor", "echo 'happyclappy' >> ",
             "--overwrite", overwrite
         ]
         if template:
@@ -66,8 +71,6 @@ class TestEditBase(PopulatedLocker):
         return
 
     def common_pos_asserts(self, result, expected_content):
-        import pdb
-        pdb.set_trace()
         assert result.exit_code == 0
         inst = self.my_locker.get_item(
             self.test_item_name, self.test_item_type
@@ -107,7 +110,7 @@ class TestEditNew(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_notemplate_overwrite(self, tmp_path, datadir):
+    def test_notemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
         """
         Conflict: naming a non-existent item but specifying overwrite
         :param tmp_path: pytest plugin injected
@@ -119,7 +122,7 @@ class TestEditNew(TestEditBase):
         return
 
     @pytest.mark.positive
-    def test_goodtemplate(self, tmp_path, datadir):
+    def test_goodtemplate(self, tmp_path, datadir, setup_and_teardown):
         """
         Creating a new item from an existing template
         :param tmp_path: pytest plugin injected
@@ -133,7 +136,7 @@ class TestEditNew(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_goodtemplate_overwrite(self, tmp_path, datadir):
+    def test_goodtemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
         """
         Iffy scenario, a github issue is open to discuss
         :param tmp_path: pytest plugin injected
@@ -145,7 +148,7 @@ class TestEditNew(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_badtemplate(self, tmp_path, datadir):
+    def test_badtemplate(self, tmp_path, datadir, setup_and_teardown):
         """
         Template is specified that does not exist, should fail
         :param tmp_path: pytest plugin injected
@@ -157,7 +160,7 @@ class TestEditNew(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_badtemplate_overwrite(self, tmp_path, datadir):
+    def test_badtemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
         """
         Template is specified that does not exist, should fail
         Overwrite is specified, but it's a new item, should fail
@@ -172,8 +175,8 @@ class TestEditNew(TestEditBase):
 
 class TestEditExists(TestEditBase):
 
-    def setup_method(self):
-        super(TestEditExists, self).setup_method()
+    def custom_setup(self, tmp_path):
+        super(TestEditExists, self).custom_setup(tmp_path)
         my_item = self.my_locker.create_item(
             self.test_item_name, self.test_item_type
         )
@@ -202,7 +205,7 @@ class TestEditExists(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_notemplate(self, tmp_path, datadir):
+    def test_notemplate(self, tmp_path, datadir, setup_and_teardown):
         """
         Existing item, but overwrite isn't set True, so fail
         :param tmp_path:
@@ -218,7 +221,7 @@ class TestEditExists(TestEditBase):
         return
 
     @pytest.mark.positive
-    def test_notemplate_overwrite(self, tmp_path, datadir):
+    def test_notemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
         """
         Specify existing item and overwrite, should succeed
         :param tmp_path: pytest plugin injected
@@ -239,7 +242,7 @@ class TestEditExists(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_goodtemplate(self, tmp_path, datadir):
+    def test_goodtemplate(self, tmp_path, datadir, setup_and_teardown):
         """
         Existing item, but overwrite isn't set True, so fail
         :param tmp_path:
@@ -256,7 +259,7 @@ class TestEditExists(TestEditBase):
         return
 
     @pytest.mark.positive
-    def test_goodtemplate_overwrite(self, tmp_path, datadir):
+    def test_goodtemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
         """
         Specify existing item & template, & overwrite, should succeed
         :param tmp_path: pytest plugin injected
@@ -274,13 +277,11 @@ class TestEditExists(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_badtemplate(self, tmp_path, datadir):
+    def test_badtemplate(self, setup_and_teardown):
         """
         Template is specified that does not exist, should fail
         Existing item without `overwrite` True, should fail
         Which error is thrown we don't care about
-        :param tmp_path: pytest plugin injected
-        :param datadir: pytest plugin injected
         :return:
         """
         before = self.my_locker.get_item(
@@ -292,7 +293,7 @@ class TestEditExists(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_badtemplate_overwrite(self, tmp_path, datadir):
+    def test_badtemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
         """
         Template is specified that does not exist, should fail
         :param tmp_path: pytest plugin injected

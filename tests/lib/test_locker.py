@@ -8,27 +8,33 @@ pytest module for lib.locker
 import pytest
 
 # Local application/library specific imports
-from tests.lib.locker_helper import EmptyLocker, PopulatedLocker
 from phibes.lib.locker import Locker
 
+# Local test imports
+# from tests.cli.click_test_helpers import update_config_option_default
+from tests.lib.locker_helper import EmptyLocker, PopulatedLocker
+from tests.lib.locker_helper import setup_and_teardown
 
-class TestLocker(object):
+
+class TestLocker(EmptyLocker):
 
     my_locker = None
     locker_name = "my_locker"
     password = "StaplerRadioPersonWomanMan"
 
-    def setup_method(self):
+    def custom_setup(self, tmp_path):
+        super(TestLocker, self).custom_setup(tmp_path)
         try:
             if Locker(self.locker_name, self.password):
                 Locker.delete(self.locker_name, self.password)
         except:
             pass
 
-    def teardown_method(self):
+    def custom_teardown(self):
+        super(TestLocker, self).custom_teardown()
         Locker.delete(self.locker_name, self.password)
 
-    def test_good(self, tmp_path, datadir):
+    def test_good(self, tmp_path, datadir, setup_and_teardown):
         Locker(self.locker_name, self.password, create=True)
         found = Locker(
             self.locker_name, self.password, create=False
@@ -39,7 +45,7 @@ class TestLocker(object):
 
 class TestItemStuff(PopulatedLocker):
 
-    def test_find_all(self, tmp_path, datadir):
+    def test_find_all(self, tmp_path, datadir, setup_and_teardown):
         all = self.my_locker.find_all()
         assert all != []
         for item_type in self.my_locker.registered_items:
@@ -55,12 +61,12 @@ class TestItemStuff(PopulatedLocker):
                 assert it.item_type != item_type
         return
 
-    def test_get_missing_item(self, tmp_path, datadir):
+    def test_get_missing_item(self, tmp_path, datadir, setup_and_teardown):
         with pytest.raises(FileNotFoundError):
             self.my_locker.get_item("never", "secret")
         return
 
-    def test_update_item(self):
+    def test_update_item(self, setup_and_teardown):
         content = (
             f"here is some stuff"
             f"password: Iwashacked007"
@@ -77,7 +83,7 @@ class TestItemStuff(PopulatedLocker):
 
 class TestFileNames(EmptyLocker):
 
-    def test_xcode_file_name(self):
+    def test_xcode_file_name(self, setup_and_teardown):
         encoded = {}
         for it in self.my_locker.registered_items.keys():
             fn = self.my_locker.encode_item_name(it, f"{it}_name")
@@ -96,9 +102,16 @@ class TestFileNames(EmptyLocker):
 class TestAuth(EmptyLocker):
 
     @pytest.mark.negative
-    def test_fail_auth(self):
+    def test_fail_auth(self, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(ValueError):
             self.my_locker = Locker(
                 self.locker_name, wrong_pw, create=False
             )
+
+    def custom_setup(self, tmp_path):
+        super(TestAuth, self).custom_setup(tmp_path)
+
+    def custom_teardown(self):
+        super(TestAuth, self).custom_teardown()
+

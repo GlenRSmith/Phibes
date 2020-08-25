@@ -8,9 +8,9 @@ Click interface to delete Items
 import click
 
 # in-project modules
-from phibes.cli.lib import get_config
 from phibes.cli.lib import delete_item as del_item
 from phibes.cli.lib import make_click_command
+from phibes.lib.config import load_config_file
 from phibes.lib.locker import registered_items
 
 
@@ -41,7 +41,7 @@ def delete(config, locker, password, item_type, item):
     :param item:
     :return:
     """
-    user_config = get_config(config)
+    load_config_file(config)
     del_item(locker, password, item_type, item)
 
 

@@ -8,9 +8,9 @@ Click interface to get an item
 import click
 
 # in-project modules
-from phibes.cli.lib import get_config
 from phibes.cli.lib import make_click_command
 from phibes.cli.lib import get_item as help_get_item
+from phibes.lib.config import load_config_file
 from phibes.lib.locker import registered_items
 
 
@@ -39,7 +39,7 @@ def get(config, locker, password, item_type, item):
     :param item:
     :return:
     """
-    user_config = get_config(config)
+    load_config_file(config)
     my_item = help_get_item(locker, password, item_type, item)
     click.echo(f"{my_item}")
 

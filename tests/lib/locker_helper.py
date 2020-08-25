@@ -47,8 +47,6 @@ class ConfigLoadingTestClass(BaseTestClass):
 
     editor = "vim"
     hash_locker_names = "False"
-    store_path = "."
-    test_path = None
 
     def custom_setup(self, tmp_path):
         super(ConfigLoadingTestClass, self).custom_setup(tmp_path)

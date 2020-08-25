@@ -71,7 +71,7 @@ class TestCrypto(EmptyLocker):
         assert type(res) is bytes
 
     @pytest.mark.negative
-    def test_fail_auth(self):
+    def test_fail_auth(self, tmp_path, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(ValueError):
             locker.Locker(
@@ -79,7 +79,7 @@ class TestCrypto(EmptyLocker):
             )
 
     @pytest.mark.positive
-    def test_good_auth(self, tmp_path, setup_and_teardown):
+    def test_good_auth(self, setup_and_teardown):
         assert locker.Locker(
             self.locker_name, self.password, create=False
         )
