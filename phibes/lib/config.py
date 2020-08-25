@@ -18,6 +18,9 @@ from typing import Union
 
 
 CONFIG_FILE_NAME = '.phibes.cfg'
+DEFAULT_STORE_PATH = '.phibes'
+DEFAULT_EDITOR = environ.get('EDITOR', 'unknown')
+DEFAULT_HASH_LOCKER_NAMES = True
 HOME_DIR = None
 
 
@@ -41,11 +44,6 @@ def set_home_dir(path: Path) -> None:
 
 
 class ConfigModel(object):
-
-    storage_folder = '.phibes'
-    default_storage_path = None
-    default_editor = environ.get('EDITOR', 'unknown')
-    default_hash_locker_names = True
 
     @property
     def store_path(self) -> Path:
@@ -214,7 +212,7 @@ def load_config_file(path):
     return conf_mod
 
 
-def write_config_file(path, config_model=None):
+def write_config_file(path, config_model=None, update=False):
     """
     Write a config to a path
     With no config_model, write the values currently in the environment
@@ -228,12 +226,17 @@ def write_config_file(path, config_model=None):
         elif path.is_file():
             conf_file = path
         else:
-            raise ValueError(
+            raise TypeError(
                 f"{path} must be a directory or a file"
             )
-    else:
-        # don't try to figure it out, just try to write it
+    elif path.name == CONFIG_FILE_NAME and path.parent.exists():
         conf_file = path
+    else:
+        raise ValueError(f"can not resolve {path}")
+    if conf_file.exists() and not update:
+        raise FileExistsError(f"{conf_file} already exists, `update` required")
+    if update and not conf_file.exists():
+        raise FileNotFoundError(f"{conf_file} not found, can't `update`.")
     try:
         conf_file.write_text(f"{config_model}")
     except FileNotFoundError:

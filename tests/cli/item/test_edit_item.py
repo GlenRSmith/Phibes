@@ -35,7 +35,7 @@ class TestEditBase(PopulatedLocker):
         my_item.content = f"{self.good_template_name}:template"
         self.my_locker.add_item(my_item)
         set_editor("echo 'happyclappy' >> ")
-        write_config_file(tmp_path)
+        write_config_file(tmp_path, update=True)
         try:
             self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
         except KeyError:
@@ -45,6 +45,10 @@ class TestEditBase(PopulatedLocker):
             )
         update_config_option_default(self.target_cmd, tmp_path)
         return
+
+    def custom_teardown(self, tmp_path):
+        self.my_locker.delete_item(self.good_template_name, "template")
+        super(TestEditBase, self).custom_teardown(tmp_path)
 
     def invoke(self, overwrite: bool, template: str = None):
         """
@@ -84,6 +88,9 @@ class TestEditNew(TestEditBase):
 
     def custom_setup(self, tmp_path):
         super(TestEditNew, self).custom_setup(tmp_path)
+
+    def custom_teardown(self, tmp_path):
+        super(TestEditNew, self).custom_teardown(tmp_path)
 
     def common_neg_asserts(self, result):
         super(TestEditNew, self).common_neg_asserts(result)
@@ -183,6 +190,9 @@ class TestEditExists(TestEditBase):
         my_item.content = f"{self.test_item_name}:{self.test_item_type}"
         self.my_locker.add_item(my_item)
         return
+
+    def custom_teardown(self, tmp_path):
+        super(TestEditExists, self).custom_teardown(tmp_path)
 
     def common_neg_asserts(self, result):
         super(TestEditExists, self).common_neg_asserts(result)

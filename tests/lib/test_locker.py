@@ -30,9 +30,12 @@ class TestLocker(EmptyLocker):
         except:
             pass
 
-    def custom_teardown(self):
-        super(TestLocker, self).custom_teardown()
-        Locker.delete(self.locker_name, self.password)
+    def custom_teardown(self, tmp_path):
+        super(TestLocker, self).custom_teardown(tmp_path)
+        try:
+            Locker.delete(self.locker_name, self.password)
+        except FileNotFoundError:
+            pass
 
     def test_good(self, tmp_path, datadir, setup_and_teardown):
         Locker(self.locker_name, self.password, create=True)
@@ -112,6 +115,6 @@ class TestAuth(EmptyLocker):
     def custom_setup(self, tmp_path):
         super(TestAuth, self).custom_setup(tmp_path)
 
-    def custom_teardown(self):
-        super(TestAuth, self).custom_teardown()
+    def custom_teardown(self, tmp_path):
+        super(TestAuth, self).custom_teardown(tmp_path)
 

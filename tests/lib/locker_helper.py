@@ -8,6 +8,7 @@ EmptyLocker class used by several tests for setup, teardown
 import pytest
 
 # Local application/library specific imports
+from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import ConfigModel, set_home_dir
 from phibes.lib.config import load_config_file, write_config_file
 from phibes.lib.item import Item
@@ -28,7 +29,7 @@ def setup_and_teardown(request, tmp_path):
     yield
     if hasattr(request.instance, 'custom_teardown'):
         if callable(getattr(request.instance, 'custom_teardown')):
-            request.instance.custom_setup(tmp_path)
+            request.instance.custom_teardown(tmp_path)
 
 
 class BaseTestClass(object):
@@ -39,7 +40,7 @@ class BaseTestClass(object):
         self.test_path = tmp_path
         return
 
-    def custom_teardown(self):
+    def custom_teardown(self, tmp_path):
         return
 
 
@@ -61,7 +62,9 @@ class ConfigLoadingTestClass(BaseTestClass):
         load_config_file(tmp_path)
         return
 
-    def custom_teardown(self):
+    def custom_teardown(self, tmp_path):
+        conf = tmp_path / CONFIG_FILE_NAME
+        conf.unlink()
         return
 
 
@@ -84,8 +87,8 @@ class EmptyLocker(ConfigLoadingTestClass):
             )
         return
 
-    def custom_teardown(self):
-        super(EmptyLocker, self).custom_teardown()
+    def custom_teardown(self, tmp_path):
+        super(EmptyLocker, self).custom_teardown(tmp_path)
         Locker.delete(self.locker_name, self.password)
         return
 
@@ -111,6 +114,6 @@ class PopulatedLocker(EmptyLocker):
             new_item.save(pth)
         return
 
-    def custom_teardown(self):
-        super(PopulatedLocker, self).custom_teardown()
+    def custom_teardown(self, tmp_path):
+        super(PopulatedLocker, self).custom_teardown(tmp_path)
         return

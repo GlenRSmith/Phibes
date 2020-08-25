@@ -40,7 +40,8 @@ class TestGetLocker(ConfigLoadingTestClass):
         Locker(self.name, self.pw, create=True)
         return
 
-    def custom_teardown(self):
+    def custom_teardown(self, tmp_path):
+        super(TestGetLocker, self).custom_teardown(tmp_path)
         try:
             Locker.delete(self.name, self.pw)
         except FileNotFoundError:

@@ -34,6 +34,10 @@ class TestDeleteItem(PopulatedLocker):
         self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
         return
 
+    def custom_teardown(self, tmp_path):
+        super(TestDeleteItem, self).custom_teardown(tmp_path)
+        return
+
     def invoke(self, item_type, item_name):
         """
         Helper method for often repeated code in test methods

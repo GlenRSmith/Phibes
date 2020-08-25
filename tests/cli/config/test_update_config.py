@@ -1,5 +1,5 @@
 """
-pytest module for phibes_cli config create command
+pytest module for phibes_cli config update command
 """
 
 # Standard library imports
@@ -11,27 +11,27 @@ from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
-from phibes.cli.config.create import create_config_cmd
+from phibes.cli.config.update import update_config_cmd
 from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.phibes_cli import main
 
 # Local test imports
-from tests.lib.locker_helper import BaseTestClass
+from tests.lib.locker_helper import ConfigLoadingTestClass
 from tests.lib.locker_helper import setup_and_teardown
 
 
 used = setup_and_teardown
 
 
-class TestCreateConfig(BaseTestClass):
+class TestUpdateConfig(ConfigLoadingTestClass):
     """
-    Testing for the CLI create-config.
+    Testing for the CLI update-config.
     """
 
     test_config = {
-        "editor": "vim",
+        "editor": "emacs",
         "hash_locker_names": False,
-        "store_path": "."
+        "store_path": "/etc"
     }
     bad_test_config = {
         "editor": "vim",
@@ -40,32 +40,24 @@ class TestCreateConfig(BaseTestClass):
     }
 
     def custom_setup(self, tmp_path):
-        super(TestCreateConfig, self).custom_setup(tmp_path)
-        try:
-            self.test_path.joinpath(CONFIG_FILE_NAME).unlink()
-        except FileNotFoundError:
-            pass
+        super(TestUpdateConfig, self).custom_setup(tmp_path)
         return
 
     def custom_teardown(self, tmp_path):
-        super(TestCreateConfig, self).custom_teardown(tmp_path)
-        try:
-            self.test_path.joinpath(CONFIG_FILE_NAME).unlink()
-        except FileNotFoundError:
-            pass
+        super(TestUpdateConfig, self).custom_teardown(tmp_path)
         return
 
     @pytest.mark.parametrize(
         "command_instance",
-        [create_config_cmd, main.commands['create-config']]
+        [update_config_cmd, main.commands['update-config']]
     )
-    def test_create_config(
+    def test_update_config(
             self, setup_and_teardown, command_instance
     ):
         target_loc = self.test_path.joinpath(
             CONFIG_FILE_NAME
         )
-        assert not target_loc.exists()
+        assert target_loc.exists()
         result = CliRunner().invoke(
             command_instance,
             [
@@ -91,15 +83,15 @@ class TestCreateConfig(BaseTestClass):
 
     @pytest.mark.parametrize(
         "command_instance",
-        [create_config_cmd, main.commands['create-config']]
+        [update_config_cmd, main.commands['update-config']]
     )
-    def test_create_bad_config(
+    def test_update_bad_config(
             self, setup_and_teardown, command_instance
     ):
         target_loc = self.test_path.joinpath(
             CONFIG_FILE_NAME
         )
-        assert not target_loc.exists()
+        assert target_loc.exists()
         result = CliRunner().invoke(
             command_instance,
             [
@@ -111,5 +103,6 @@ class TestCreateConfig(BaseTestClass):
         )
         assert result.exit_code == 1
         assert type(result.exception) == FileNotFoundError
-        assert not target_loc.exists()
+        assert self.bad_test_config['store_path'] in str(result)
+        assert target_loc.exists()
         return

@@ -33,6 +33,11 @@ class TestListItems(locker_helper.PopulatedLocker):
         self.list_items = phibes_cli.main.commands[self.target_cmd_name]
         return
 
+    def custom_teardown(self, tmp_path):
+        self.my_locker.delete_item(self.item_name, self.item_type)
+        super(TestListItems, self).custom_teardown(tmp_path)
+        return
+
     def invoke(self, item_type: str):
         return CliRunner().invoke(
             self.list_items, [
