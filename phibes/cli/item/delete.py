@@ -8,10 +8,32 @@ Click interface to delete Items
 import click
 
 # in-project modules
+from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import delete_item as del_item
-from phibes.cli.lib import make_click_command
-from phibes.lib.config import load_config_file
 from phibes.lib.locker import registered_items
+
+
+class DeleteItemCmd(ConfigFileLoadingCmd):
+
+    def __init__(self):
+        super(DeleteItemCmd, self).__init__()
+        return
+
+    @staticmethod
+    def handle(config, locker, password, item_type, item, *args, **kwargs):
+        """
+        Remove the named Item from the Locker
+        :param config:
+        :param locker:
+        :param password:
+        :param item_type:
+        :param item:
+        :return:
+        """
+        super(DeleteItemCmd, DeleteItemCmd).handle(
+            config, *args, **kwargs
+        )
+        del_item(locker, password, item_type, item)
 
 
 options = {
@@ -31,18 +53,4 @@ options = {
 }
 
 
-def delete(config, locker, password, item_type, item):
-    """
-    Remove the named Item from the Locker
-    :param config:
-    :param locker:
-    :param password:
-    :param item_type:
-    :param item:
-    :return:
-    """
-    load_config_file(config)
-    del_item(locker, password, item_type, item)
-
-
-delete_item_cmd = make_click_command('delete-item', delete, options)
+delete_item_cmd = DeleteItemCmd.make_click_command('delete-item', options)
