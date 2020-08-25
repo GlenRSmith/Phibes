@@ -104,6 +104,8 @@ class ConfigModel(object):
                 self._hash_locker_names = False
             else:
                 self._hash_locker_names = True
+        self.apply()
+        return
 
     def __str__(self):
         # Some things are not json serializable, e.g. Path
