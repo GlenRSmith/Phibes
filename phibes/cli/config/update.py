@@ -11,18 +11,38 @@ import click
 # in-project modules
 from phibes.cli.command_base import PhibesCommandBase
 from phibes.cli.lib import PhibesExistsError, PhibesCliError
+from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import get_home_dir, load_config_file
 from phibes.lib.config import write_config_file
 
-try:
-    load_config_file(get_home_dir().joinpath(CONFIG_FILE_NAME))
-except FileNotFoundError:
-    conf = ConfigModel(store_path='.', editor='vi', hash_names=True)
-    write_config_file(get_home_dir().joinpath(CONFIG_FILE_NAME), conf)
+
+default_store_path = None
+default_editor = None
+default_hash = None
 
 
-current_conf = ConfigModel()
+def populate_defaults():
+    """
+    If the calling user does have ~/CONFIG_FILE_NAME, use it to populate defaults
+    """
+    global default_store_path
+    global default_editor
+    global default_hash
+    try:
+        load_config_file(get_home_dir().joinpath(CONFIG_FILE_NAME))
+    except FileNotFoundError:
+        pass
+    try:
+        current_conf = ConfigModel()
+        default_store_path = current_conf.store_path
+        default_editor = current_conf.editor
+        default_hash = current_conf.hash_locker_names
+    except PhibesConfigurationError:
+        pass
+
+
+populate_defaults()
 
 
 class UpdateConfigCmd(PhibesCommandBase):
@@ -70,20 +90,20 @@ options = {
         prompt='Path to locker(s)',
         help='Path on filesystem where encrypted data will be written',
         type=pathlib.Path,
-        default=current_conf.store_path
+        default=default_store_path
     ),
     'editor': click.option(
         '--editor',
         prompt='editor (for adding/updating encrypted items)',
         help='shell-invocable editor to use with the `edit` command',
         type=str,
-        default=current_conf.editor
+        default=default_editor
     ),
     'hash_locker_names': click.option(
         '--hash_names',
         prompt='Do you want your stored locker names obfuscated?',
         type=bool,
-        default=current_conf.hash_locker_names
+        default=default_hash
     )
 }
 
