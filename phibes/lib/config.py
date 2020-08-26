@@ -12,7 +12,8 @@ from typing import Union
 # Third party packages
 
 # In-project modules
-# Do not do that here. This is a 'leaf' module.
+# Be very cautious here not to introduce cyclic imports
+from phibes.lib.errors import PhibesConfigurationError
 
 # TODO: provide server config, this is mostly single user, local CLI config
 
@@ -119,14 +120,14 @@ class ConfigModel(object):
     @staticmethod
     def _validate_store_path(val: Path):
         if not isinstance(val, Path):
-            raise TypeError(
+            raise PhibesConfigurationError(
                 f"store_path must be a Path, {val} is {type(val)}"
             )
         if not val.exists():
             try:
                 val.mkdir()
             except FileNotFoundError:
-                raise FileNotFoundError(
+                raise PhibesConfigurationError(
                     f"store_path {val} does not exist"
                 )
         return
@@ -134,7 +135,7 @@ class ConfigModel(object):
     @staticmethod
     def _validate_editor(val):
         if type(val) is not str:
-            raise TypeError(
+            raise PhibesConfigurationError(
                 f"editor must be str, {val} is {type(val)}"
             )
         return
@@ -142,7 +143,7 @@ class ConfigModel(object):
     @staticmethod
     def _validate_hash_names(val):
         if type(val) is not bool:
-            raise TypeError(
+            raise PhibesConfigurationError(
                 f"hash_locker_names must be bool, {val} is {type(val)}"
             )
         return
@@ -163,7 +164,7 @@ class ConfigModel(object):
         except TypeError as err:
             failures.append(f"{err}\n")
         if failures:
-            raise TypeError(failures)
+            raise PhibesConfigurationError(failures)
         return True
 
     def apply(self):
