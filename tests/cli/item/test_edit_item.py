@@ -15,7 +15,7 @@ from phibes.lib.config import set_editor, write_config_file
 
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
-from tests.lib.locker_helper import PopulatedLocker, setup_and_teardown
+from tests.lib.locker_helper import PopulatedLocker
 
 
 class TestEditBase(PopulatedLocker):
@@ -143,7 +143,9 @@ class TestEditNew(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_goodtemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
+    def test_goodtemplate_overwrite(
+            self, tmp_path, datadir, setup_and_teardown
+    ):
         """
         Iffy scenario, a github issue is open to discuss
         :param tmp_path: pytest plugin injected
@@ -167,7 +169,9 @@ class TestEditNew(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_badtemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
+    def test_badtemplate_overwrite(
+            self, tmp_path, datadir, setup_and_teardown
+    ):
         """
         Template is specified that does not exist, should fail
         Overwrite is specified, but it's a new item, should fail
@@ -269,7 +273,9 @@ class TestEditExists(TestEditBase):
         return
 
     @pytest.mark.positive
-    def test_goodtemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
+    def test_goodtemplate_overwrite(
+            self, tmp_path, datadir, setup_and_teardown
+    ):
         """
         Specify existing item & template, & overwrite, should succeed
         :param tmp_path: pytest plugin injected
@@ -303,7 +309,9 @@ class TestEditExists(TestEditBase):
         return
 
     @pytest.mark.negative
-    def test_badtemplate_overwrite(self, tmp_path, datadir, setup_and_teardown):
+    def test_badtemplate_overwrite(
+            self, tmp_path, datadir, setup_and_teardown
+    ):
         """
         Template is specified that does not exist, should fail
         :param tmp_path: pytest plugin injected

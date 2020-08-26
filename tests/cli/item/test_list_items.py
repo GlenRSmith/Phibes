@@ -3,8 +3,6 @@ pytest module for phibes_cli list items command
 """
 
 # Standard library imports
-# import shutil
-import json
 
 # Related third party imports
 import pytest
@@ -13,7 +11,6 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes import phibes_cli
 from tests.lib import locker_helper
-from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestListItems(locker_helper.PopulatedLocker):
@@ -49,6 +46,7 @@ class TestListItems(locker_helper.PopulatedLocker):
             ]
         )
 
+    @pytest.mark.positive
     def test_list_all_items(self, setup_and_teardown):
         result = self.invoke("all")
         assert result.exit_code == 0
@@ -56,6 +54,7 @@ class TestListItems(locker_helper.PopulatedLocker):
             assert item_type in result.output
         return
 
+    @pytest.mark.positive
     def test_list_by_item_type(self, setup_and_teardown):
         all_types = self.my_locker.registered_items.keys()
         for target_type in all_types:

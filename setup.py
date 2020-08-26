@@ -14,7 +14,4 @@ python setup.py develop -u
 
 from setuptools import setup
 
-setup(
-      name="phibes",
-      packages=["."],
-)
+setup(name="phibes", packages=["."])

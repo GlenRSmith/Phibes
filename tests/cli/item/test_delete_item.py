@@ -3,8 +3,6 @@ pytest module for phibes_cli locker commands
 """
 
 # Standard library imports
-# import shutil
-import json
 
 # Related third party imports
 import pytest
@@ -15,7 +13,6 @@ from phibes import phibes_cli
 
 # Local test imports
 from tests.lib.locker_helper import PopulatedLocker
-from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestDeleteItem(PopulatedLocker):

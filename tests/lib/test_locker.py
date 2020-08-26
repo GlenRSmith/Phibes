@@ -11,9 +11,7 @@ import pytest
 from phibes.lib.locker import Locker
 
 # Local test imports
-# from tests.cli.click_test_helpers import update_config_option_default
 from tests.lib.locker_helper import EmptyLocker, PopulatedLocker
-from tests.lib.locker_helper import setup_and_teardown
 
 
 class TestLocker(EmptyLocker):
@@ -27,7 +25,7 @@ class TestLocker(EmptyLocker):
         try:
             if Locker(self.locker_name, self.password):
                 Locker.delete(self.locker_name, self.password)
-        except:
+        except Exception:
             pass
 
     def custom_teardown(self, tmp_path):
@@ -117,4 +115,3 @@ class TestAuth(EmptyLocker):
 
     def custom_teardown(self, tmp_path):
         super(TestAuth, self).custom_teardown(tmp_path)
-

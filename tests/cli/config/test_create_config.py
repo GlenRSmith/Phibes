@@ -17,10 +17,10 @@ from phibes.phibes_cli import main
 
 # Local test imports
 from tests.lib.locker_helper import BaseTestClass
-from tests.lib.locker_helper import setup_and_teardown
+# from tests.lib.locker_helper import setup_and_teardown
 
 
-used = setup_and_teardown
+# used = setup_and_teardown
 
 
 class TestCreateConfig(BaseTestClass):
@@ -79,14 +79,12 @@ class TestCreateConfig(BaseTestClass):
         assert target_loc.exists()
         contents = json.loads(target_loc.read_text())
         assert contents['editor'] == self.test_config['editor']
-        assert (
-            Path(contents['store_path']).resolve() ==
-            Path(self.test_config['store_path']).resolve()
-        )
-        assert (
-            contents['hash_locker_names'] ==
-            self.test_config['hash_locker_names']
-        )
+        mem = Path(contents['store_path']).resolve()
+        disk = Path(self.test_config['store_path']).resolve()
+        assert (mem == disk)
+        mem = contents['hash_locker_names']
+        disk = self.test_config['hash_locker_names']
+        assert (mem == disk)
         return
 
     @pytest.mark.parametrize(
