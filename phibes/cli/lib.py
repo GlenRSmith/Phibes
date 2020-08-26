@@ -47,34 +47,6 @@ COMMON_OPTIONS = {
 }
 
 
-def make_click_command(
-        cmd_name: str,
-        func: Callable,
-        initial_options: dict,
-        exclude_common: bool = False
-) -> click.command:
-    """
-    Creates a click command with common options and specific options.
-    Takes a command name, a python function, and a dict of options,
-    and returns a named click.command
-    """
-    if not exclude_common:
-        # Being careful not to mutate the module-level dict
-        options = copy.deepcopy(COMMON_OPTIONS)
-        # Merge the passed-in options dict into the common options dict.
-        # This exposes the ability to override any of the common options,
-        # such as making the `password` option issue a confirmation prompt.
-        options.update(initial_options)
-    else:
-        options = initial_options
-    # Apply all the options to the func, the way the decorators would do
-    for option in reversed(options.values()):
-        option(func)
-    return click.command(
-        cmd_name, context_settings=dict(max_content_width=120)
-    )(func)
-
-
 def get_locker(locker_name, password):
     """
     locally-used convenience function
