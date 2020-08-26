@@ -28,6 +28,7 @@ class TestPhibesFile(object):
         if self.pth.exists():
             self.pth.unlink()
 
+    @pytest.mark.positive
     def test_write_new_read(self):
         phibes_file.write(
             self.pth,
@@ -40,6 +41,7 @@ class TestPhibesFile(object):
         assert result['salt'] == self.test_salt
         assert result['timestamp'] == self.test_timestamp
 
+    @pytest.mark.negative
     def test_write_no_body(self):
         with pytest.raises(AttributeError):
             phibes_file.write(
@@ -49,6 +51,7 @@ class TestPhibesFile(object):
                 body=""
             )
 
+    @pytest.mark.negative
     def test_forbid_newlines(self):
         with pytest.raises(ValueError):
             phibes_file.write(
@@ -61,6 +64,7 @@ class TestPhibesFile(object):
                 )
             )
 
+    @pytest.mark.negative
     def test_forbid_overwrite(self):
         phibes_file.write(
             self.pth,
@@ -76,6 +80,7 @@ class TestPhibesFile(object):
                 body=f"{self.test_body}"
             )
 
+    @pytest.mark.positive
     def test_allow_overwrite(self):
         phibes_file.write(
             self.pth,
@@ -95,6 +100,7 @@ class TestPhibesFile(object):
         assert result['timestamp'] == self.test_timestamp
         assert result['body'] == 'replacement'
 
+    @pytest.mark.negative
     def test_forbid_empty(self):
         with pytest.raises(AttributeError):
             phibes_file.write(
@@ -104,6 +110,7 @@ class TestPhibesFile(object):
                 body=""
             )
 
+    @pytest.mark.positive
     def test_allow_empty(self):
         phibes_file.write(
             self.pth,

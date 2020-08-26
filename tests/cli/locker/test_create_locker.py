@@ -47,6 +47,7 @@ class TestCreateLocker(ConfigLoadingTestClass):
     @pytest.mark.parametrize(
         "command_instance", [create_locker_cmd, main.commands['create-locker']]
     )
+    @pytest.mark.positive
     def test_normal(
             self, setup_and_teardown, command_instance
     ):
@@ -65,6 +66,7 @@ class TestCreateLocker(ConfigLoadingTestClass):
     @pytest.mark.parametrize(
         "command_instance", [create_locker_cmd, main.commands['create-locker']]
     )
+    @pytest.mark.positive
     def test_normal_default_config(
             self, setup_and_teardown, command_instance
     ):

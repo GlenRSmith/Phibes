@@ -37,6 +37,7 @@ class TestCryptImpl(object):
         plaintext = self.impl.decrypt(ciphertext)
         assert plaintext == "This is just a test"
 
+    @pytest.mark.positive
     def test_multiple_cycles(self):
         """
         Ciphers can only be used once - CryptImpl is supposed to

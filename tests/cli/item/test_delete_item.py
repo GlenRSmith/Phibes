@@ -62,7 +62,6 @@ class TestDeleteItem(PopulatedLocker):
         assert inst.name == self.delete_item_name
         result = self.invoke(self.delete_item_type, self.delete_item_name)
         assert result.exit_code == 0
-        # assert "deleted" in result.output
         with pytest.raises(FileNotFoundError):
             self.my_locker.get_item(
                 self.delete_item_name, self.delete_item_type

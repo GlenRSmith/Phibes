@@ -5,6 +5,7 @@ pytest module for lib.secret
 # Standard library imports
 
 # Related third party imports
+import pytest
 
 # Local application/library specific imports
 from phibes.lib.secret import Secret
@@ -15,6 +16,7 @@ from tests.lib.locker_helper import EmptyLocker
 
 class TestSecrets(EmptyLocker):
 
+    @pytest.mark.positive
     def test_secrets(self, setup_and_teardown):
         # create some secrets
         pth = self.my_locker.get_item_path("secret", "facebook")

@@ -48,6 +48,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
     @pytest.mark.parametrize(
         "command_instance", [delete_locker_cmd, main.commands['delete-locker']]
     )
+    @pytest.mark.positive
     def test_delete_locker_main(
             self, setup_and_teardown, command_instance
     ):
@@ -69,6 +70,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
     @pytest.mark.parametrize(
         "command_instance", [delete_locker_cmd, main.commands['delete-locker']]
     )
+    @pytest.mark.positive
     def test_delete_locker_normal(
             self, setup_and_teardown, command_instance
     ):

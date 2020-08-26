@@ -6,6 +6,7 @@ pytest module for lib.template
 import json
 
 # Related third party imports
+import pytest
 
 # Local application/library specific imports
 
@@ -15,6 +16,7 @@ from tests.lib.locker_helper import EmptyLocker
 
 class TestTemplate(EmptyLocker):
 
+    @pytest.mark.positive
     def test_template(self, setup_and_teardown):
         # create a template
         t1 = self.my_locker.create_item("basic", "template")

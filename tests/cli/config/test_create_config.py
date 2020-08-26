@@ -56,6 +56,7 @@ class TestCreateConfig(BaseTestClass):
         "command_instance",
         [create_config_cmd, main.commands['create-config']]
     )
+    @pytest.mark.positive
     def test_create_config(
             self, setup_and_teardown, command_instance
     ):
@@ -88,6 +89,7 @@ class TestCreateConfig(BaseTestClass):
         "command_instance",
         [create_config_cmd, main.commands['create-config']]
     )
+    @pytest.mark.negative
     def test_create_bad_config(
             self, setup_and_teardown, command_instance
     ):
