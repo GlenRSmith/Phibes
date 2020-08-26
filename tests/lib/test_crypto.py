@@ -27,11 +27,13 @@ class TestCryptImpl(object):
         self.salt = self.impl.salt
         self.key = self.impl.key
 
+    @pytest.mark.positive
     def test_encrypt(self):
         plaintext = "This is just a test"
         ciphertext = self.impl.encrypt(plaintext)
         assert ciphertext == 'yYq48fG6KR65UTWfgGlGLQUBPQ=='
 
+    @pytest.mark.positive
     def test_decrypt(self):
         ciphertext = 'yYq48fG6KR65UTWfgGlGLQUBPQ=='
         plaintext = self.impl.decrypt(ciphertext)
