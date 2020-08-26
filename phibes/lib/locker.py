@@ -147,7 +147,7 @@ class Locker(object):
         else:
             raise FileNotFoundError(
                 f"Locker {name} not found to delete!\n"
-                f"{ConfigModel()}"
+                f"{ConfigModel().store_path}\n"
             )
 
     @classmethod

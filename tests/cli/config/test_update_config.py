@@ -12,6 +12,7 @@ import pytest
 
 # Local application/library specific imports
 from phibes.cli.config.update import update_config_cmd
+from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.phibes_cli import main
 
@@ -96,7 +97,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
             ]
         )
         assert result.exit_code == 1
-        assert type(result.exception) == FileNotFoundError
+        assert type(result.exception) == PhibesConfigurationError
         assert self.bad_test_config['store_path'] in str(result)
         assert target_loc.exists()
         return
