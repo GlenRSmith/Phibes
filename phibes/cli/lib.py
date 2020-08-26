@@ -15,6 +15,7 @@ import click
 # in-project modules
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import get_home_dir
+from phibes.lib.errors import PhibesError
 from phibes.lib.locker import Locker
 
 
@@ -90,7 +91,7 @@ def get_locker(locker_name, password):
         )
 
 
-class PhibesCliError(Exception):
+class PhibesCliError(PhibesError):
 
     def __init__(self, *args):
         if args:

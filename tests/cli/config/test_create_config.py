@@ -12,15 +12,12 @@ import pytest
 
 # Local application/library specific imports
 from phibes.cli.config.create import create_config_cmd
+from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.phibes_cli import main
 
 # Local test imports
 from tests.lib.locker_helper import BaseTestClass
-# from tests.lib.locker_helper import setup_and_teardown
-
-
-# used = setup_and_teardown
 
 
 class TestCreateConfig(BaseTestClass):
@@ -108,6 +105,6 @@ class TestCreateConfig(BaseTestClass):
             ]
         )
         assert result.exit_code == 1
-        assert type(result.exception) == FileNotFoundError
+        assert type(result.exception) == PhibesConfigurationError
         assert not target_loc.exists()
         return
