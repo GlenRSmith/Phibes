@@ -24,7 +24,7 @@ default_hash = None
 
 def populate_defaults():
     """
-    If the calling user does have ~/CONFIG_FILE_NAME, use it to populate defaults
+    If the user does have ~/CONFIG_FILE_NAME, use it to populate defaults
     """
     global default_store_path
     global default_editor
