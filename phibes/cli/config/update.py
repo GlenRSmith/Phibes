@@ -12,7 +12,7 @@ import click
 from phibes.cli.command_base import PhibesCommandBase
 from phibes.cli.lib import PhibesExistsError, PhibesCliError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
-from phibes.lib.config import get_home_dir, load_config_file, write_config_file
+from phibes.lib.config import get_home_dir, load_config_file
 from phibes.lib.config import write_config_file
 
 try:

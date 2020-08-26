@@ -16,29 +16,29 @@ from phibes.lib.config import CONFIG_FILE_NAME, load_config_file, get_home_dir
 
 
 config_option = click.option(
-        '--config',
-        default=get_home_dir().joinpath(CONFIG_FILE_NAME),
-        type=pathlib.Path,
-        help=(
-            f"Path to config file `{CONFIG_FILE_NAME}`, "
-            f"defaults to user home"
-        ),
-        show_envvar=True,
-        envvar="PHIBES_CONFIG",
-    )
+    '--config',
+    default=get_home_dir().joinpath(CONFIG_FILE_NAME),
+    type=pathlib.Path,
+    help=(
+        f"Path to config file `{CONFIG_FILE_NAME}`, "
+        f"defaults to user home"
+    ),
+    show_envvar=True,
+    envvar="PHIBES_CONFIG",
+)
 locker_option = click.option(
-        '--locker',
-        prompt='Locker',
-        type=str,
-        default=getpass.getuser(),
-        help="Name of locker, defaults to local OS username"
-    )
+    '--locker',
+    prompt='Locker',
+    type=str,
+    default=getpass.getuser(),
+    help="Name of locker, defaults to local OS username"
+)
 password_option = click.option(
-        '--password',
-        prompt='Password',
-        help='Password used when Locker was created',
-        hide_input=True
-    )
+    '--password',
+    prompt='Password',
+    help='Password used when Locker was created',
+    hide_input=True
+)
 
 
 COMMON_OPTIONS = {

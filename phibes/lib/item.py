@@ -109,7 +109,7 @@ class Item(object):
     def timestamp(self):
         try:
             ret_val = self.crypt_impl.decrypt(self._timestamp)
-        except:
+        except Exception:
             ret_val = datetime.now()
         return str(ret_val)
 

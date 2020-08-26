@@ -3,8 +3,6 @@ pytest module for phibes_cli locker commands
 """
 
 # Standard library imports
-# import shutil
-import json
 
 # Related third party imports
 import pytest

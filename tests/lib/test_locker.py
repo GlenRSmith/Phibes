@@ -25,7 +25,7 @@ class TestLocker(EmptyLocker):
         try:
             if Locker(self.locker_name, self.password):
                 Locker.delete(self.locker_name, self.password)
-        except:
+        except Exception:
             pass
 
     def custom_teardown(self, tmp_path):
@@ -115,4 +115,3 @@ class TestAuth(EmptyLocker):
 
     def custom_teardown(self, tmp_path):
         super(TestAuth, self).custom_teardown(tmp_path)
-
