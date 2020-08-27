@@ -1,5 +1,5 @@
 # Shell to use with Make
-SHELL := /bin/zsh
+#SHELL := /bin/zsh
 
 # Set important Paths
 PROJECT := phibes
