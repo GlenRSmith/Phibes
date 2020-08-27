@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 # In-project modules
 from . config import ConfigModel
 from . crypto import CryptImpl, get_name_hash
+from . errors import PhibesAuthError, PhibesNotFoundError
 from . item import FILE_EXT, Item
 from . import phibes_file
 # pylint: disable=unused-import
@@ -39,6 +40,8 @@ ItemList = List[Item]
 # HEX_REGEX = "^(0[xX])?[A-Fa-f0-9]+$"
 # HexStr = Match[HEX_REGEX]
 # str(type(self)).split("'")[1].split(".")[-1].lower()
+
+LOCKER_FILE = ".config"
 
 
 class Locker(object):
@@ -93,16 +96,63 @@ class Locker(object):
         self.conf = ConfigModel()
         self._salt = None
         self._ciphertext = None
-        if self.conf.hash_locker_names:
-            self.path = self.conf.store_path.joinpath(get_name_hash(name))
-        else:
-            self.path = self.conf.store_path.joinpath(name)
-        self.lock_file = self.path.joinpath(".locker.cfg")
-        if not self.lock_file.exists() and not create:
-            raise FileNotFoundError(
-                f"Matching locker {self.lock_file.resolve()} not found\n"
-                f"Did you mean to pass create=True?"
+        plain_path = self.conf.store_path.joinpath(name)
+        hash_path = self.conf.store_path.joinpath(get_name_hash(name))
+        # clean up empty dirs to reduce conflict check complexity
+        if plain_path.exists() and not any(plain_path.iterdir()):
+            shutil.rmtree(plain_path)
+        if hash_path.exists() and not any(hash_path.iterdir()):
+            shutil.rmtree(hash_path)
+        if hash_path.exists() and plain_path.exists():
+            raise ValueError(
+                f"Locker {name} conflict problem!!!\n"
+                f"Storage path {self.conf.store_path} contains both\n"
+                f"- {plain_path}\n"
+                f"- {hash_path}\n"
             )
+        plain_lock = plain_path/LOCKER_FILE
+        hash_lock = hash_path/LOCKER_FILE
+        if create:
+            err_msg = ""
+            if plain_path.exists():
+                if self.conf.hash_locker_names:
+                    err_msg += "Can't create hashed dir, unhashed exists\n"
+                if plain_lock.exists():
+                    err_msg += f"lock file {plain_lock.resolve()}"
+                else:
+                    err_msg += f"locker dir {plain_path.resolve()}"
+            elif hash_path.exists():
+                if not self.conf.hash_locker_names:
+                    err_msg += "Can't create unhashed dir, hashed exists\n"
+                if hash_lock.exists():
+                    err_msg += f"lock file {hash_lock.resolve()}"
+                else:
+                    err_msg += f"locker dir {hash_path.resolve()}"
+            if err_msg:
+                raise FileExistsError(
+                    f"Error attempting to create Locker {name}\n"
+                    f"{err_msg} already exists\n"
+                    f"Did you mean to pass create=False?\n"
+                    f"{self.conf}"
+                )
+        if self.conf.hash_locker_names:
+            self.path = hash_path
+        else:
+            self.path = plain_path
+        self.lock_file = self.path.joinpath(LOCKER_FILE)
+        if not self.lock_file.exists() and not create:
+            # accommodate the scenario where the user created a hashed-name
+            # locker and then changed their config to unhashed-names
+            # catch either way!
+            tmp_file = self.conf.store_path/get_name_hash(name)/LOCKER_FILE
+            if tmp_file.exists():
+                self.path = self.conf.store_path / get_name_hash(name)
+                self.lock_file = self.path / LOCKER_FILE
+            else:
+                raise PhibesNotFoundError(
+                    f"Locker {self.conf.store_path/name} not found\n"
+                    f"Did you mean to pass create=True?"
+                )
         if self.lock_file.exists() and create:
             raise FileExistsError(
                 f"Matching locker {self.lock_file} already exists"
@@ -133,7 +183,7 @@ class Locker(object):
             )
         else:
             if not self.crypt_impl.authenticate(password, self._ciphertext):
-                raise ValueError(f"{password} is invalid")
+                raise PhibesAuthError(f"{password} is invalid")
         return
 
     @classmethod
@@ -145,7 +195,7 @@ class Locker(object):
         if inst:
             shutil.rmtree(inst.path)
         else:
-            raise FileNotFoundError(
+            raise PhibesNotFoundError(
                 f"Locker {name} not found to delete!\n"
                 f"{ConfigModel().store_path}\n"
             )
@@ -161,7 +211,7 @@ class Locker(object):
         try:
             inst = Locker(name, password, create=False)
         except FileNotFoundError as err:
-            raise FileNotFoundError(
+            raise PhibesNotFoundError(
                 f"Locker {name} not found"
                 f"{err}"
             )
@@ -270,7 +320,7 @@ class Locker(object):
         if template_name:
             template = self.get_item(template_name, "template")
             if not template:
-                raise FileNotFoundError(
+                raise PhibesNotFoundError(
                     f"template {template_name} not found"
                 )
             new_item.content = template.content
@@ -289,7 +339,7 @@ class Locker(object):
             found_item.read(pth)
             # TODO: validate using salt
         else:
-            raise FileNotFoundError(
+            raise PhibesNotFoundError(
                 f"{item_type}:{item_name} not found"
             )
         return found_item
