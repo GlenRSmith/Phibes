@@ -29,14 +29,15 @@ test:
 	pytest --verbose
 
 cover:
-	pytest --cov=phibes tests
+	pytest --cov-report term-missing --cov=phibes tests -m negative
+	pytest --cov-report term-missing --cov=phibes tests -m positive
 
 flake:
 	flake8 phibes
 
 test_all:
 	pytest --cov=phibes -m positive --cov-fail-under=75
-	pytest --cov=phibes -m negative --cov-fail-under=80
+	pytest --cov=phibes -m negative --cov-fail-under=65
 	flake8 phibes
 
 find_unmarked_tests:
