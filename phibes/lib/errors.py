@@ -25,3 +25,15 @@ class PhibesError(Exception):
 
 class PhibesConfigurationError(PhibesError):
     pass
+
+
+class PhibesAuthError(PhibesError):
+    pass
+
+
+class PhibesNotFoundError(PhibesError):
+    pass
+
+
+class PhibesExistsError(PhibesError):
+    pass

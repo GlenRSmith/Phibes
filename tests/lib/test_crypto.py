@@ -10,6 +10,7 @@ import pytest
 # Local application/library specific imports
 from phibes.lib import crypto
 from phibes.lib import locker
+from phibes.lib.errors import PhibesAuthError
 
 # Local test imports
 from tests.lib.locker_helper import EmptyLocker
@@ -27,16 +28,19 @@ class TestCryptImpl(object):
         self.salt = self.impl.salt
         self.key = self.impl.key
 
+    @pytest.mark.positive
     def test_encrypt(self):
         plaintext = "This is just a test"
         ciphertext = self.impl.encrypt(plaintext)
         assert ciphertext == 'yYq48fG6KR65UTWfgGlGLQUBPQ=='
 
+    @pytest.mark.positive
     def test_decrypt(self):
         ciphertext = 'yYq48fG6KR65UTWfgGlGLQUBPQ=='
         plaintext = self.impl.decrypt(ciphertext)
         assert plaintext == "This is just a test"
 
+    @pytest.mark.positive
     def test_multiple_cycles(self):
         """
         Ciphers can only be used once - CryptImpl is supposed to
@@ -72,7 +76,7 @@ class TestCrypto(EmptyLocker):
     @pytest.mark.negative
     def test_fail_auth(self, tmp_path, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
-        with pytest.raises(ValueError):
+        with pytest.raises(PhibesAuthError):
             locker.Locker(
                 self.locker_name, wrong_pw, create=False
             )

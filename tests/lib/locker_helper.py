@@ -5,31 +5,14 @@ EmptyLocker class used by several tests for setup, teardown
 # Standard library imports
 
 # Related third party imports
-import pytest
 
 # Local application/library specific imports
 from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import ConfigModel, set_home_dir
 from phibes.lib.config import load_config_file, write_config_file
+from phibes.lib.errors import PhibesNotFoundError
 from phibes.lib.item import Item
 from phibes.lib.locker import Locker
-
-
-@pytest.fixture
-def setup_and_teardown(request, tmp_path):
-    """
-    Injecting this fixture into a test method causes that method to
-    use `custom_setup` and `custom_teardown` for setup and teardown.
-
-    This allows the tmp_path fixture to be used in setup and teardown.
-    """
-    if hasattr(request.instance, 'custom_setup'):
-        if callable(getattr(request.instance, 'custom_setup')):
-            request.instance.custom_setup(tmp_path)
-    yield
-    if hasattr(request.instance, 'custom_teardown'):
-        if callable(getattr(request.instance, 'custom_teardown')):
-            request.instance.custom_teardown(tmp_path)
 
 
 class BaseTestClass(object):
@@ -67,6 +50,10 @@ class ConfigLoadingTestClass(BaseTestClass):
         conf.unlink()
         return
 
+    def update_config(self, config: ConfigModel):
+        write_config_file(self.test_path, config, update=True)
+        load_config_file(self.test_path)
+
 
 class EmptyLocker(ConfigLoadingTestClass):
 
@@ -79,7 +66,7 @@ class EmptyLocker(ConfigLoadingTestClass):
         try:
             if Locker(self.locker_name, self.password):
                 Locker.delete(self.locker_name, self.password)
-        except FileNotFoundError:
+        except PhibesNotFoundError:
             pass
         finally:
             self.my_locker = Locker(

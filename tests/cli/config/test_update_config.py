@@ -48,6 +48,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         "command_instance",
         [update_config_cmd, main.commands['update-config']]
     )
+    @pytest.mark.positive
     def test_update_config(
             self, setup_and_teardown, command_instance
     ):
@@ -80,6 +81,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         "command_instance",
         [update_config_cmd, main.commands['update-config']]
     )
+    @pytest.mark.negative
     def test_update_bad_config(
             self, setup_and_teardown, command_instance
     ):

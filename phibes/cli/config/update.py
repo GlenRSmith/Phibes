@@ -10,7 +10,7 @@ import click
 
 # in-project modules
 from phibes.cli.command_base import PhibesCommandBase
-from phibes.cli.lib import PhibesExistsError, PhibesCliError
+from phibes.cli.lib import PhibesCliExistsError, PhibesCliError
 from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import get_home_dir, load_config_file
@@ -73,7 +73,7 @@ class UpdateConfigCmd(PhibesCommandBase):
         except ValueError as err:
             raise PhibesCliError(err)
         except FileExistsError as err:
-            raise PhibesExistsError(err)
+            raise PhibesCliExistsError(err)
         return
 
 

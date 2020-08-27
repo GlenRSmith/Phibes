@@ -10,7 +10,8 @@ from click.testing import CliRunner
 
 # Local application/library specific imports
 from phibes import phibes_cli
-from phibes.cli.lib import PhibesCliError, PhibesNotFoundError
+from phibes.lib.errors import PhibesNotFoundError
+from phibes.cli.lib import PhibesCliError, PhibesCliNotFoundError
 from phibes.lib.config import set_editor, write_config_file
 
 # Local test imports
@@ -94,7 +95,7 @@ class TestEditNew(TestEditBase):
 
     def common_neg_asserts(self, result):
         super(TestEditNew, self).common_neg_asserts(result)
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(PhibesNotFoundError):
             self.my_locker.get_item(
                 self.test_item_name, self.test_item_type
             )
@@ -324,6 +325,6 @@ class TestEditExists(TestEditBase):
         result = self.invoke(True, self.bad_template_name)
         self.common_neg_asserts(result)
         assert "template" in result.exception.message.lower()
-        assert isinstance(result.exception, PhibesNotFoundError)
+        assert isinstance(result.exception, PhibesCliNotFoundError)
         self.item_unchanged_asserts(before)
         return

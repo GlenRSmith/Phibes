@@ -9,6 +9,7 @@ from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
+from phibes.lib.errors import PhibesNotFoundError
 from phibes.cli.locker.create import create_locker_cmd
 from phibes.lib.locker import Locker
 from phibes.phibes_cli import main
@@ -32,7 +33,7 @@ class TestCreateLocker(ConfigLoadingTestClass):
         super(TestCreateLocker, self).custom_setup(tmp_path)
         try:
             Locker.delete(self.name, self.pw)
-        except FileNotFoundError:
+        except PhibesNotFoundError:
             pass
         return
 
@@ -40,13 +41,14 @@ class TestCreateLocker(ConfigLoadingTestClass):
         super(TestCreateLocker, self).custom_teardown(tmp_path)
         try:
             Locker.delete(self.name, self.pw)
-        except FileNotFoundError:
+        except PhibesNotFoundError:
             pass
         return
 
     @pytest.mark.parametrize(
         "command_instance", [create_locker_cmd, main.commands['create-locker']]
     )
+    @pytest.mark.positive
     def test_normal(
             self, setup_and_teardown, command_instance
     ):
@@ -65,6 +67,7 @@ class TestCreateLocker(ConfigLoadingTestClass):
     @pytest.mark.parametrize(
         "command_instance", [create_locker_cmd, main.commands['create-locker']]
     )
+    @pytest.mark.positive
     def test_normal_default_config(
             self, setup_and_teardown, command_instance
     ):

@@ -20,7 +20,8 @@ phibes = {editable = true, path = "."}
 python_version = "3.8"
 
 [scripts]
-test = "pytest --basetemp=./basetemp --verbose --capture=no"
-cov = "pytest --cov=phibes tests --cov-fail-under=80"
-flake = "flake8 phibes"
+test_all = "make test_all"
+test = "make test"
+cov = "make cover"
+flake = "make flake"
 list = "./pipenv_list_scripts.py"

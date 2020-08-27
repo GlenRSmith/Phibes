@@ -3,11 +3,9 @@ Support functions for command-line interface modules.
 """
 
 # core library modules
-import copy
 import getpass
 import os
 import pathlib
-from typing import Callable
 
 # third party packages
 import click
@@ -15,7 +13,8 @@ import click
 # in-project modules
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import get_home_dir
-from phibes.lib.errors import PhibesError
+from phibes.lib import errors
+# from phibes.lib.errors import PhibesError, PhibesNotFoundError
 from phibes.lib.locker import Locker
 
 
@@ -47,34 +46,6 @@ COMMON_OPTIONS = {
 }
 
 
-def make_click_command(
-        cmd_name: str,
-        func: Callable,
-        initial_options: dict,
-        exclude_common: bool = False
-) -> click.command:
-    """
-    Creates a click command with common options and specific options.
-    Takes a command name, a python function, and a dict of options,
-    and returns a named click.command
-    """
-    if not exclude_common:
-        # Being careful not to mutate the module-level dict
-        options = copy.deepcopy(COMMON_OPTIONS)
-        # Merge the passed-in options dict into the common options dict.
-        # This exposes the ability to override any of the common options,
-        # such as making the `password` option issue a confirmation prompt.
-        options.update(initial_options)
-    else:
-        options = initial_options
-    # Apply all the options to the func, the way the decorators would do
-    for option in reversed(options.values()):
-        option(func)
-    return click.command(
-        cmd_name, context_settings=dict(max_content_width=120)
-    )(func)
-
-
 def get_locker(locker_name, password):
     """
     locally-used convenience function
@@ -84,14 +55,14 @@ def get_locker(locker_name, password):
     """
     try:
         return Locker.find(locker_name, password)
-    except FileNotFoundError as err:
-        raise PhibesNotFoundError(
+    except errors.PhibesNotFoundError as err:
+        raise PhibesCliNotFoundError(
             f"can't find locker {locker_name} (could be password error)"
             f"\n{err}\n"
         )
 
 
-class PhibesCliError(PhibesError):
+class PhibesCliError(errors.PhibesError):
 
     def __init__(self, *args):
         if args:
@@ -105,20 +76,16 @@ class PhibesCliError(PhibesError):
         return f"{self.__class__}: {msg}"
 
 
-class PhibesNotFoundError(PhibesCliError):
+class PhibesCliNotFoundError(PhibesCliError):
     pass
 
 
-class PhibesExistsError(PhibesCliError):
+class PhibesCliExistsError(PhibesCliError):
     pass
 
 
-class PhibesPasswordError(PhibesCliError):
+class PhibesCliPasswordError(PhibesCliError):
     pass
-
-
-def make_str_bool(bool_str: str) -> bool:
-    return not bool_str.lower().startswith('f')
 
 
 def edit_item(
@@ -143,16 +110,16 @@ def edit_item(
     my_locker = get_locker(locker_name, password)
     try:
         item = my_locker.get_item(item_name, item_type)
-    except FileNotFoundError:
+    except errors.PhibesNotFoundError:
         if overwrite:
-            raise PhibesNotFoundError(
+            raise PhibesCliNotFoundError(
                 f"can't overwrite non-existing {item_type}:{item_name}"
             )
         else:
             item = None
     if item:
         if not overwrite:
-            raise PhibesExistsError(
+            raise PhibesCliExistsError(
                 f"file for {item_type}:{item_name} already exists\n"
                 f"overwrite=True must be specified to update\n"
             )
@@ -161,8 +128,8 @@ def edit_item(
     if template_name:
         try:
             template = my_locker.get_item(template_name, "template")
-        except FileNotFoundError:
-            raise PhibesNotFoundError(
+        except errors.PhibesNotFoundError:
+            raise PhibesCliNotFoundError(
                 f"template:{template_name} not found"
             )
     else:
@@ -242,8 +209,8 @@ def get_item(
     my_locker = get_locker(locker_name, password)
     try:
         my_locker.get_item(item_name, item_type)
-    except FileNotFoundError:
-        raise PhibesNotFoundError(
+    except errors.PhibesNotFoundError:
+        raise PhibesCliNotFoundError(
             f"can't find {item_type}:{item_name}"
         )
     return
@@ -257,14 +224,14 @@ def delete_item(
 ):
     try:
         my_locker = Locker(locker_name, password)
-    except FileNotFoundError:
-        raise PhibesNotFoundError(
+    except errors.PhibesNotFoundError:
+        raise PhibesCliNotFoundError(
             f"Locker {locker_name} not found"
         )
     try:
         my_locker.delete_item(item_name, item_type)
-    except FileNotFoundError:
-        raise PhibesNotFoundError(
+    except errors.PhibesNotFoundError:
+        raise PhibesCliNotFoundError(
             f"can't delete non-existing {item_type}:{item_name}"
         )
     return

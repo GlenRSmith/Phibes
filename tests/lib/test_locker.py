@@ -8,6 +8,7 @@ pytest module for lib.locker
 import pytest
 
 # Local application/library specific imports
+from phibes.lib.errors import PhibesAuthError, PhibesNotFoundError
 from phibes.lib.locker import Locker
 
 # Local test imports
@@ -32,9 +33,10 @@ class TestLocker(EmptyLocker):
         super(TestLocker, self).custom_teardown(tmp_path)
         try:
             Locker.delete(self.locker_name, self.password)
-        except FileNotFoundError:
+        except PhibesNotFoundError:
             pass
 
+    @pytest.mark.positive
     def test_good(self, tmp_path, datadir, setup_and_teardown):
         Locker(self.locker_name, self.password, create=True)
         found = Locker(
@@ -46,6 +48,7 @@ class TestLocker(EmptyLocker):
 
 class TestItemStuff(PopulatedLocker):
 
+    @pytest.mark.positive
     def test_find_all(self, tmp_path, datadir, setup_and_teardown):
         all = self.my_locker.find_all()
         assert all != []
@@ -62,11 +65,13 @@ class TestItemStuff(PopulatedLocker):
                 assert it.item_type != item_type
         return
 
+    @pytest.mark.negative
     def test_get_missing_item(self, tmp_path, datadir, setup_and_teardown):
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(PhibesNotFoundError):
             self.my_locker.get_item("never", "secret")
         return
 
+    @pytest.mark.positive
     def test_update_item(self, setup_and_teardown):
         content = (
             f"here is some stuff"
@@ -84,6 +89,7 @@ class TestItemStuff(PopulatedLocker):
 
 class TestFileNames(EmptyLocker):
 
+    @pytest.mark.positive
     def test_xcode_file_name(self, setup_and_teardown):
         encoded = {}
         for it in self.my_locker.registered_items.keys():
@@ -105,7 +111,7 @@ class TestAuth(EmptyLocker):
     @pytest.mark.negative
     def test_fail_auth(self, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
-        with pytest.raises(ValueError):
+        with pytest.raises(PhibesAuthError):
             self.my_locker = Locker(
                 self.locker_name, wrong_pw, create=False
             )

@@ -10,6 +10,7 @@ from click.testing import CliRunner
 
 # Local application/library specific imports
 from phibes import phibes_cli
+from phibes.lib.errors import PhibesNotFoundError
 
 # Local test imports
 from tests.lib.locker_helper import PopulatedLocker
@@ -62,8 +63,7 @@ class TestDeleteItem(PopulatedLocker):
         assert inst.name == self.delete_item_name
         result = self.invoke(self.delete_item_type, self.delete_item_name)
         assert result.exit_code == 0
-        # assert "deleted" in result.output
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(PhibesNotFoundError):
             self.my_locker.get_item(
                 self.delete_item_name, self.delete_item_type
             )

@@ -9,7 +9,8 @@ import click
 
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
-from phibes.cli.lib import PhibesExistsError
+from phibes.lib.errors import PhibesExistsError
+from phibes.cli.lib import PhibesCliExistsError
 from phibes.lib.locker import Locker
 
 
@@ -26,8 +27,8 @@ class CreateLockerCmd(ConfigFileLoadingCmd):
         )
         try:
             new_locker = Locker(locker, password, create=True)
-        except FileExistsError as err:
-            raise PhibesExistsError(
+        except PhibesExistsError as err:
+            raise PhibesCliExistsError(
                 f"Locker {locker} already exists\n{err}"
             )
         click.echo(f"Locker created {locker}")

@@ -10,7 +10,7 @@ import click
 
 # in-project modules
 from phibes.cli.command_base import PhibesCommandBase
-from phibes.cli.lib import PhibesExistsError, PhibesCliError
+from phibes.cli.lib import PhibesCliExistsError, PhibesCliError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import DEFAULT_EDITOR, DEFAULT_HASH_LOCKER_NAMES
 from phibes.lib.config import DEFAULT_STORE_PATH
@@ -46,7 +46,7 @@ class CreateConfigCmd(PhibesCommandBase):
         except ValueError as err:
             raise PhibesCliError(err)
         except FileExistsError as err:
-            raise PhibesExistsError(err)
+            raise PhibesCliExistsError(err)
         return
 
 
