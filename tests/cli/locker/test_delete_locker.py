@@ -10,6 +10,7 @@ import pytest
 
 # Local application/library specific imports
 from phibes.phibes_cli import main
+from phibes.lib.errors import PhibesNotFoundError
 from phibes.lib.locker import Locker
 from phibes.cli.locker.delete import delete_locker_cmd
 
@@ -32,7 +33,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
         super(TestDeleteLocker, self).custom_setup(tmp_path)
         try:
             Locker.delete(self.name, self.pw)
-        except FileNotFoundError:
+        except PhibesNotFoundError:
             pass
         Locker(self.name, self.pw, create=True)
         return
@@ -41,7 +42,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
         super(TestDeleteLocker, self).custom_teardown(tmp_path)
         try:
             Locker.delete(self.name, self.pw)
-        except FileNotFoundError:
+        except PhibesNotFoundError:
             pass
         return
 
@@ -63,7 +64,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
             ]
         )
         assert result.exit_code == 0
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(PhibesNotFoundError):
             Locker(self.name, self.pw)
         return
 
@@ -85,6 +86,6 @@ class TestDeleteLocker(ConfigLoadingTestClass):
             ]
         )
         assert result.exit_code == 0
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(PhibesNotFoundError):
             Locker(self.name, self.pw)
         return
