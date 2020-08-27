@@ -110,8 +110,8 @@ class Locker(object):
                 f"- {plain_path}\n"
                 f"- {hash_path}\n"
             )
-        plain_lock = plain_path/LOCKER_FILE
-        hash_lock = hash_path/LOCKER_FILE
+        plain_lock = plain_path / LOCKER_FILE
+        hash_lock = hash_path / LOCKER_FILE
         if create:
             err_msg = ""
             if plain_path.exists():
@@ -144,7 +144,7 @@ class Locker(object):
             # accommodate the scenario where the user created a hashed-name
             # locker and then changed their config to unhashed-names
             # catch either way!
-            tmp_file = self.conf.store_path/get_name_hash(name)/LOCKER_FILE
+            tmp_file = self.conf.store_path / get_name_hash(name) / LOCKER_FILE
             if tmp_file.exists():
                 self.path = self.conf.store_path / get_name_hash(name)
                 self.lock_file = self.path / LOCKER_FILE
