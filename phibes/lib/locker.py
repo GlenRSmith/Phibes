@@ -49,14 +49,6 @@ class Locker(object):
     registered_items = registered_items
 
     @property
-    def salt(self):
-        """
-        Convenience accessor to crypt.salt
-        :return:
-        """
-        return self._salt
-
-    @property
     def plaintext(self):
         """
         Plaintext only available here by decrypting
@@ -85,7 +77,6 @@ class Locker(object):
         :param name: The name of the locker. Must be unique in storage
         """
         self.conf = ConfigModel()
-        self._salt = None
         self._ciphertext = None
         plain_path = self.conf.store_path.joinpath(name)
         hash_path = self.conf.store_path.joinpath(get_name_hash(name))
@@ -152,22 +143,23 @@ class Locker(object):
             )
         if create and not Locker.can_create(self.path):
             raise ValueError(f"could not create {name}")
+        tmp_salt = None
         if not create:
             rec = phibes_file.read(self.lock_file)
-            self._salt = rec['salt']
+            tmp_salt = rec['salt']
             self._timestamp = rec['timestamp']
             self._ciphertext = rec['body']
         self.crypt_impl = CryptImpl(
-            password, crypt_arg_is_key=False, salt=self._salt
+            password, crypt_arg_is_key=False, salt=tmp_salt
         )
         if create:
-            self._salt = self.crypt_impl.salt
+            tmp_salt = self.crypt_impl.salt
             self.path.mkdir(exist_ok=False)
             self._ciphertext = self.crypt_impl.encrypt_password(password)
             self._timestamp = self.crypt_impl.encrypt(str(datetime.now()))
             phibes_file.write(
                 self.lock_file,
-                self._salt,
+                tmp_salt,
                 self._timestamp,
                 self._ciphertext,
                 overwrite=False
