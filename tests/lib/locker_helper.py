@@ -94,7 +94,7 @@ class PopulatedLocker(EmptyLocker):
                 f"{item_type}", f"{item_type}_name"
             )
             new_item = Item(
-                self.my_locker.crypt_key,
+                self.my_locker.crypt_impl.key,
                 f"{item_type}_name"
             )
             new_item.content = content

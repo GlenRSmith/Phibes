@@ -57,15 +57,6 @@ class Locker(object):
         return self._salt
 
     @property
-    def crypt_key(self):
-        """
-        Method to get crypt key
-        Lack of setter is intentional
-        :return: crypt_key
-        """
-        return self.crypt_impl.key
-
-    @property
     def plaintext(self):
         """
         Plaintext only available here by decrypting
@@ -316,7 +307,7 @@ class Locker(object):
             template_name: Optional[str] = None
     ) -> Item:
         item_cls = registered_items[item_type]
-        new_item = item_cls(self.crypt_key, item_name)
+        new_item = item_cls(self.crypt_impl.key, item_name)
         if template_name:
             template = self.get_item(template_name, "template")
             if not template:
@@ -335,7 +326,7 @@ class Locker(object):
         pth = self.get_item_path(item_type, item_name)
         if pth.exists():
             item_cls = registered_items[item_type]
-            found_item = item_cls(self.crypt_key, item_name)
+            found_item = item_cls(self.crypt_impl.key, item_name)
             found_item.read(pth)
             # TODO: validate using salt
         else:
