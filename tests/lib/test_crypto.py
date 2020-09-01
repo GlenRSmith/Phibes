@@ -68,11 +68,6 @@ class TestCrypto(EmptyLocker):
         cipher = impl.encrypt_password(pw)
         assert impl.authenticate(pw, cipher)
 
-    @pytest.mark.positive
-    def test_make_salt_bytes(self):
-        res = crypto.make_salt_bytes()
-        assert type(res) is bytes
-
     @pytest.mark.negative
     def test_fail_auth(self, tmp_path, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"

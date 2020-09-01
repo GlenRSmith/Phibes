@@ -14,29 +14,42 @@ from Cryptodome.Util import Counter
 
 # In-project modules
 
+current_crypt_config = {
+    "hash_algo": "sha256",
+    "crypt_key_rounds": 100100,
+    "auth_key_rounds": 100101,
+    "key_bytes": 32,  # 256 bits
+    "salt_bytes": 16,  # AES.block_size
+    "name_bytes": 4,
+    "mode": AES.MODE_CTR
+}
 
-HASH_ALGO = 'sha256'
-CRYPT_KEY_ROUNDS = 100100
-AUTH_KEY_ROUNDS = CRYPT_KEY_ROUNDS + 1
-# PBKDF2-generated key length, default is 32 I think, longest AES allows
-CRYPT_KEY_BYTES = 32
-KEY_BYTES = 32
-SALT_BYTES = AES.block_size  # 16
-NAME_BYTES = 4
-
-# HEX_REGEX = re.compile("^(0[xX])?[A-Fa-f0-9]+$")
-# HexStr = Match[HEX_REGEX]
-# KEY_REGEX = re.compile(b"[.]{CRYPT_KEY_BYTES}")
-# KeyBytes = Match[KEY_REGEX]
-# CipherDetails = Tuple[bytes, AES]
+available_versions = {
+    "current": current_crypt_config
+}
 
 
-def make_salt_bytes(num_bytes: int = SALT_BYTES) -> bytes:
-    return secrets.token_bytes(num_bytes)
+def determine_valid_version(salt, key, password, ciphertext):
+    for ver in available_versions:
+        try:
+            impl = CryptImpl(
+                crypt_arg=key,
+                crypt_arg_is_key=True,
+                salt=salt,
+                version=ver
+            )
+            if impl.authenticate(password, ciphertext):
+                return ver
+            else:
+                continue
+        except Exception as err:
+            print(err)
+            continue
+    raise ValueError("no matching encryption found")
 
 
-def make_salt_string(num_bytes: int = SALT_BYTES):
-    return make_salt_bytes(num_bytes).hex()
+def get_crypt_version(version="current"):
+    return available_versions.get(version)
 
 
 def encrypt(key: str, plaintext: str, iv: Optional[str] = None) -> str:
@@ -65,7 +78,8 @@ def get_strong_hash(
         content: str,
         number_of_rounds: int,
         salt: str,
-        length: int
+        length: int,
+        hash_algo
 ) -> str:
     """
     Get a PDKDF2-based hash value for some string
@@ -77,53 +91,32 @@ def get_strong_hash(
     """
     # Library dependancy, so called function here *will* return bytes
     ret_val = hashlib.pbkdf2_hmac(
-        HASH_ALGO, content.encode(), bytes.fromhex(salt),
+        hash_algo, content.encode(), bytes.fromhex(salt),
         number_of_rounds, dklen=length
     )
     return ret_val.hex()
 
 
-def make_crypt_key(seed: str, salt: str) -> str:
-    """
-    Convenience method to create a cryptographic key for the implemented
-    encryption method
-    :param seed: Starting string that will be hashed in round 1
-    :param salt: String containing a hexadecimal value
-    :return:
-    """
-    try:
-        ret_val = get_strong_hash(
-            seed, CRYPT_KEY_ROUNDS, salt, length=KEY_BYTES
-        )
-    except TypeError as err:
-        raise err
-    return ret_val
-
-
-def get_password_hash(password: str, salt: str) -> str:
-    """
-    Convenience method to create a hash for a password using the implemented
-    hashing method
-    :param password: Password to be hashed
-    :param salt: String containing a hexadecimal value
-    :return:
-    """
-    try:
-        ret_val = get_strong_hash(
-            password, AUTH_KEY_ROUNDS, salt, length=KEY_BYTES
-        )
-    except TypeError as err:
-        raise err
-    return ret_val
-
-
-def get_name_hash(name: str) -> str:
+def get_name_hash(name: str, version: Optional[str] = "current") -> str:
     """
     Return the one-way hash of the name.
-    :param name:
-    :return:
+
+    Uses the same hash method as used in encryption, but wouldn't have to.
+    @param name: plaintext name string
+    @type name: str
+    @param version: affordance for future change of encryption/hash methods
+    @type version: str
+    @return: hashed result
+    @rtype: str
     """
-    return get_strong_hash(name, AUTH_KEY_ROUNDS, '0000', length=NAME_BYTES)
+    ccv = get_crypt_version(version)
+    return hashlib.pbkdf2_hmac(
+        ccv.get("hash_algo"),
+        name.encode(),
+        bytes.fromhex('0000'),
+        ccv.get("auth_key_rounds"),
+        dklen=ccv.get("name_bytes")
+    ).hex()
 
 
 class CryptImpl(object):
@@ -150,15 +143,40 @@ class CryptImpl(object):
     def __init__(
             self,
             crypt_arg: str,
-            crypt_arg_is_key: bool = True,
-            salt: str = make_salt_string()
+            crypt_arg_is_key: Optional[bool] = True,
+            salt: Optional[str] = None,
+            version: Optional[str] = "current"
     ):
-        salt = (make_salt_string(), salt)[bool(salt)]
+        ccv = get_crypt_version(version)
+        self.salt_len = ccv.get("salt_bytes")
+        self.rounds = ccv.get("crypt_key_rounds")
+        self.key_bytes = ccv.get("key_bytes")
+        self.hash_algo = ccv.get("hash_algo")
+        if salt:
+            # `len` is character length, twice byte length
+            if len(salt) != self.salt_len * 2:
+                raise ValueError(
+                    f"salt must be {self.salt_len} bytes long\n"
+                    f"{salt} is {len(salt)/2} bytes long"
+                )
+        else:
+            salt = secrets.token_hex(self.salt_len)
         self._salt = salt
         if crypt_arg_is_key:
+            # client already has encryption key
             self.key = crypt_arg
         else:
-            self.key = make_crypt_key(crypt_arg, salt)
+            # creating a new encryption key
+            try:
+                self.key = get_strong_hash(
+                    crypt_arg,
+                    self.rounds,
+                    salt,
+                    self.key_bytes,
+                    self.hash_algo
+                )
+            except TypeError as err:
+                raise err
         self._refresh_cipher(salt)
         return
 
@@ -190,9 +208,22 @@ class CryptImpl(object):
         return ret_val
 
     def encrypt_password(self, password: str) -> str:
+        """
+        Performs a hash on the password, then encrypts the hash
+        @param password: password to encrypt
+        @type password: str
+        @return: encrypted value
+        @rtype: str
+        """
         return encrypt(
             self.key,
-            get_password_hash(password, self.salt),
+            get_strong_hash(
+                password,
+                self.rounds,
+                self.salt,
+                length=self.key_bytes,
+                hash_algo=self.hash_algo
+            ),
             self.salt
         )
 
@@ -214,9 +245,9 @@ class CryptImpl(object):
         :return:
         """
         key_bytes = bytes.fromhex(self.key)
-        if not len(key_bytes) == CRYPT_KEY_BYTES:
+        if not len(key_bytes) == self.key_bytes:
             raise ValueError(
-                f"`key` arg must be exactly {CRYPT_KEY_BYTES} long\n"
+                f"`key` arg must be exactly {self.key_bytes} long\n"
                 f"{key_bytes} (from key:{self.key}) is {len(key_bytes)}"
             )
         self.cipher = AES.new(
