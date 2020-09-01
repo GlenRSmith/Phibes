@@ -97,7 +97,8 @@ class Locker(object):
                     f"{self.conf}"
                 )
             if not self.lock_file.exists():
-                tmp_file = self.conf.store_path / get_name_hash(name) / LOCKER_FILE
+                tmp_dir = self.conf.store_path / get_name_hash(name)
+                tmp_file = tmp_dir / LOCKER_FILE
                 if tmp_file.exists():
                     self.path = self.conf.store_path / get_name_hash(name)
                     self.lock_file = self.path / LOCKER_FILE
