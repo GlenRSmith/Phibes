@@ -9,8 +9,8 @@ import pytest
 
 # Local application/library specific imports
 from phibes.lib import crypto
-from phibes.lib import locker
 from phibes.lib.errors import PhibesAuthError
+from phibes.model import Locker
 
 # Local test imports
 from tests.lib.locker_helper import EmptyLocker
@@ -72,12 +72,12 @@ class TestCrypto(EmptyLocker):
     def test_fail_auth(self, tmp_path, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(PhibesAuthError):
-            locker.Locker(
+            Locker(
                 self.locker_name, wrong_pw, create=False
             )
 
     @pytest.mark.positive
     def test_good_auth(self, setup_and_teardown):
-        assert locker.Locker(
+        assert Locker(
             self.locker_name, self.password, create=False
         )

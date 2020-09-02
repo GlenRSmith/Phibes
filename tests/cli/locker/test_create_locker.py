@@ -9,9 +9,9 @@ from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
-from phibes.lib.errors import PhibesNotFoundError
 from phibes.cli.locker.create import create_locker_cmd
-from phibes.lib.locker import Locker
+from phibes.lib.errors import PhibesNotFoundError
+from phibes.model import Locker
 from phibes.phibes_cli import main
 
 # Local test imports

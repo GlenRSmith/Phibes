@@ -15,15 +15,18 @@ from typing import List, Optional, Tuple
 # Third party packages
 
 # In-project modules
-from . config import ConfigModel
-from . crypto import CryptImpl, get_name_hash
-from . errors import PhibesAuthError, PhibesConfigurationError
-from . errors import PhibesNotFoundError, PhibesExistsError
+from phibes.lib import phibes_file
+from phibes.lib.config import ConfigModel
+from phibes.lib.crypto import CryptImpl, get_name_hash
+from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
+from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
 from phibes.model import FILE_EXT, Item
-from . import phibes_file
 # pylint: disable=unused-import
 # Item subclasses must be loaded so __subclasses__ below will report them
-from phibes.model import Schema, Secret, Tag, Template
+from . schema import Schema
+from . secret import Secret
+from . tag import Tag
+from . template import Template
 
 registered_items = {}
 for sub in [Schema, Secret, Tag, Template]:

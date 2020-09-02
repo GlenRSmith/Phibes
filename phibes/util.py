@@ -10,7 +10,7 @@ from pathlib import Path
 import click
 
 # for purposes of the CLI project, lib is being treated as third-party!
-from phibes.lib.locker import Locker
+from locker import Locker
 
 
 @click.group()

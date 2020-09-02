@@ -17,7 +17,7 @@ from phibes.lib.config import ConfigModel
 from phibes.lib.crypto import get_name_hash
 from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.lib.locker import Locker, LOCKER_FILE
+from phibes.model import Locker, LOCKER_FILE
 from phibes.phibes_cli import main
 
 # Local test imports
