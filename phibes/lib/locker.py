@@ -19,14 +19,11 @@ from . config import ConfigModel
 from . crypto import CryptImpl, get_name_hash
 from . errors import PhibesAuthError, PhibesConfigurationError
 from . errors import PhibesNotFoundError, PhibesExistsError
-from . item import FILE_EXT, Item
+from phibes.model import FILE_EXT, Item
 from . import phibes_file
 # pylint: disable=unused-import
 # Item subclasses must be loaded so __subclasses__ below will report them
-from . schema import Schema
-from . secret import Secret
-from . tag import Tag
-from . template import Template
+from phibes.model import Schema, Secret, Tag, Template
 
 registered_items = {}
 for sub in [Schema, Secret, Tag, Template]:
