@@ -13,8 +13,8 @@ from typing import List, Set
 # Third party packages
 
 # In-project modules
-from . crypto import CryptImpl
-from . item import Item
+from phibes.lib.crypto import CryptImpl
+from phibes.model import Item
 
 
 ItemSet = Set[Item]

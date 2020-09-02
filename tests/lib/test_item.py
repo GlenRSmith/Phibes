@@ -9,7 +9,7 @@ from datetime import datetime
 import pytest
 
 # Local application/library specific imports
-from phibes.lib.item import Item
+from phibes.model import Item
 
 # Local test imports
 from tests.lib.locker_helper import EmptyLocker

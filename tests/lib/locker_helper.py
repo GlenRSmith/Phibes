@@ -11,8 +11,8 @@ from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import ConfigModel, set_home_dir
 from phibes.lib.config import load_config_file, write_config_file
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.lib.item import Item
 from phibes.lib.locker import Locker
+from phibes.model import Item
 
 
 class BaseTestClass(object):

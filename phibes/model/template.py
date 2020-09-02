@@ -1,7 +1,7 @@
 """
-Implementation of Secrets
+Implementation of Template
 
-A Secret is an entry in a Locker.
+A Template is an entry in a Locker.
 """
 
 # Built-in library packages
@@ -9,11 +9,11 @@ A Secret is an entry in a Locker.
 # Third party packages
 
 # In-project modules
-from . crypto import CryptImpl
-from . item import Item
+from phibes.lib.crypto import CryptImpl
+from phibes.model import Item
 
 
-class Secret(Item):
+class Template(Item):
 
     def __init__(self, crypt_obj: CryptImpl, name: str, content: str = ""):
         super().__init__(crypt_obj, name, content)

@@ -13,8 +13,8 @@ from typing import Optional
 # Third party packages
 
 # In-project modules
-from . crypto import CryptImpl
-from . import phibes_file
+from phibes.lib.crypto import CryptImpl
+from phibes.lib import phibes_file
 
 
 FILE_EXT = "cry"
