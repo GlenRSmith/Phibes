@@ -27,13 +27,13 @@ class Item(object):
 
     def __init__(
             self,
-            key: str,
+            crypt_obj: CryptImpl,
             name: str,
             content: Optional[str] = None
     ):
         self.item_type = self.get_type_name()
         self.name = name
-        self.crypt_impl = CryptImpl(key)
+        self.crypt_impl = crypt_obj
         self._ciphertext = None
         self._timestamp = None
         if content:

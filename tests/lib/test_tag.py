@@ -48,7 +48,7 @@ class TestTags(EmptyLocker):
             ["secret:twitter", "secret:reddit"]
         )
         t1.save(pth, overwrite=True)
-        t2 = Tag(self.my_locker.crypt_impl.key, f"social_media")
+        t2 = Tag(self.my_locker.crypt_impl, f"social_media")
         t2.read(pth)
         assert t2 is not None
         those_secrets = t2.list_items()

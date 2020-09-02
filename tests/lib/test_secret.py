@@ -20,15 +20,15 @@ class TestSecrets(EmptyLocker):
     def test_secrets(self, setup_and_teardown):
         # create some secrets
         pth = self.my_locker.get_item_path("secret", "facebook")
-        s1 = Secret(self.my_locker.crypt_impl.key, "facebook")
+        s1 = Secret(self.my_locker.crypt_impl, "facebook")
         s1.content = "password:KidsBirthday"
         s1.save(pth)
         pth = self.my_locker.get_item_path("secret", "twitter")
-        s2 = Secret(self.my_locker.crypt_impl.key, "twitter")
+        s2 = Secret(self.my_locker.crypt_impl, "twitter")
         s2.content = "password:KidsBirthday"
         s2.save(pth)
         pth = self.my_locker.get_item_path("secret", "reddit")
-        s3 = Secret(self.my_locker.crypt_impl.key, "reddit")
+        s3 = Secret(self.my_locker.crypt_impl, "reddit")
         s3.content = "password:KidsBirthday"
         s3.save(pth)
         # TestSecrets.my_locker.add_item(s1)
