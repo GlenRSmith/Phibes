@@ -45,7 +45,7 @@ class TestCryptImpl(object):
     def setup_method(self):
         self.pw = "s00p3rsekrit"
         crypt_impl = CryptFactory().create(self.pw)
-        self.crypt_id = crypt_impl.guid
+        self.crypt_id = crypt_impl.crypt_id
         self.pw_hash = crypt_impl.pw_hash
         self.salt = crypt_impl.salt
         return
@@ -80,7 +80,7 @@ class TestCryptImpl(object):
             assert pt == tt
         for crypt_id in CryptFactory().list_builders():
             crypt = CryptFactory().create(self.pw, crypt_id)
-            crypt_id = crypt.guid
+            crypt_id = crypt.crypt_id
             pw_hash = crypt.pw_hash
             salt = crypt.salt
             for tt in plains:
@@ -101,7 +101,7 @@ class TestCrypto(EmptyLocker):
         pw = "this right here"
         crypt = CryptFactory().create(pw)
         file_pw_hash = crypt.pw_hash
-        crypt_id = crypt.guid
+        crypt_id = crypt.crypt_id
         file_salt = crypt.salt
         crypt = CryptFactory().get(
             crypt_id, pw, file_pw_hash, file_salt

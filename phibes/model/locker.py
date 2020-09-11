@@ -196,7 +196,7 @@ class Locker(object):
             phibes_file.write(
                 self.lock_file,
                 self.crypt_impl.salt,
-                self.crypt_impl.guid,
+                self.crypt_impl.crypt_id,
                 self.crypt_impl.encrypt(str(datetime.now())),
                 self.crypt_impl.pw_hash,
                 overwrite=False

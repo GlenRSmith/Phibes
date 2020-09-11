@@ -97,9 +97,6 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
             raise err
         return
 
-    # Every encryption call we make needs to use a unique salt.
-    # That salt value needs to be on the object for retrieval and storage
-    # immediately after the encryption is called.
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
         return self._encrypt.encrypt(plaintext, salt)
 
@@ -139,12 +136,11 @@ def get_module_crypt_100100(
 
 class CryptWrapper(object):
 
-    guid = "AesCtrPbkdf2Sha256100100"
-
-    def __init__(self, guid, crypt_class, init_kwargs):
+    def __init__(self, crypt_id, crypt_class, init_kwargs):
+        self.crypt_id = crypt_id
         self.crypt_class = crypt_class
         self.init_kwargs = init_kwargs
-        CryptFactory().register_builder(guid, self)
+        CryptFactory().register_builder(crypt_id, self)
         return
 
     def __call__(
@@ -157,7 +153,7 @@ class CryptWrapper(object):
         instance = self.crypt_class(
             password, pw_hash, salt, **self.init_kwargs
         )
-        instance.guid = self.guid
+        instance.crypt_id = self.crypt_id
         return instance
 
 
