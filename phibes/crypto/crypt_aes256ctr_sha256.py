@@ -86,13 +86,12 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
             key = self.create_key(password, salt)
             self._encrypt = CryptAesCtrmode(key, salt)
             auth_key = self.hash_name(password, self.salt)
-            if creating:
-                self.pw_hash = auth_key
-            else:
+            if not creating:
                 if not auth_key == pw_hash:
                     raise PhibesAuthError(
                         f"{pw_hash} does not match {auth_key}"
                     )
+            self.pw_hash = auth_key
 
         except TypeError as err:
             raise err
