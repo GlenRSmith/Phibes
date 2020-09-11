@@ -47,40 +47,73 @@ LOCKER_FILE = ".config"
 
 
 def find_matching_crypt_impl(path: Path, plain_name, password):
+    msgs = f"{path=}\n"
+    msgs += f"{plain_name=}\n"
     dirs = [s.name for s in path.glob('*') if s.is_dir()]
+    msgs += f"{dirs=}\n"
     plain_dir = (None, path.joinpath(plain_name))[plain_name in dirs]
-    hashed_dir = None
-    for tmp_dir in dirs:
-        # We don't know the name hash until after we confirm the crypt impl
-        # so just pick up every directory that has a lock file in it
-        lockfile = Path(tmp_dir).joinpath(LOCKER_FILE)
+    msgs += f"{plain_dir=}\n"
+    plain_lock_rec = None
+    plain_crypt_inst = None
+    had_auth_failure = False
+    if plain_dir:
+        dirs.remove(plain_name)
+        lockfile = plain_dir / LOCKER_FILE
         if lockfile.exists():
-            rec = phibes_file.read(lockfile)
-            pw_hash = rec['body']
-            salt = rec['salt']
-            crypt_id = rec['crypt_id']
-            crypt_inst = get_crypt(
-                crypt_id, password, pw_hash, salt
-            )
-            # auth happens in the c'tor, but check the dirname, too
-            if tmp_dir == crypt_inst.name_hash(plain_name):
-                if plain_name in dirs:
-                    raise ValueError(
-                        f"conflict {hashed_dir} and {plain_dir} both exist"
-                    )
-                return crypt_inst
-            raise PhibesAuthError(
-                f"{plain_name} found no match with given password"
-            )
-    if plain_name not in dirs:
-        raise PhibesNotFoundError(f"no match found {path} {plain_name}")
-    lockfile = path / plain_name / LOCKER_FILE
-    if not lockfile.exists():
-        raise PhibesNotFoundError(f"missing {lockfile}")
-    rec = phibes_file.read(lockfile)
-    return get_crypt(
-        rec['crypt_id'], password, rec['body'], rec['salt']
-    )
+            plain_lock_rec = phibes_file.read(lockfile)
+            try:
+                msgs += f"trying to get {plain_lock_rec['crypt_id']=}\n"
+                plain_crypt_inst = get_crypt(
+                    plain_lock_rec['crypt_id'],
+                    password,
+                    plain_lock_rec['body'],
+                    plain_lock_rec['salt']
+                )
+            except PhibesAuthError:
+                had_auth_failure = True
+    hashed_lock_rec = None
+    hashed_crypt_inst = None
+    # We don't know the name hash until after we confirm the crypt impl
+    # so just pick up every directory that has a lock file in it
+    found_lockfiles = {
+        flf: path.joinpath(flf, LOCKER_FILE)
+        for flf in dirs
+        if path.joinpath(flf, LOCKER_FILE).exists()
+    }
+    for flf in found_lockfiles:
+        msgs += f"looking for lock file {found_lockfiles[flf].resolve()}\n"
+        rec = phibes_file.read(found_lockfiles[flf])
+        pw_hash = rec['body']
+        salt = rec['salt']
+        crypt_id = rec['crypt_id']
+        try:
+            msgs += f"trying to get crypt {crypt_id=} {password=} {pw_hash=}\n"
+            crypt_inst = get_crypt(crypt_id, password, pw_hash, salt)
+        except PhibesAuthError:
+            had_auth_failure = True
+            continue
+        # auth succeeded in the c'tor, but check the dirname, too
+        if crypt_inst.hash_name(plain_name) == flf:
+            hashed_lock_rec = rec
+            hashed_crypt_inst = crypt_inst
+            break
+    if hashed_lock_rec and plain_lock_rec:
+        raise PhibesConfigurationError(
+            f"conflicting lock files exist {hashed_lock_rec} {plain_lock_rec}"
+        )
+    elif hashed_lock_rec:
+        rec = hashed_lock_rec
+    elif plain_lock_rec:
+        rec = plain_lock_rec
+    elif had_auth_failure:
+        raise PhibesAuthError(
+            f"could not auth {path} {plain_name}\n{msgs}"
+        )
+    else:
+        raise PhibesNotFoundError(
+            f"no match found {path} {plain_name}\n{msgs}"
+        )
+    return get_crypt(rec['crypt_id'], password, rec['body'], rec['salt'])
 
 
 class Locker(object):
