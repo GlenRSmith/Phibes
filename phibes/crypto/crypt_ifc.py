@@ -3,7 +3,7 @@ Interface definition for crypt/hash-ing classes
 """
 # Built-in library packages
 import abc
-from typing import Iterator, Optional
+from typing import Optional
 
 # Third party packages
 
@@ -76,38 +76,34 @@ class CryptIfc(abc.ABC):
     ) -> str:
         pass
 
-    # @abc.abstractmethod
-    # def authenticate(self, password: str) -> bool:
-    #     pass
-
     @classmethod
     def validate_child(cls, subclass):
-        required_methods = abstract_methods(cls)
-        missing_methods = []
-        for rm in required_methods:
-            if (
-                    hasattr(subclass, rm) and
-                    hasattr(getattr(subclass, rm),'__isabstractmethod__') and
-                    getattr(subclass, rm).__isabstractmethod__ and
-                    callable(getattr(subclass, rm))
-            ):
-                pass
-            else:
-                missing_methods.append(rm)
-        ret_val = True
-        for rm in required_methods:
-            ret_val &= (
-                    hasattr(subclass, rm) and
-                    callable(getattr(subclass, rm))
+        if not cls.__subclasshook__(subclass):
+            missing = {
+                name for name in dir(cls)
+                if class_has_callable(cls, name, abstract=True)
+            } - {
+                name for name in dir(cls)
+                if class_has_callable(subclass, name, abstract=False)
+            }
+            raise ValueError(
+                f"{subclass} is missing implementation for {missing}"
             )
-        return missing_methods
+        return
 
     @classmethod
     def __subclasshook__(cls, subclass):
-        ret_val = True
-        for rm in abstract_methods(cls):
-            ret_val &= class_has_callable(subclass, rm)
-        return ret_val
+        parent_abstract_methods = {
+            name for name in dir(cls)
+            if class_has_callable(cls, name, abstract=True)
+        }
+        child_concrete_methods = {
+            name for name in dir(cls)
+            if class_has_callable(subclass, name, abstract=False)
+        }
+        return parent_abstract_methods.issubset(
+            child_concrete_methods
+        )
 
 
 def class_has_callable(
@@ -131,22 +127,7 @@ def class_has_callable(
             abstract or
             (
                 not hasattr(getattr(cls, method), is_abs) or
-                not getattr(getattr(cls, method), is_abs, False)
+                not getattr(getattr(cls, method), is_abs, True)
             )
         )
-    )
-
-
-def abstract_methods(cls) -> Iterator[str]:
-    ret_list = []
-    for attr_name in dir(cls):
-        if class_has_callable(cls, attr_name, abstract=True):
-            ret_list.append(attr_name)
-    return iter(ret_list)
-
-
-def r_issubof_l(cls, sub):
-    return all(
-        class_has_callable(sub, am, abstract=False)
-        for am in abstract_methods(cls)
     )

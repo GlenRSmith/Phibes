@@ -10,7 +10,6 @@ from typing import Optional
 
 # In-project modules
 from phibes.crypto.crypt_ifc import CryptIfc
-from phibes.crypto.factory import CryptFactory
 from phibes.crypto.hash_pbkdf2 import pbkdf2_sha256
 from phibes.crypto.encrypt_aes import CryptAesCtrmode
 from phibes.lib.errors import PhibesAuthError
@@ -37,7 +36,7 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
     For convenience, the same salt is used for each of these.
     """
 
-    # No to change this so not an instance value
+    # No need to vary this, so not an instance value
     name_bytes = 4
 
     @property
@@ -118,47 +117,6 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
 
     def __str__(self):
         return (
+            f"{self.crypt_id=} - {type(self.crypt_id)=}"
             f"{self.salt=} - {type(self.salt)=}"
         )
-
-
-def get_module_crypt_100100(
-        password: str,
-        pw_hash: Optional[str] = None,
-        salt: Optional[str] = None,
-        **kwargs: dict
-) -> CryptIfc:
-    kwargs = {"key_rounds": 100100}
-    return CryptAesCtrPbkdf2Sha256(
-        password, pw_hash, salt, **kwargs
-    )
-
-
-class CryptWrapper(object):
-
-    def __init__(self, crypt_id, crypt_class, init_kwargs):
-        self.crypt_id = crypt_id
-        self.crypt_class = crypt_class
-        self.init_kwargs = init_kwargs
-        CryptFactory().register_builder(crypt_id, self)
-        return
-
-    def __call__(
-            self,
-            password: str,
-            pw_hash: Optional[str] = None,
-            salt: Optional[str] = None,
-            **kwargs: dict
-    ):
-        instance = self.crypt_class(
-            password, pw_hash, salt, **self.init_kwargs
-        )
-        instance.crypt_id = self.crypt_id
-        return instance
-
-
-inst = CryptWrapper(
-    "AesCtrPbkdf2Sha256100100",
-    CryptAesCtrPbkdf2Sha256,
-    {'key_rounds': 100100}
-)

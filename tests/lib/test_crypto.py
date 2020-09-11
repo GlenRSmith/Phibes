@@ -9,6 +9,7 @@ import pytest
 
 # Local application/library specific imports
 from phibes.crypto import CryptFactory
+from phibes.crypto import create_crypt, get_crypt
 from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker
 
@@ -44,7 +45,7 @@ class TestCryptImpl(object):
 
     def setup_method(self):
         self.pw = "s00p3rsekrit"
-        crypt_impl = CryptFactory().create(self.pw)
+        crypt_impl = create_crypt(self.pw)
         self.crypt_id = crypt_impl.crypt_id
         self.pw_hash = crypt_impl.pw_hash
         self.salt = crypt_impl.salt
@@ -54,14 +55,14 @@ class TestCryptImpl(object):
     @pytest.mark.parametrize("plaintext", plains)
     def test_create_encrypt_decrypt(self, plaintext):
         for crypt_id in CryptFactory().list_builders():
-            crypt = CryptFactory().create(self.pw, crypt_id)
+            crypt = create_crypt(self.pw, crypt_id)
             assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
 
     @pytest.mark.positive
     @pytest.mark.parametrize("plaintext", plains)
     def test_get_encrypt_decrypt(self, plaintext):
         for crypt_id in CryptFactory().list_builders():
-            crypt = CryptFactory().get(
+            crypt = get_crypt(
                 crypt_id, self.pw, self.pw_hash, self.salt
             )
             assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
@@ -73,13 +74,13 @@ class TestCryptImpl(object):
         have a workaround that refreshes the cipher after each use
         :return:
         """
-        crypt = CryptFactory().create(self.pw)
+        crypt = create_crypt(self.pw)
         for tt in plains:
             ct = crypt.encrypt(tt)
             pt = crypt.decrypt(ct)
             assert pt == tt
         for crypt_id in CryptFactory().list_builders():
-            crypt = CryptFactory().create(self.pw, crypt_id)
+            crypt = create_crypt(self.pw, crypt_id)
             crypt_id = crypt.crypt_id
             pw_hash = crypt.pw_hash
             salt = crypt.salt
@@ -87,7 +88,7 @@ class TestCryptImpl(object):
                 ct = crypt.encrypt(tt)
                 pt = crypt.decrypt(ct)
                 assert pt == tt
-            crypt = CryptFactory().get(crypt_id, self.pw, pw_hash, salt)
+            crypt = get_crypt(crypt_id, self.pw, pw_hash, salt)
             for tt in plains:
                 ct = crypt.encrypt(tt)
                 pt = crypt.decrypt(ct)
@@ -99,11 +100,11 @@ class TestCrypto(EmptyLocker):
     @pytest.mark.positive
     def test_what(self):
         pw = "this right here"
-        crypt = CryptFactory().create(pw)
+        crypt = create_crypt(pw)
         file_pw_hash = crypt.pw_hash
         crypt_id = crypt.crypt_id
         file_salt = crypt.salt
-        crypt = CryptFactory().get(
+        crypt = get_crypt(
             crypt_id, pw, file_pw_hash, file_salt
         )
         assert crypt
@@ -118,6 +119,5 @@ class TestCrypto(EmptyLocker):
 
     @pytest.mark.positive
     def test_good_auth(self, setup_and_teardown):
-        assert Locker(
-            self.locker_name, self.password, create=False
-        )
+        # auth is 'built in' to getting a crypt for existing locker
+        assert Locker(self.locker_name, self.password, create=False)

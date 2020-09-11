@@ -5,13 +5,13 @@ All available implementations are registered and accessible by name.
 
 # Built-in library packages
 from __future__ import annotations
-import abc
-# from typing import List, Optional, Tuple
+# import abc
+from typing import Optional
 
 # Third party packages
 
 # In-project modules
-from . crypt_ifc import CryptIfc
+from phibes.crypto import crypt_ifc
 # from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
 # from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
 
@@ -115,7 +115,7 @@ class CryptFactory(CallableFactory):
         @param kwargs: params specific to the type of crypt being created
         @type kwargs: dict
         @return: Crypt
-        @rtype: CryptIfc
+        @rtype: crypt_ifc.CryptIfc
         """
         print(f"CryptFactory.create {kwargs=}")
         print(f"CryptFactory.create {self._default=}")
@@ -144,12 +144,55 @@ class CryptFactory(CallableFactory):
         @param kwargs:
         @type kwargs:
         @return: Crypt
-        @rtype: CryptIfc
+        @rtype: crypt_ifc.CryptIfc
         """
         print(f"CryptFactory.get {kwargs=}")
         builder = self._objects.get(crypt_id)
+        print(f"CryptFactory builder {builder}")
         if not builder:
             raise ValueError(crypt_id)
         # Return the result of `__call__` on the registered item
         ret_val = builder(password, pw_hash, salt, **kwargs)
         return ret_val
+
+
+class CryptWrapper(object):
+
+    def __init__(self, crypt_class, init_kwargs):
+        self.crypt_id = crypt_class.__name__ + ''.join(
+            [f"{k}{v}" for (k, v) in init_kwargs.items()]
+        )
+        self.crypt_class = crypt_class
+        crypt_ifc.CryptIfc.validate_child(crypt_class)
+        self.init_kwargs = init_kwargs
+        CryptFactory().register_builder(self.crypt_id, self)
+        return
+
+    def __call__(
+            self,
+            password: str,
+            pw_hash: Optional[str] = None,
+            salt: Optional[str] = None,
+            **kwargs: dict
+    ):
+        instance = self.crypt_class(
+            password, pw_hash, salt, **self.init_kwargs
+        )
+        instance.crypt_id = self.crypt_id
+        return instance
+
+
+def register_crypt(crypt_class, unique_kw_args):
+    CryptWrapper(crypt_class, unique_kw_args)
+
+
+def create_crypt(password: str, crypt_id: str = None, **kwargs):
+    return CryptFactory().create(password, crypt_id, **kwargs)
+
+
+def get_crypt(crypt_id, password, pw_hash, salt, **kwargs):
+    return CryptFactory().get(crypt_id, password, pw_hash, salt, **kwargs)
+
+
+def list_crypts():
+    return CryptFactory.list_builders()
