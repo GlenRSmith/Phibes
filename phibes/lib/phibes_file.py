@@ -3,11 +3,12 @@ PhibesFile provides read/write services for the uniform layout
 that is shared by the locker file and all item files.
 
 Line 1: the salt value (a hex string)
+Line 2: the unique ID of the crypt handler
 Line 2: the timestamp at the time the file was written
 Line 3: the user content
 
 This file interface is 'agnostic' about encryption,
-but for complete reference, the standard is that Lines 2 & 3 are
+but for complete reference, the standard is that Lines 3 & 4 are
 encrypted.
 """
 
@@ -34,6 +35,8 @@ def read(pth: Path) -> dict:
     with pth.open('r') as cf:
         # the salt was stored as a hexadecimal string
         ret_val['salt'] = cf.readline().strip('\n')
+        # the next line is a unique crypt implementation ID
+        ret_val['crypt_id'] = cf.readline().strip('\n')
         # the next line is an encrypted datetime stamp
         ret_val['timestamp'] = cf.readline().strip('\n')
         # the next line is the encrypted content
@@ -44,6 +47,7 @@ def read(pth: Path) -> dict:
 def write(
         pth: Path,
         salt: str,
+        crypt_id: str,
         timestamp: str,
         body: str,
         overwrite: bool = False,
@@ -53,6 +57,7 @@ def write(
     Write the salt, timestamp, and body to the specified pth file
     :param pth: Path object to write
     :param salt: salt value
+    :param crypt_id: ID of crypt handler
     :param timestamp: timestamp
     :param body: body
     :param overwrite: whether to overwrite an existing file
@@ -69,11 +74,50 @@ def write(
         raise ValueError(
             f"File fields can not contain newline char\n"
             f"salt: {salt}\n"
+            f"crypt_id: {crypt_id}\n"
             f"timestamp: {timestamp}\n"
             f"body: {body}\n"
         )
     with pth.open("w") as cipher_file:
         cipher_file.write(
-            f"{salt}\n{timestamp}\n{body}\n"
+            f"{salt}\n{crypt_id}\n{timestamp}\n{body}\n"
         )
     return
+
+
+class PhibesRecordHandler(object):
+    def __init__(self, *args):
+        self.args = args
+
+    def write(
+            self, salt: str, crypt_id: str, timestamp: str, body: str
+    ) -> str:
+        """
+        Return a multi-line str suitable for writing to file
+        :param salt: salt value
+        :param crypt_id: ID of crypt handler
+        :param timestamp: timestamp
+        :param body: body
+        :return: str
+        """
+        if not body:
+            raise AttributeError(f"Record has no content!")
+        if (
+                "\n" in salt or
+                "\n" in crypt_id or
+                "\n" in timestamp
+        ) or (body and "\n" in body):
+            raise ValueError(
+                f"File fields can not contain newline char\n"
+                f"salt: {salt}\n"
+                f"crypt_id: {crypt_id}\n"
+                f"timestamp: {timestamp}\n"
+                f"body: {body}\n"
+            )
+        return f"{salt}\n{crypt_id}\n{timestamp}\n{body}\n"
+
+    def read(self):
+        return
+
+    def __repr__(self):
+        return

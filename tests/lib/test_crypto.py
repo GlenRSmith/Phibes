@@ -22,7 +22,6 @@ class TestCryptImpl(object):
         self.pw = "This is just a test"
         self.impl = crypto.CryptImpl(
             self.pw,
-            crypt_arg_is_key=False,
             salt='1c03cdbfc25c0b3007caa19d560b3d77'
         )
         self.salt = self.impl.salt
@@ -64,7 +63,7 @@ class TestCrypto(EmptyLocker):
     @pytest.mark.positive
     def test_what(self):
         pw = "this right here"
-        impl = crypto.CryptImpl(pw, crypt_arg_is_key=False)
+        impl = crypto.CryptImpl(pw)
         cipher = impl.encrypt_password(pw)
         assert impl.authenticate(pw, cipher)
 

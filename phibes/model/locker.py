@@ -15,6 +15,7 @@ from typing import List, Optional, Tuple
 # Third party packages
 
 # In-project modules
+from phibes.crypto import crypt_factory
 from phibes.lib import phibes_file
 from phibes.lib.config import ConfigModel
 from phibes.lib.crypto import CryptImpl, get_name_hash
@@ -45,6 +46,49 @@ ItemList = List[Item]
 LOCKER_FILE = ".config"
 
 
+def create_crypt(path: Path, password: str):
+    return crypt_factory.get(password)
+    # from phibes.crypto import CryptFactory
+    # return CryptFactory().create(password)
+
+
+def find_matching_crypt_impl(path: Path, plain_name, password):
+    dirs = [s.name for s in path.glob('*') if s.is_dir()]
+    plain_dir = (None, path.joinpath(plain_name))[plain_name in dirs]
+    hashed_dir = None
+    for tmp_dir in dirs:
+        # We don't know the name hash until after we confirm the crypt impl
+        # so just pick up every directory that has a lock file in it
+        lockfile = Path(tmp_dir).joinpath(LOCKER_FILE)
+        if lockfile.exists():
+            rec = phibes_file.read(lockfile)
+            pw_hash = rec['body']
+            salt = rec['salt']
+            crypt_id = rec['crypt_id']
+            crypt_inst = crypt_factory.get(
+                crypt_id, password, pw_hash, salt
+            )
+            # auth happens in the c'tor, but check the dirname, too
+            if tmp_dir == crypt_inst.name_hash(plain_name):
+                if plain_name in dirs:
+                    raise ValueError(
+                        f"conflict {hashed_dir} and {plain_dir} both exist"
+                    )
+                return crypt_inst
+            raise PhibesAuthError(
+                f"{plain_name} found no match with given password"
+            )
+    if plain_name not in dirs:
+        raise PhibesNotFoundError(f"no match found {path} {plain_name}")
+    lockfile = path / plain_name / LOCKER_FILE
+    if not lockfile.exists():
+        raise PhibesNotFoundError(f"missing {lockfile}")
+    rec = phibes_file.read(lockfile)
+    return crypt_factory.get(
+        rec['crypt_id'], password, rec['body'], rec['salt']
+    )
+
+
 class Locker(object):
 
     registered_items = registered_items
@@ -59,7 +103,14 @@ class Locker(object):
         :param name: The name of the locker. Must be unique in storage
         """
         self.conf = ConfigModel()
+        if not create:
+            self.crypt_impl = find_matching_crypt_impl(
+                self.conf.store_path, name, password
+            )
+        else:
+            self.crypt_impl = None
         plain_path = self.conf.store_path.joinpath(name)
+        # not possible until a crypt_impl is assigned!
         hash_path = self.conf.store_path.joinpath(get_name_hash(name))
         # clean up empty dirs to reduce conflict check complexity
         if plain_path.exists() and not any(plain_path.iterdir()):
@@ -109,12 +160,12 @@ class Locker(object):
                     )
             rec = phibes_file.read(self.lock_file)
             self._timestamp = rec['timestamp']
-            tmp_ciphertext = rec['body']
-            self.crypt_impl = CryptImpl(
-                password, crypt_arg_is_key=False, salt=rec['salt']
+            self.crypt_impl = crypt_factory.get(
+                crypt_id=rec["crypt_id"],
+                password=password,
+                pw_hash=rec["body"],
+                salt=rec["salt"]
             )
-            if not self.crypt_impl.authenticate(password, tmp_ciphertext):
-                raise PhibesAuthError(f"{password} is invalid")
         else:
             err_msg = ""
             if plain_path.exists():
@@ -140,16 +191,14 @@ class Locker(object):
                 )
             if not Locker.can_create(self.path):
                 raise ValueError(f"could not create {name}")
-            self.crypt_impl = CryptImpl(password, crypt_arg_is_key=False)
-            tmp_salt = self.crypt_impl.salt
+            self.crypt_impl = crypt_factory.create(password)
             self.path.mkdir(exist_ok=False)
-            tmp_ciphertext = self.crypt_impl.encrypt_password(password)
-            self._timestamp = self.crypt_impl.encrypt(str(datetime.now()))
             phibes_file.write(
                 self.lock_file,
-                tmp_salt,
-                self._timestamp,
-                tmp_ciphertext,
+                self.crypt_impl.salt,
+                self.crypt_impl.guid,
+                self.crypt_impl.encrypt(str(datetime.now())),
+                self.crypt_impl.pw_hash,
                 overwrite=False
             )
         return
@@ -180,7 +229,7 @@ class Locker(object):
             inst = Locker(name, password, create=False)
         except FileNotFoundError as err:
             raise PhibesNotFoundError(
-                f"Locker {name} not found"
+                f"Locker {name} not found\n"
                 f"{err}"
             )
         return inst

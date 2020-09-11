@@ -47,6 +47,7 @@ class Item(object):
         phibes_file.write(
             pth,
             self.salt,
+            self.crypt_impl.guid,
             self._timestamp,
             self._ciphertext,
             overwrite=overwrite
