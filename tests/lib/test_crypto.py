@@ -8,8 +8,7 @@ pytest module for lib.crypto
 import pytest
 
 # Local application/library specific imports
-from phibes.crypto import CryptFactory
-from phibes.crypto import create_crypt, get_crypt
+from phibes.crypto import create_crypt, get_crypt, list_crypts
 from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker
 
@@ -54,14 +53,14 @@ class TestCryptImpl(object):
     @pytest.mark.positive
     @pytest.mark.parametrize("plaintext", plains)
     def test_create_encrypt_decrypt(self, plaintext):
-        for crypt_id in CryptFactory().list_builders():
+        for crypt_id in list_crypts():
             crypt = create_crypt(self.pw, crypt_id)
             assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
 
     @pytest.mark.positive
     @pytest.mark.parametrize("plaintext", plains)
     def test_get_encrypt_decrypt(self, plaintext):
-        for crypt_id in CryptFactory().list_builders():
+        for crypt_id in list_crypts():
             crypt = get_crypt(
                 crypt_id, self.pw, self.pw_hash, self.salt
             )
@@ -79,7 +78,7 @@ class TestCryptImpl(object):
             ct = crypt.encrypt(tt)
             pt = crypt.decrypt(ct)
             assert pt == tt
-        for crypt_id in CryptFactory().list_builders():
+        for crypt_id in list_crypts():
             crypt = create_crypt(self.pw, crypt_id)
             crypt_id = crypt.crypt_id
             pw_hash = crypt.pw_hash

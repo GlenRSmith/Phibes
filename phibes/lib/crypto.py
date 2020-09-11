@@ -3,10 +3,8 @@ Cryptography support
 """
 
 # Built-in library packages
-import abc
 import base64
 import hashlib
-from pathlib import Path
 import secrets
 from typing import Optional
 
@@ -171,10 +169,6 @@ class CryptImpl(CryptIfc):
 
     def strong_hash(self, plaintext: str, salt: str, length: int) -> str:
         # Library dependency, so called function here *will* return bytes
-        ret_val = hashlib.pbkdf2_hmac(
-            self.hash_algo, plaintext.encode(), bytes.fromhex(salt),
-            self.rounds, dklen=length
-        )
         return hashlib.pbkdf2_hmac(
             self.hash_algo,
             plaintext.encode(),

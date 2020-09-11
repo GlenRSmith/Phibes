@@ -103,9 +103,9 @@ class PhibesRecordHandler(object):
         if not body:
             raise AttributeError(f"Record has no content!")
         if (
-                "\n" in salt or
-                "\n" in crypt_id or
-                "\n" in timestamp
+                "\n" in salt
+                or "\n" in crypt_id
+                or "\n" in timestamp
         ) or (body and "\n" in body):
             raise ValueError(
                 f"File fields can not contain newline char\n"

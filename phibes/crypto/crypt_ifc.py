@@ -113,21 +113,21 @@ def class_has_callable(
 ):
     is_abs = "__isabstractmethod__"
     return (
-        hasattr(cls, method) and
-        callable(getattr(cls, method)) and
-        (
-            not abstract or
-            (
-                hasattr(getattr(cls, method), is_abs) and
-                getattr(getattr(cls, method), is_abs)
+        hasattr(cls, method)
+        and callable(getattr(cls, method))
+        and (
+            not abstract
+            or (
+                hasattr(getattr(cls, method), is_abs)
+                and getattr(getattr(cls, method), is_abs)
             )
-        ) and
-        (
-            abstract is None or
-            abstract or
-            (
-                not hasattr(getattr(cls, method), is_abs) or
-                not getattr(getattr(cls, method), is_abs, True)
+        )
+        and (
+            abstract is None
+            or abstract
+            or (
+                not hasattr(getattr(cls, method), is_abs)
+                or not getattr(getattr(cls, method), is_abs, True)
             )
         )
     )

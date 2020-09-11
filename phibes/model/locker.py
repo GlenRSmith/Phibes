@@ -53,25 +53,23 @@ def find_matching_crypt_impl(path: Path, plain_name, password):
     msgs += f"{dirs=}\n"
     plain_dir = (None, path.joinpath(plain_name))[plain_name in dirs]
     msgs += f"{plain_dir=}\n"
-    plain_lock_rec = None
     plain_crypt_inst = None
     had_auth_failure = False
     if plain_dir:
         dirs.remove(plain_name)
         lockfile = plain_dir / LOCKER_FILE
         if lockfile.exists():
-            plain_lock_rec = phibes_file.read(lockfile)
+            plain_rec = phibes_file.read(lockfile)
             try:
-                msgs += f"trying to get {plain_lock_rec['crypt_id']=}\n"
+                msgs += f"trying to get {plain_rec['crypt_id']=}\n"
                 plain_crypt_inst = get_crypt(
-                    plain_lock_rec['crypt_id'],
+                    plain_rec['crypt_id'],
                     password,
-                    plain_lock_rec['body'],
-                    plain_lock_rec['salt']
+                    plain_rec['body'],
+                    plain_rec['salt']
                 )
             except PhibesAuthError:
                 had_auth_failure = True
-    hashed_lock_rec = None
     hashed_crypt_inst = None
     # We don't know the name hash until after we confirm the crypt impl
     # so just pick up every directory that has a lock file in it
@@ -94,26 +92,20 @@ def find_matching_crypt_impl(path: Path, plain_name, password):
             continue
         # auth succeeded in the c'tor, but check the dirname, too
         if crypt_inst.hash_name(plain_name) == flf:
-            hashed_lock_rec = rec
             hashed_crypt_inst = crypt_inst
             break
-    if hashed_lock_rec and plain_lock_rec:
+    if hashed_crypt_inst and plain_crypt_inst:
         raise PhibesConfigurationError(
-            f"conflicting lock files exist {hashed_lock_rec} {plain_lock_rec}"
+            f"lock file conflict: {hashed_crypt_inst} {plain_crypt_inst}"
         )
-    elif hashed_lock_rec:
-        rec = hashed_lock_rec
-    elif plain_lock_rec:
-        rec = plain_lock_rec
+    elif hashed_crypt_inst:
+        return hashed_crypt_inst
+    elif plain_crypt_inst:
+        return plain_crypt_inst
     elif had_auth_failure:
-        raise PhibesAuthError(
-            f"could not auth {path} {plain_name}\n{msgs}"
-        )
+        raise PhibesAuthError(f"could not auth {path} {plain_name}\n{msgs}")
     else:
-        raise PhibesNotFoundError(
-            f"no match found {path} {plain_name}\n{msgs}"
-        )
-    return get_crypt(rec['crypt_id'], password, rec['body'], rec['salt'])
+        raise PhibesNotFoundError(f"no match: {path} {plain_name}\n{msgs}")
 
 
 class Locker(object):
