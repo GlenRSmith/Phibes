@@ -101,52 +101,55 @@ class CryptFactory(CallableFactory):
     def list_builders(self):
         return self.list_objects()
 
-    def create(self, password, **kwargs):
-        # This method is called to get a registered crypt when only the
-        # password is known (i.e. creating a locker).
-        #
-        # password, {type-specific args}
-        # packing our usage-specific params into a dict so the ObjectFactory
-        # can remain agnostic. It also permits the callables to have varied
-        # signatures.
+    def create(self, password: str, crypt_id: str = None, **kwargs):
+        """
+        Get a registered crypt while creating a locker
+        password, {type-specific args}
+        Pack usage-specific params into a dict so the ObjectFactory
+        can remain agnostic.
+        It also permits the callables to have varied signatures.
+        @param password: user-provided creation password
+        @type password: str
+        @param crypt_id: usually omitted key for entry in factory
+        @type crypt_id: str
+        @param kwargs: params specific to the type of crypt being created
+        @type kwargs: dict
+        @return: Crypt
+        @rtype: CryptIfc
+        """
         print(f"CryptFactory.create {kwargs=}")
         print(f"CryptFactory.create {self._default=}")
-        builder = self._objects.get(self._default)
-        if not builder:
-            raise ValueError(self._default)
-        return builder(password, **kwargs)
-        # return self._create(crypt_id, **kwargs)
+        target_id = (self._default, crypt_id)[bool(crypt_id)]
+        return self.get(target_id, password, None, None, **kwargs)
+        # builder = self._objects.get(target_id)
+        # if not builder:
+        #     raise ValueError(self._default)
+        # return builder(password, **kwargs)
 
     # It's ok to have context position params but only the consistent ones
     # For example, if the hash method becomes Argon2, "rounds" isn't a thing.
     def get(self, crypt_id, password, pw_hash, salt, **kwargs):
-        # This method is called to get a registered crypt
-        # when the params are known (i.e. after reading the lock file).
-        #
         """
-        Get a Crypt implementation matching the service_id, initialized with
-        the passed parameters.
-        If no service_id is passed, the default implementation is returned.
-        Clients should call this, and never the _create method from the parent.
-        @param password:
-        @type password:
-        @param crypt_id:
-        @type crypt_id:
-        @return:
-        @rtype:
+        Called to get a registered crypt initialized with the given
+        params
+        (i.e. after reading the lock file).
+        @param crypt_id: Registered GUID of the crypt needed
+        @type crypt_id: str
+        @param password: user-provided password
+        @type password: str
+        @param pw_hash: restored authentication hash from the created locker
+        @type pw_hash: str
+        @param salt: salt used to create auth hash (and encryption key)
+        @type salt: str
+        @param kwargs:
+        @type kwargs:
+        @return: Crypt
+        @rtype: CryptIfc
         """
-        # packing our usage-specific params into a dict so the ObjectFactory
-        # can remain agnostic. It also permits the callables to have varied
-        # signatures.
-        # kwargs = {'password': password, 'salt': salt}
-        # kwargs = {'password': password}
         print(f"CryptFactory.get {kwargs=}")
         builder = self._objects.get(crypt_id)
         if not builder:
             raise ValueError(crypt_id)
-        # Not returning the thing that was registered,
-        # Returning the result of `__call__` on that thing
+        # Return the result of `__call__` on the registered item
         ret_val = builder(password, pw_hash, salt, **kwargs)
         return ret_val
-        # return builder(password, salt, **kwargs)
-        # return self._create(crypt_id, **kwargs)

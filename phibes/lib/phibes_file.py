@@ -4,8 +4,8 @@ that is shared by the locker file and all item files.
 
 Line 1: the salt value (a hex string)
 Line 2: the unique ID of the crypt handler
-Line 2: the timestamp at the time the file was written
-Line 3: the user content
+Line 3: the timestamp at the time the file was written
+Line 4: the user content
 
 This file interface is 'agnostic' about encryption,
 but for complete reference, the standard is that Lines 3 & 4 are
