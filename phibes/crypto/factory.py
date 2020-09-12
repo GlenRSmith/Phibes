@@ -195,4 +195,4 @@ def get_crypt(crypt_id, password, pw_hash, salt, **kwargs):
 
 
 def list_crypts():
-    return CryptFactory.list_builders()
+    return CryptFactory().list_builders()
