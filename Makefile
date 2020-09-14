@@ -26,7 +26,7 @@ which:
 	which python
 
 test:
-	pytest --verbose
+	pytest --verbose tests
 
 cover:
 	pytest --cov-report term-missing --cov=phibes tests -m negative
