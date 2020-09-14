@@ -19,6 +19,16 @@ from Cryptodome.Util import Counter
 # If this stays, it belongs in a more general file
 class EncryptionIfc(abc.ABC):
 
+    @property
+    @abc.abstractmethod
+    def key(self):
+        pass
+
+    @key.setter
+    @abc.abstractmethod
+    def key(self, new_key):
+        pass
+
     @abc.abstractmethod
     def __init__(self, key: str, salt: Optional[str] = None, **kwargs):
         pass
@@ -32,30 +42,12 @@ class EncryptionIfc(abc.ABC):
         pass
 
 
-class CryptAesCtrmode(EncryptionIfc, abc.ABC):
+class AesCtrIfc(EncryptionIfc):
     """
-    Encryption implementation for AES256 encryption with mode=Counter
+    Encryption implementation for AES encryption with mode=Counter
     """
-    # AES.block_size = 16
-    salt_length_bytes = AES.block_size
-    key_length_bytes = AES.block_size * 2
 
-    @property
-    def cipher(self):
-        """
-        cipher property accessor
-        :return:
-        """
-        return AES.new(
-            key=bytes.fromhex(self.key),
-            mode=AES.MODE_CTR,
-            counter=Counter.new(
-                AES.block_size * 8,
-                initial_value=int.from_bytes(
-                    bytes.fromhex(self.salt), "big"
-                )
-            )
-        )
+    iv_length_bytes = AES.block_size  # 16
 
     @property
     def key(self):
@@ -66,18 +58,32 @@ class CryptAesCtrmode(EncryptionIfc, abc.ABC):
         return self._key
 
     @key.setter
-    def key(self, new_key):
+    def key(self, new_key: str):
         """
         key property mutator
         :param new_key:
         :return:
         """
-        if len(new_key) != CryptAesCtrmode.key_length_bytes * 2:
+        if len(bytes.fromhex(new_key)) != self.key_length_bytes:
             raise ValueError(
-                f"`key` {new_key} is {len(new_key) / 2} bytes long\n"
-                f"{AES.block_size} bytes required\n"
+                f"key {new_key} is {len(bytes.fromhex(new_key))} bytes long\n"
+                f"{self.key_length_bytes} bytes required\n"
             )
         self._key = new_key
+
+    @property
+    def iv(self):
+        return self._iv
+
+    @iv.setter
+    def iv(self, new_iv: str):
+        iv = (new_iv, self.create_salt())[new_iv is None]
+        if len(bytes.fromhex(iv)) != self.iv_length_bytes:
+            raise ValueError(
+                f"`iv` {new_iv} is {len(bytes.fromhex(iv))} bytes long\n"
+                f"{self.iv_length_bytes} bytes required\n"
+            )
+        self._iv = iv
 
     @property
     def salt(self):
@@ -85,44 +91,52 @@ class CryptAesCtrmode(EncryptionIfc, abc.ABC):
         salt property accessor
         :return:
         """
-        return self._salt
+        # temporarily kick it to self._iv
+        return self.iv
 
-    @salt.setter
-    def salt(self, new_salt: Optional[str]):
+    def __init__(self, key: str, iv: Optional[str] = None, **kwargs):
+        super(AesCtrIfc, self).__init__(key, iv, **kwargs)
+        self.key = key
+        # assigning None triggers creating new value; see iv.setter
+        self.iv = iv
+        return
+
+    @property
+    @abc.abstractmethod
+    # This gets resolved by having a simple class attribute
+    # Defining a classmethod property by decorators is needlessly complicated
+    def key_length_bytes(self):
         """
-        salt property mutator
-        assign `None` to get it to regenerate itself!
-        :param new_salt:
+        Required length in bytes of the encryption key
+        @return: key_length_bytes
+        @rtype: int
+        """
+        pass
+
+    @classmethod
+    def create_salt(cls):
+        return secrets.token_hex(cls.iv_length_bytes)
+
+    @property
+    def cipher(self):
+        """
+        cipher property accessor; always returns a new one
         :return:
         """
-        salt = (new_salt, self.create_salt())[new_salt is None]
-        if len(salt) != CryptAesCtrmode.salt_length_bytes * 2:
-            raise ValueError(
-                f"`salt` {new_salt} is {len(new_salt) / 2} bytes long\n"
-                f"{CryptAesCtrmode.salt_length_bytes} bytes required\n"
+        return AES.new(
+            key=bytes.fromhex(self.key),
+            mode=AES.MODE_CTR,
+            counter=Counter.new(
+                AES.block_size * 8,
+                initial_value=int.from_bytes(
+                    bytes.fromhex(self.iv), "big"
+                )
             )
-        self._salt = salt
-        return
+        )
 
-    def __init__(self, key: str, salt: Optional[str] = None, **kwargs):
-        super(CryptAesCtrmode, self).__init__(key, salt, **kwargs)
-        self.key = key
-        # assigning None triggers creating new value; see salt.setter
-        self.salt = salt
-        return
-
-    @staticmethod
-    def create_salt():
-        """
-        Convenience method to get salt of the right length.
-        @return: new salt
-        @rtype: str, with valid hexadecimal
-        """
-        return secrets.token_hex(CryptAesCtrmode.salt_length_bytes)
-
-    def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
-        if salt:
-            self.salt = salt
+    def encrypt(self, plaintext: str, iv: Optional[str] = None) -> str:
+        if iv:
+            self.iv = iv
         # convert from str to bytes
         plaintext_bytes = plaintext.encode('utf-8')
         # run the actual encryption - it gets bytes, returns bytes
@@ -134,9 +148,9 @@ class CryptAesCtrmode(EncryptionIfc, abc.ABC):
         # convert the bytes to a utf-8 str
         return fs_safe_cipherbytes.decode('utf-8')
 
-    def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
-        if salt:
-            self.salt = salt
+    def decrypt(self, ciphertext: str, iv: Optional[str] = None) -> str:
+        if iv:
+            self.iv = iv
         # reverse the steps in `encrypt`
         # convert from str to bytes
         fs_safe_cipherbytes = ciphertext.encode('utf-8')
@@ -146,3 +160,15 @@ class CryptAesCtrmode(EncryptionIfc, abc.ABC):
         plaintext_bytes = self.cipher.decrypt(cipherbytes)
         # convert the bytes to utf-8 str
         return plaintext_bytes.decode('utf-8')
+
+
+class CryptAes128Ctr(AesCtrIfc):
+
+    key_length_bytes = 16
+
+
+class CryptAes256Ctr(AesCtrIfc):
+
+    key_length_bytes = 32
+
+
