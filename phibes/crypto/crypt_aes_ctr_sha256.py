@@ -11,7 +11,7 @@ from typing import Optional
 # In-project modules
 from phibes.crypto.crypt_ifc import CryptIfc
 from phibes.crypto.hash_pbkdf2 import pbkdf2_sha256
-from phibes.crypto.encrypt_aes import CryptAesCtrmode
+from phibes.crypto.encrypt_aes import CryptAes256Ctr
 from phibes.lib.errors import PhibesAuthError
 
 
@@ -47,22 +47,12 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
         """
         return self._encrypt.salt
 
-    @salt.setter
-    def salt(self, new_salt: str):
-        """
-        salt property mutator
-        :param new_salt:
-        :return:
-        """
-        self._encrypt.salt = new_salt
-        return
-
     def __init__(
-            self,
-            password: str,
-            pw_hash: Optional[str] = None,
-            salt: Optional[str] = None,
-            **kwargs: dict
+        self,
+        password: str,
+        pw_hash: Optional[str] = None,
+        salt: Optional[str] = None,
+        **kwargs: dict
     ):
         super(CryptAesCtrPbkdf2Sha256, self).__init__(
             password, pw_hash, salt, **kwargs
@@ -80,10 +70,10 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
                 f"{password=} {pw_hash=} {salt=} {kwargs=}"
             )
         if creating:
-            salt = CryptAesCtrmode.create_salt()
+            salt = CryptAes256Ctr.create_salt()
         try:
             key = self.create_key(password, salt)
-            self._encrypt = CryptAesCtrmode(key, salt)
+            self._encrypt = CryptAes256Ctr(key, salt)
             auth_key = self.hash_name(password, self.salt)
             if not creating:
                 if not auth_key == pw_hash:
@@ -107,7 +97,8 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
 
     def create_key(self, password: str, salt: str):
         return self._hash_str(
-            password, salt, self.key_rounds, CryptAesCtrmode.key_length_bytes
+            password, salt, self.key_rounds, CryptAes256Ctr.key_length_bytes
+            # password, salt, self.key_rounds, 32
         )
 
     def hash_name(self, name: str, salt: Optional[str] = '0000') -> str:
