@@ -1,3 +1,8 @@
+"""
+Module to support PBKDF2-based hashing
+"""
+
+
 # Built-in library packages
 import enum
 import hashlib
