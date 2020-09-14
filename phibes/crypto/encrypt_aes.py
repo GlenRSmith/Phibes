@@ -170,5 +170,3 @@ class CryptAes128Ctr(AesCtrIfc):
 class CryptAes256Ctr(AesCtrIfc):
 
     key_length_bytes = 32
-
-
