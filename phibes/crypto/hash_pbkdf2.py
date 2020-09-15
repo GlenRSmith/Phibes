@@ -2,12 +2,14 @@
 Module to support PBKDF2-based hashing
 """
 
-
 # Built-in library packages
 import enum
 import hashlib
 
 # Third party packages
+
+# In project
+from phibes.crypto.crypt_ifc import HashIfc
 
 
 class HashAlg(enum.Enum):
@@ -48,9 +50,15 @@ def pbkdf2(
     ).hex()
 
 
-def pbkdf2_sha256(seed, salt, rounds, key_length=None):
-    return pbkdf2(HashAlg.SHA256, seed, salt, rounds, key_length)
+class HashPbkdf2(HashIfc):
 
+    def __init__(self, **kwargs):
+        super(HashPbkdf2, self).__init__(**kwargs)
+        self.hash_alg = HashAlg(
+            kwargs.get('hash_alg').upper().replace('-', '')
+        )
 
-def pbkdf2_sha512(seed, salt, rounds, key_length=None):
-    return pbkdf2(HashAlg.SHA512, seed, salt, rounds, key_length)
+    def hash_str(
+            self, plaintext: str, salt: str, rounds: int, length_bytes: int
+    ) -> str:
+        return pbkdf2(self.hash_alg, plaintext, salt, rounds, length_bytes)
