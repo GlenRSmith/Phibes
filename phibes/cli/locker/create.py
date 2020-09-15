@@ -11,7 +11,7 @@ import click
 from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.lib.errors import PhibesExistsError
 from phibes.cli.lib import PhibesCliExistsError
-from phibes.lib.locker import Locker
+from phibes.model import Locker
 
 
 class CreateLockerCmd(ConfigFileLoadingCmd):

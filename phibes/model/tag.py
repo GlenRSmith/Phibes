@@ -13,7 +13,8 @@ from typing import List, Set
 # Third party packages
 
 # In-project modules
-from . item import Item
+from phibes.crypto.crypt_ifc import CryptIfc
+from phibes.model import Item
 
 
 ItemSet = Set[Item]
@@ -25,14 +26,14 @@ class Tag(Item):
     A tag is a name and list of items.
     """
 
-    def __init__(self, key: str, name: str, content: str = ""):
+    def __init__(self, crypt_obj: CryptIfc, name: str, content: str = ""):
         """
         Create or find a matching tag in the locker
         :param key: Encryption key
         :param name: name of Tag
         :param content: optional content
         """
-        super().__init__(key, name, content)
+        super().__init__(crypt_obj, name, content)
         # if there is existing content, it will be applied during read
         self.content = set()
         return

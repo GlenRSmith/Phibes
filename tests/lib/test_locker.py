@@ -9,7 +9,7 @@ import pytest
 
 # Local application/library specific imports
 from phibes.lib.errors import PhibesAuthError, PhibesNotFoundError
-from phibes.lib.locker import Locker
+from phibes.model import Locker
 
 # Local test imports
 from tests.lib.locker_helper import EmptyLocker, PopulatedLocker

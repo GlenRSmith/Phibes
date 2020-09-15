@@ -10,7 +10,7 @@ import click
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import get_item as help_get_item
-from phibes.lib.locker import registered_items
+from phibes.model.locker import registered_items
 
 
 class GetItemCmd(ConfigFileLoadingCmd):

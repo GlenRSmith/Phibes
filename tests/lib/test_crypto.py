@@ -8,37 +8,68 @@ pytest module for lib.crypto
 import pytest
 
 # Local application/library specific imports
-from phibes.lib import crypto
-from phibes.lib import locker
+from phibes.crypto import create_crypt, default_id, get_crypt, list_crypts
+from phibes.crypto import register_crypt
+from phibes.crypto.crypt_aes_ctr_sha256 import CryptAesCtrPbkdf2Sha
 from phibes.lib.errors import PhibesAuthError
+from phibes.model import Locker
 
 # Local test imports
 from tests.lib.locker_helper import EmptyLocker
 
 
+plains = [
+    "Easy Peasy",
+    "this is my password for bouncycastledelivery.com",
+    "this is my password \t for bouncycastledelivery.com",
+    "this is my password \n for bouncycastledelivery.com",
+    "This is just a test 1",
+    "That is just a test 2",
+    "We were just a test 3",
+    "They will just be a test 4",
+    """
+    site:www.bouncycastledelivery.com
+    username:Jenny'sMomAndDad
+    password:WeWantToThrowtheb3stbirthdayparty07
+    """,
+    """
+    {
+        'site':'www.bouncycastledelivery.com',
+        'username':'Jenny'sMomAndDad',
+        'password':'WeWantToThrowtheb3stbirthdayparty07'
+    }
+    """
+]
+
+
 class TestCryptImpl(object):
 
     def setup_method(self):
-        self.pw = "This is just a test"
-        self.impl = crypto.CryptImpl(
-            self.pw,
-            crypt_arg_is_key=False,
-            salt='1c03cdbfc25c0b3007caa19d560b3d77'
-        )
-        self.salt = self.impl.salt
-        self.key = self.impl.key
+        self.pw = "s00p3rsekrit"
+        self.crypts = {}
+        for cid in list_crypts():
+            crypt_impl = create_crypt(self.pw, crypt_id=cid)
+            self.crypts[cid] = {
+                'pw_hash': crypt_impl.pw_hash,
+                'salt': crypt_impl.salt
+            }
+        return
 
     @pytest.mark.positive
-    def test_encrypt(self):
-        plaintext = "This is just a test"
-        ciphertext = self.impl.encrypt(plaintext)
-        assert ciphertext == 'yYq48fG6KR65UTWfgGlGLQUBPQ=='
+    @pytest.mark.parametrize("plaintext", plains)
+    def test_create_encrypt_decrypt(self, plaintext):
+        for crypt_id in list_crypts():
+            crypt = create_crypt(self.pw, crypt_id)
+            assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
 
     @pytest.mark.positive
-    def test_decrypt(self):
-        ciphertext = 'yYq48fG6KR65UTWfgGlGLQUBPQ=='
-        plaintext = self.impl.decrypt(ciphertext)
-        assert plaintext == "This is just a test"
+    @pytest.mark.parametrize("plaintext", plains)
+    def test_get_encrypt_decrypt(self, plaintext):
+        for cid, rec in self.crypts.items():
+            crypt = get_crypt(
+                cid, self.pw, rec['pw_hash'], rec['salt']
+            )
+            assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
 
     @pytest.mark.positive
     def test_multiple_cycles(self):
@@ -47,16 +78,25 @@ class TestCryptImpl(object):
         have a workaround that refreshes the cipher after each use
         :return:
         """
-        test_texts = [
-            "This is just a test 1",
-            "That is just a test 2",
-            "We were just a test 3",
-            "They will just be a test 4",
-        ]
-        for tt in test_texts:
-            ct = self.impl.encrypt(tt)
-            pt = self.impl.decrypt(ct)
+        crypt = create_crypt(self.pw)
+        for tt in plains:
+            ct = crypt.encrypt(tt)
+            pt = crypt.decrypt(ct)
             assert pt == tt
+        for crypt_id in list_crypts():
+            crypt = create_crypt(self.pw, crypt_id)
+            crypt_id = crypt.crypt_id
+            pw_hash = crypt.pw_hash
+            salt = crypt.salt
+            for tt in plains:
+                ct = crypt.encrypt(tt)
+                pt = crypt.decrypt(ct)
+                assert pt == tt
+            crypt = get_crypt(crypt_id, self.pw, pw_hash, salt)
+            for tt in plains:
+                ct = crypt.encrypt(tt)
+                pt = crypt.decrypt(ct)
+                assert pt == tt
 
 
 class TestCrypto(EmptyLocker):
@@ -64,25 +104,43 @@ class TestCrypto(EmptyLocker):
     @pytest.mark.positive
     def test_what(self):
         pw = "this right here"
-        impl = crypto.CryptImpl(pw, crypt_arg_is_key=False)
-        cipher = impl.encrypt_password(pw)
-        assert impl.authenticate(pw, cipher)
-
-    @pytest.mark.positive
-    def test_make_salt_bytes(self):
-        res = crypto.make_salt_bytes()
-        assert type(res) is bytes
+        crypt = create_crypt(pw)
+        file_pw_hash = crypt.pw_hash
+        crypt_id = crypt.crypt_id
+        file_salt = crypt.salt
+        crypt = get_crypt(
+            crypt_id, pw, file_pw_hash, file_salt
+        )
+        assert crypt
 
     @pytest.mark.negative
     def test_fail_auth(self, tmp_path, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(PhibesAuthError):
-            locker.Locker(
+            Locker(
                 self.locker_name, wrong_pw, create=False
             )
 
     @pytest.mark.positive
     def test_good_auth(self, setup_and_teardown):
-        assert locker.Locker(
-            self.locker_name, self.password, create=False
+        # auth is 'built in' to getting a crypt for existing locker
+        assert Locker(self.locker_name, self.password, create=False)
+
+
+class TestCryptFallback(object):
+
+    def setup_method(self):
+        self.pw = "s00p3rsekrit"
+        return
+
+    @pytest.mark.positive
+    @pytest.mark.parametrize("plaintext", plains)
+    def test_create_encrypt_decrypt(self, plaintext):
+        crypt_id = register_crypt(
+            CryptAesCtrPbkdf2Sha,
+            fallback_id=default_id,
+            key_rounds=100100,
+            hash_alg='SHANANA'
         )
+        crypt = create_crypt(self.pw, crypt_id)
+        assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext

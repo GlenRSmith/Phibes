@@ -9,7 +9,7 @@ from datetime import datetime
 import pytest
 
 # Local application/library specific imports
-from phibes.lib.item import Item
+from phibes.model import Item
 
 # Local test imports
 from tests.lib.locker_helper import EmptyLocker
@@ -24,7 +24,7 @@ class TestCreate(EmptyLocker):
                 f"{item_type}", f"{item_type}_name"
             )
             new_item = Item(
-                self.my_locker.crypt_impl.key,
+                self.my_locker.crypt_impl,
                 f"{item_type}_name"
             )
             with pytest.raises(AttributeError):
@@ -45,7 +45,7 @@ class TestCreateAndSave(EmptyLocker):
                 f"{item_type}", f"{item_type}_name"
             )
             new_item = Item(
-                self.my_locker.crypt_impl.key,
+                self.my_locker.crypt_impl,
                 f"{item_type}_name"
             )
             new_item.content = content
@@ -56,7 +56,7 @@ class TestCreateAndSave(EmptyLocker):
                 f"{item_type}_name"
             )
             found = Item(
-                self.my_locker.crypt_impl.key,
+                self.my_locker.crypt_impl,
                 f"{item_type}_name"
             )
             found.read(pth)
@@ -73,13 +73,13 @@ class TestCreateAndSave(EmptyLocker):
             f"secret", f"secret_name",
         )
         new_item = Item(
-            self.my_locker.crypt_impl.key,
+            self.my_locker.crypt_impl,
             f"sekrit_name"
         )
         new_item.content = content
         new_item.save(pth)
         found = Item(
-            self.my_locker.crypt_impl.key,
+            self.my_locker.crypt_impl,
             f"sekrit_name"
         )
         found.read(pth)

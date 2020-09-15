@@ -15,7 +15,7 @@ from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import get_home_dir
 from phibes.lib import errors
 # from phibes.lib.errors import PhibesError, PhibesNotFoundError
-from phibes.lib.locker import Locker
+from phibes.model import Locker
 
 
 COMMON_OPTIONS = {

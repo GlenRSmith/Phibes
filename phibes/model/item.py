@@ -13,8 +13,8 @@ from typing import Optional
 # Third party packages
 
 # In-project modules
-from . crypto import CryptImpl
-from . import phibes_file
+from phibes.crypto.crypt_ifc import CryptIfc
+from phibes.lib import phibes_file
 
 
 FILE_EXT = "cry"
@@ -27,13 +27,13 @@ class Item(object):
 
     def __init__(
             self,
-            key: str,
+            crypt_obj: CryptIfc,
             name: str,
             content: Optional[str] = None
     ):
         self.item_type = self.get_type_name()
         self.name = name
-        self.crypt_impl = CryptImpl(key)
+        self.crypt_impl = crypt_obj
         self._ciphertext = None
         self._timestamp = None
         if content:
@@ -47,6 +47,7 @@ class Item(object):
         phibes_file.write(
             pth,
             self.salt,
+            self.crypt_impl.crypt_id,
             self._timestamp,
             self._ciphertext,
             overwrite=overwrite
@@ -69,7 +70,7 @@ class Item(object):
         self._ciphertext = rec['body']
         # crypt_impl will have generated a random salt,
         # need to set it to the correct one for this item
-        self.crypt_impl.salt = self._salt
+        self.crypt_impl.iv = self._salt
 
     def __str__(self):
         ret_val = "Item\n"

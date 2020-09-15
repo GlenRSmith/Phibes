@@ -15,12 +15,12 @@ from typing import List, Optional, Tuple
 # Third party packages
 
 # In-project modules
-from . config import ConfigModel
-from . crypto import CryptImpl, get_name_hash
-from . errors import PhibesAuthError, PhibesConfigurationError
-from . errors import PhibesNotFoundError, PhibesExistsError
-from . item import FILE_EXT, Item
-from . import phibes_file
+from phibes.crypto import create_crypt, get_crypt
+from phibes.lib import phibes_file
+from phibes.lib.config import ConfigModel
+from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
+from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
+from phibes.model import FILE_EXT, Item
 # pylint: disable=unused-import
 # Item subclasses must be loaded so __subclasses__ below will report them
 from . schema import Schema
@@ -45,6 +45,68 @@ ItemList = List[Item]
 LOCKER_FILE = ".config"
 
 
+def find_matching_crypt_impl(path: Path, plain_name, password):
+    msgs = f"{path=}\n"
+    msgs += f"{plain_name=}\n"
+    dirs = [s.name for s in path.glob('*') if s.is_dir()]
+    msgs += f"{dirs=}\n"
+    plain_dir = (None, path.joinpath(plain_name))[plain_name in dirs]
+    msgs += f"{plain_dir=}\n"
+    plain_crypt_inst = None
+    had_auth_failure = False
+    if plain_dir:
+        dirs.remove(plain_name)
+        lockfile = plain_dir / LOCKER_FILE
+        if lockfile.exists():
+            plain_rec = phibes_file.read(lockfile)
+            try:
+                msgs += f"trying to get {plain_rec['crypt_id']=}\n"
+                plain_crypt_inst = get_crypt(
+                    plain_rec['crypt_id'],
+                    password,
+                    plain_rec['body'],
+                    plain_rec['salt']
+                )
+            except PhibesAuthError:
+                had_auth_failure = True
+    hashed_crypt_inst = None
+    # We don't know the name hash until after we confirm the crypt impl
+    # so just pick up every directory that has a lock file in it
+    found_lockfiles = {
+        flf: path.joinpath(flf, LOCKER_FILE)
+        for flf in dirs
+        if path.joinpath(flf, LOCKER_FILE).exists()
+    }
+    for flf in found_lockfiles:
+        msgs += f"looking for lock file {found_lockfiles[flf].resolve()}\n"
+        rec = phibes_file.read(found_lockfiles[flf])
+        pw_hash = rec['body']
+        salt = rec['salt']
+        crypt_id = rec['crypt_id']
+        try:
+            msgs += f"trying to get crypt {crypt_id=} {password=} {pw_hash=}\n"
+            crypt_inst = get_crypt(crypt_id, password, pw_hash, salt)
+        except PhibesAuthError:
+            had_auth_failure = True
+            continue
+        # auth succeeded in the c'tor, but check the dirname, too
+        if crypt_inst.hash_name(plain_name) == flf:
+            hashed_crypt_inst = crypt_inst
+            break
+    if hashed_crypt_inst and plain_crypt_inst:
+        raise PhibesConfigurationError(
+            f"lock file conflict: {hashed_crypt_inst} {plain_crypt_inst}"
+        )
+    elif hashed_crypt_inst:
+        return hashed_crypt_inst
+    elif plain_crypt_inst:
+        return plain_crypt_inst
+    elif had_auth_failure:
+        raise PhibesAuthError(f"could not auth {path} {plain_name}\n{msgs}")
+    else:
+        raise PhibesNotFoundError(f"no match: {path} {plain_name}\n{msgs}")
+
+
 class Locker(object):
 
     registered_items = registered_items
@@ -59,8 +121,15 @@ class Locker(object):
         :param name: The name of the locker. Must be unique in storage
         """
         self.conf = ConfigModel()
+        if create:
+            self.crypt_impl = create_crypt(password)
+        else:
+            self.crypt_impl = find_matching_crypt_impl(
+                self.conf.store_path, name, password
+            )
         plain_path = self.conf.store_path.joinpath(name)
-        hash_path = self.conf.store_path.joinpath(get_name_hash(name))
+        hash_dir = self.crypt_impl.hash_name(name)
+        hash_path = self.conf.store_path.joinpath(hash_dir)
         # clean up empty dirs to reduce conflict check complexity
         if plain_path.exists() and not any(plain_path.iterdir()):
             shutil.rmtree(plain_path)
@@ -97,10 +166,10 @@ class Locker(object):
                     f"{self.conf}"
                 )
             if not self.lock_file.exists():
-                tmp_dir = self.conf.store_path / get_name_hash(name)
+                tmp_dir = self.conf.store_path / hash_dir
                 tmp_file = tmp_dir / LOCKER_FILE
                 if tmp_file.exists():
-                    self.path = self.conf.store_path / get_name_hash(name)
+                    self.path = self.conf.store_path / hash_dir
                     self.lock_file = self.path / LOCKER_FILE
                 else:
                     raise PhibesNotFoundError(
@@ -109,12 +178,12 @@ class Locker(object):
                     )
             rec = phibes_file.read(self.lock_file)
             self._timestamp = rec['timestamp']
-            tmp_ciphertext = rec['body']
-            self.crypt_impl = CryptImpl(
-                password, crypt_arg_is_key=False, salt=rec['salt']
+            self.crypt_impl = get_crypt(
+                crypt_id=rec["crypt_id"],
+                password=password,
+                pw_hash=rec["body"],
+                salt=rec["salt"]
             )
-            if not self.crypt_impl.authenticate(password, tmp_ciphertext):
-                raise PhibesAuthError(f"{password} is invalid")
         else:
             err_msg = ""
             if plain_path.exists():
@@ -140,16 +209,14 @@ class Locker(object):
                 )
             if not Locker.can_create(self.path):
                 raise ValueError(f"could not create {name}")
-            self.crypt_impl = CryptImpl(password, crypt_arg_is_key=False)
-            tmp_salt = self.crypt_impl.salt
+            self.crypt_impl = create_crypt(password)
             self.path.mkdir(exist_ok=False)
-            tmp_ciphertext = self.crypt_impl.encrypt_password(password)
-            self._timestamp = self.crypt_impl.encrypt(str(datetime.now()))
             phibes_file.write(
                 self.lock_file,
-                tmp_salt,
-                self._timestamp,
-                tmp_ciphertext,
+                self.crypt_impl.salt,
+                self.crypt_impl.crypt_id,
+                self.crypt_impl.encrypt(str(datetime.now())),
+                self.crypt_impl.pw_hash,
                 overwrite=False
             )
         return
@@ -180,7 +247,7 @@ class Locker(object):
             inst = Locker(name, password, create=False)
         except FileNotFoundError as err:
             raise PhibesNotFoundError(
-                f"Locker {name} not found"
+                f"Locker {name} not found\n"
                 f"{err}"
             )
         return inst
@@ -284,7 +351,7 @@ class Locker(object):
             template_name: Optional[str] = None
     ) -> Item:
         item_cls = registered_items[item_type]
-        new_item = item_cls(self.crypt_impl.key, item_name)
+        new_item = item_cls(self.crypt_impl, item_name)
         if template_name:
             template = self.get_item(template_name, "template")
             if not template:
@@ -303,7 +370,7 @@ class Locker(object):
         pth = self.get_item_path(item_type, item_name)
         if pth.exists():
             item_cls = registered_items[item_type]
-            found_item = item_cls(self.crypt_impl.key, item_name)
+            found_item = item_cls(self.crypt_impl, item_name)
             found_item.read(pth)
             # TODO: validate using salt
         else:

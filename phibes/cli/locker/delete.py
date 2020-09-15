@@ -10,7 +10,7 @@ import click
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import get_locker
-from phibes.lib.locker import Locker
+from phibes.model import Locker
 
 
 class DeleteLockerCmd(ConfigFileLoadingCmd):

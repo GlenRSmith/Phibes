@@ -15,6 +15,7 @@ from phibes.lib import phibes_file
 class TestPhibesFile(object):
 
     test_salt = "1233485123"
+    test_crypt_id = "InLwOOlsoOOlSSoko"
     test_timestamp = "timestamp"
     test_body = "Lorem ipsum dolor sit amet, ex eum tollit laoreet"
     test_file = "test_phibes_test.tmp"
@@ -33,12 +34,14 @@ class TestPhibesFile(object):
         phibes_file.write(
             self.pth,
             salt=self.test_salt,
+            crypt_id=self.test_crypt_id,
             timestamp=self.test_timestamp,
             body=self.test_body
         )
         result = phibes_file.read(self.pth)
         assert result['body'] == self.test_body
         assert result['salt'] == self.test_salt
+        assert result['crypt_id'] == self.test_crypt_id
         assert result['timestamp'] == self.test_timestamp
 
     @pytest.mark.negative
@@ -47,6 +50,7 @@ class TestPhibesFile(object):
             phibes_file.write(
                 self.pth,
                 salt=self.test_salt,
+                crypt_id=self.test_crypt_id,
                 timestamp=self.test_timestamp,
                 body=""
             )
@@ -57,6 +61,7 @@ class TestPhibesFile(object):
             phibes_file.write(
                 self.pth,
                 salt=self.test_salt,
+                crypt_id=self.test_crypt_id,
                 timestamp=self.test_timestamp,
                 body=(
                     f"{self.test_body}\n"
@@ -69,6 +74,7 @@ class TestPhibesFile(object):
         phibes_file.write(
             self.pth,
             salt=self.test_salt,
+            crypt_id=self.test_crypt_id,
             timestamp=self.test_timestamp,
             body=f"{self.test_body}"
         )
@@ -76,6 +82,7 @@ class TestPhibesFile(object):
             phibes_file.write(
                 self.pth,
                 salt=self.test_salt,
+                crypt_id=self.test_crypt_id,
                 timestamp=self.test_timestamp,
                 body=f"{self.test_body}"
             )
@@ -85,18 +92,21 @@ class TestPhibesFile(object):
         phibes_file.write(
             self.pth,
             salt=self.test_salt,
+            crypt_id=self.test_crypt_id,
             timestamp=self.test_timestamp,
             body=f"{self.test_body}"
         )
         phibes_file.write(
             self.pth,
             salt=self.test_salt,
+            crypt_id=self.test_crypt_id,
             timestamp=self.test_timestamp,
             body="replacement",
             overwrite=True
         )
         result = phibes_file.read(self.pth)
         assert result['salt'] == self.test_salt
+        assert result['crypt_id'] == self.test_crypt_id
         assert result['timestamp'] == self.test_timestamp
         assert result['body'] == 'replacement'
 
@@ -106,6 +116,7 @@ class TestPhibesFile(object):
             phibes_file.write(
                 self.pth,
                 salt=self.test_salt,
+                crypt_id=self.test_crypt_id,
                 timestamp=self.test_timestamp,
                 body=""
             )
@@ -115,11 +126,13 @@ class TestPhibesFile(object):
         phibes_file.write(
             self.pth,
             salt=self.test_salt,
+            crypt_id=self.test_crypt_id,
             timestamp=self.test_timestamp,
             body="",
             allow_empty=True
         )
         result = phibes_file.read(self.pth)
         assert result['salt'] == self.test_salt
+        assert result['crypt_id'] == self.test_crypt_id
         assert result['timestamp'] == self.test_timestamp
         assert result['body'] == ''
