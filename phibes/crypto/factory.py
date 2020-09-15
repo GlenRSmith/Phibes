@@ -39,10 +39,10 @@ class CryptFactory(object, metaclass=SingletonMeta):
     the __init__ of a CryptIfc class, or an instance of a 'factory'
     class that has a __call__ method that returns a CryptIfc object
     """
-    _default = None
 
     def __init__(self):
         self._objects = {}
+        self._fallbacks = {}
         return
 
     def _create(self, key: str, **kwargs: dict):
@@ -63,11 +63,9 @@ class CryptFactory(object, metaclass=SingletonMeta):
             raise ValueError(f"No registered item found with {key=}")
         return item(**kwargs)
 
-    def register_builder(self, key, builder):
+    def register_builder(self, key, builder, fallback_id=None):
         self._objects[key] = builder
-        if not self._default:
-            # TODO make a more intentional way to set default.
-            self._default = key
+        self._fallbacks[key] = fallback_id
 
     def list_builders(self):
         """
@@ -75,7 +73,18 @@ class CryptFactory(object, metaclass=SingletonMeta):
         @return: registered builders
         @rtype: list
         """
-        return list(self._objects.keys())
+        val = set(self._objects.keys())
+        if None in val:
+            val.remove(None)
+        return list(val)
+
+    def list_fallbacks(self):
+        """
+        Convenience method to inspect the registered builders' fallbacks
+        @return: registered builders' fallbacks
+        @rtype: list
+        """
+        return list(self._fallbacks.keys())
 
     def create(self, password: str, crypt_id: str = None, **kwargs):
         """
@@ -92,12 +101,33 @@ class CryptFactory(object, metaclass=SingletonMeta):
         @return: Crypt
         @rtype: crypt_ifc.CryptIfc
         """
-        # print(f"CryptFactory.create {kwargs=}")
-        # print(f"CryptFactory.create {self._default=}")
-        target_id = (self._default, crypt_id)[bool(crypt_id)]
-        return self.get(target_id, password, None, None, **kwargs)
+        if crypt_id is None:
+            crypt_id = self._fallbacks[crypt_id]
+        ret_ob = None
+        while not ret_ob:
+            try:
+                ret_ob = self.get(crypt_id, password, None, None, **kwargs)
+                return ret_ob
+            except Exception as err:
+                print(f"failed to create {crypt_id}\n{err}")
+                try:
+                    next_id = self._fallbacks[crypt_id]
+                except KeyError as err:
+                    raise KeyError(
+                        f"{crypt_id} {err}"
+                    )
+                if next_id is None:
+                    return None
+                crypt_id = next_id
+            if not ret_ob:
+                target_id = ''
+        return ret_ob
 
-    def get(self, crypt_id, password, pw_hash, salt, **kwargs):
+    def get(
+            self, crypt_id, password,
+            pw_hash: Optional[str], salt: Optional[str],
+            **kwargs
+    ):
         """
         Called to get a registered crypt initialized with the given
         params (i.e. after reading the lock file).
@@ -125,14 +155,14 @@ class CryptFactory(object, metaclass=SingletonMeta):
 
 class CryptWrapper(object):
 
-    def __init__(self, crypt_class, init_kwargs):
+    def __init__(self, crypt_class, fallback_id=None, **init_kwargs):
         self.crypt_id = crypt_class.__name__ + ''.join(
             [f"{k}{v}" for (k, v) in init_kwargs.items()]
         )
         self.crypt_class = crypt_class
         crypt_ifc.CryptIfc.validate_child(crypt_class)
         self.init_kwargs = init_kwargs
-        CryptFactory().register_builder(self.crypt_id, self)
+        CryptFactory().register_builder(self.crypt_id, self, fallback_id)
         return
 
     def __call__(
@@ -149,8 +179,18 @@ class CryptWrapper(object):
         return instance
 
 
-def register_crypt(crypt_class, unique_kw_args):
-    CryptWrapper(crypt_class, unique_kw_args)
+def register_crypt(crypt_class, fallback_id=None, **unique_kw_args):
+    return CryptWrapper(crypt_class, fallback_id, **unique_kw_args).crypt_id
+
+
+def register_default_crypt(crypt_class, fallback_id=None, **unique_kw_args):
+    default_id = register_crypt(
+        crypt_class, fallback_id=fallback_id, **unique_kw_args
+    )
+    CryptFactory().register_builder(
+        key=None, builder=None, fallback_id=default_id
+    )
+    return default_id
 
 
 def create_crypt(password: str, crypt_id: str = None, **kwargs):
