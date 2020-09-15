@@ -44,10 +44,13 @@ class TestCryptImpl(object):
 
     def setup_method(self):
         self.pw = "s00p3rsekrit"
-        crypt_impl = create_crypt(self.pw)
-        self.crypt_id = crypt_impl.crypt_id
-        self.pw_hash = crypt_impl.pw_hash
-        self.salt = crypt_impl.salt
+        self.crypts = {}
+        for cid in list_crypts():
+            crypt_impl = create_crypt(self.pw, crypt_id=cid)
+            self.crypts[cid] = {
+                'pw_hash': crypt_impl.pw_hash,
+                'salt': crypt_impl.salt
+            }
         return
 
     @pytest.mark.positive
@@ -60,9 +63,9 @@ class TestCryptImpl(object):
     @pytest.mark.positive
     @pytest.mark.parametrize("plaintext", plains)
     def test_get_encrypt_decrypt(self, plaintext):
-        for crypt_id in list_crypts():
+        for cid, rec in self.crypts.items():
             crypt = get_crypt(
-                crypt_id, self.pw, self.pw_hash, self.salt
+                cid, self.pw, rec['pw_hash'], rec['salt']
             )
             assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
 
