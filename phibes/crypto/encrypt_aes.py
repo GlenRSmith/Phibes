@@ -14,32 +14,7 @@ from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
 
 # In-project modules
-
-
-# If this stays, it belongs in a more general file
-class EncryptionIfc(abc.ABC):
-
-    @property
-    @abc.abstractmethod
-    def key(self):
-        pass
-
-    @key.setter
-    @abc.abstractmethod
-    def key(self, new_key):
-        pass
-
-    @abc.abstractmethod
-    def __init__(self, key: str, salt: Optional[str] = None, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def encrypt(self, plaintext: str, salt: str) -> str:
-        pass
-
-    @abc.abstractmethod
-    def decrypt(self, ciphertext: str, salt: str) -> str:
-        pass
+from phibes.crypto.crypt_ifc import EncryptionIfc
 
 
 class AesCtrIfc(EncryptionIfc):

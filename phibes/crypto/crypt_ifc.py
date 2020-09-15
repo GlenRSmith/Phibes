@@ -10,6 +10,49 @@ from typing import Optional
 # In-project modules
 
 
+class HashIfc(abc.ABC):
+
+    @abc.abstractmethod
+    def __init__(self, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def hash_str(
+            self, plaintext: str, salt: str, rounds: int, length_bytes: int
+    ) -> str:
+            pass
+
+
+class EncryptionIfc(abc.ABC):
+
+    @classmethod
+    @abc.abstractmethod
+    def create_salt(cls):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def key(self):
+        pass
+
+    @key.setter
+    @abc.abstractmethod
+    def key(self, new_key):
+        pass
+
+    @abc.abstractmethod
+    def __init__(self, key: str, salt: Optional[str] = None, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def encrypt(self, plaintext: str, salt: str) -> str:
+        pass
+
+    @abc.abstractmethod
+    def decrypt(self, ciphertext: str, salt: str) -> str:
+        pass
+
+
 """
 
 The top-level encryption/hashing class needs to expose:
