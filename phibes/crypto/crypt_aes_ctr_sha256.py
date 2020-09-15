@@ -10,7 +10,7 @@ from typing import Optional
 
 # In-project modules
 from phibes.crypto.crypt_ifc import CryptIfc
-from phibes.crypto.hash_pbkdf2 import pbkdf2_sha256
+from phibes.crypto.hash_pbkdf2 import HashPbkdf2
 from phibes.crypto.encrypt_aes import CryptAes256Ctr
 from phibes.lib.errors import PhibesAuthError
 
@@ -20,7 +20,7 @@ from phibes.lib.errors import PhibesAuthError
 # length for salt.
 
 
-class CryptAesCtrPbkdf2Sha256(CryptIfc):
+class CryptAesCtrPbkdf2Sha(CryptIfc):
     """
     Crypt implementation for AES256 encryption with mode=Counter,
     with PBKDF2 key generation using SHA256 hashing
@@ -54,10 +54,11 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
         salt: Optional[str] = None,
         **kwargs: dict
     ):
-        super(CryptAesCtrPbkdf2Sha256, self).__init__(
+        super(CryptAesCtrPbkdf2Sha, self).__init__(
             password, pw_hash, salt, **kwargs
         )
         self.key_rounds = kwargs.get('key_rounds')
+        self.hash_alg = kwargs.get('hash_alg')
         self.hash_rounds = self.key_rounds + 1
         creating = password and not pw_hash and not salt
         if not (password and pw_hash and salt) and not creating:
@@ -69,12 +70,13 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
                 f"{pref}(password, pw_hash, salt, key_rounds=int)\n"
                 f"{password=} {pw_hash=} {salt=} {kwargs=}"
             )
+        self._hasher = HashPbkdf2(**{'hash_alg': self.hash_alg})
         if creating:
             salt = CryptAes256Ctr.create_salt()
         try:
             key = self.create_key(password, salt)
             self._encrypt = CryptAes256Ctr(key, salt)
-            auth_key = self.hash_name(password, self.salt)
+            auth_key = self.encrypt(self.hash_name(password, salt))
             if not creating:
                 if not auth_key == pw_hash:
                     raise PhibesAuthError(
@@ -93,17 +95,16 @@ class CryptAesCtrPbkdf2Sha256(CryptIfc):
         return self._encrypt.decrypt(ciphertext, salt)
 
     def _hash_str(self, message, salt, rounds, length):
-        return pbkdf2_sha256(message, salt, rounds, length)
+        return self._hasher.hash_str(message, salt, rounds, length)
 
     def create_key(self, password: str, salt: str):
         return self._hash_str(
             password, salt, self.key_rounds, CryptAes256Ctr.key_length_bytes
-            # password, salt, self.key_rounds, 32
         )
 
     def hash_name(self, name: str, salt: Optional[str] = '0000') -> str:
         return self._hash_str(
-            name, salt, self.hash_rounds, CryptAesCtrPbkdf2Sha256.name_bytes
+            name, salt, self.hash_rounds, CryptAesCtrPbkdf2Sha.name_bytes
         )
 
     def __str__(self):
