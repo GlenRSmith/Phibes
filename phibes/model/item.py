@@ -13,7 +13,7 @@ from typing import Optional
 # Third party packages
 
 # In-project modules
-from phibes.lib.crypto import CryptImpl
+from phibes.crypto.crypt_ifc import CryptIfc
 from phibes.lib import phibes_file
 
 
@@ -27,7 +27,7 @@ class Item(object):
 
     def __init__(
             self,
-            crypt_obj: CryptImpl,
+            crypt_obj: CryptIfc,
             name: str,
             content: Optional[str] = None
     ):

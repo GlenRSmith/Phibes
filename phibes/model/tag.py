@@ -13,7 +13,7 @@ from typing import List, Set
 # Third party packages
 
 # In-project modules
-from phibes.lib.crypto import CryptImpl
+from phibes.crypto.crypt_ifc import CryptIfc
 from phibes.model import Item
 
 
@@ -26,7 +26,7 @@ class Tag(Item):
     A tag is a name and list of items.
     """
 
-    def __init__(self, crypt_obj: CryptImpl, name: str, content: str = ""):
+    def __init__(self, crypt_obj: CryptIfc, name: str, content: str = ""):
         """
         Create or find a matching tag in the locker
         :param key: Encryption key
