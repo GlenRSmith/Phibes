@@ -18,7 +18,6 @@ from typing import List, Optional, Tuple
 from phibes.crypto import create_crypt, get_crypt
 from phibes.lib import phibes_file
 from phibes.lib.config import ConfigModel
-from phibes.lib.crypto import get_name_hash
 from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
 from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
 from phibes.model import FILE_EXT, Item
@@ -122,15 +121,15 @@ class Locker(object):
         :param name: The name of the locker. Must be unique in storage
         """
         self.conf = ConfigModel()
-        if not create:
+        if create:
+            self.crypt_impl = create_crypt(password)
+        else:
             self.crypt_impl = find_matching_crypt_impl(
                 self.conf.store_path, name, password
             )
-        else:
-            self.crypt_impl = None
         plain_path = self.conf.store_path.joinpath(name)
-        # not possible until a crypt_impl is assigned!
-        hash_path = self.conf.store_path.joinpath(get_name_hash(name))
+        hash_dir = self.crypt_impl.hash_name(name)
+        hash_path = self.conf.store_path.joinpath(hash_dir)
         # clean up empty dirs to reduce conflict check complexity
         if plain_path.exists() and not any(plain_path.iterdir()):
             shutil.rmtree(plain_path)
@@ -167,10 +166,10 @@ class Locker(object):
                     f"{self.conf}"
                 )
             if not self.lock_file.exists():
-                tmp_dir = self.conf.store_path / get_name_hash(name)
+                tmp_dir = self.conf.store_path / hash_dir
                 tmp_file = tmp_dir / LOCKER_FILE
                 if tmp_file.exists():
-                    self.path = self.conf.store_path / get_name_hash(name)
+                    self.path = self.conf.store_path / hash_dir
                     self.lock_file = self.path / LOCKER_FILE
                 else:
                     raise PhibesNotFoundError(
