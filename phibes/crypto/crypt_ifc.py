@@ -20,7 +20,7 @@ class HashIfc(abc.ABC):
     def hash_str(
             self, plaintext: str, salt: str, rounds: int, length_bytes: int
     ) -> str:
-            pass
+        pass
 
 
 class EncryptionIfc(abc.ABC):

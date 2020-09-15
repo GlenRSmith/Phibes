@@ -14,7 +14,6 @@ import pytest
 from phibes.cli.locker.get import get_locker_cmd
 from phibes.cli.lib import PhibesCliNotFoundError
 from phibes.lib.config import ConfigModel
-# from phibes.lib.crypto import get_name_hash
 from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker, LOCKER_FILE
@@ -118,7 +117,6 @@ class TestMatrixHashed(ConfigLoadingTestClass):
         assert type(result.exception) is PhibesCliNotFoundError
         # alert if tests are messing up actual user home dir
         assert not Path.home().joinpath(self.name).exists()
-        # assert not Path.home().joinpath(get_name_hash(self.name)).exists()
         return
 
     @pytest.mark.parametrize(params, matrix_params)
@@ -144,7 +142,6 @@ class TestMatrixHashed(ConfigLoadingTestClass):
         assert result.exit_code == 0
         # alert if tests are messing up actual user home dir
         assert not Path.home().joinpath(self.name).exists()
-        # assert not Path.home().joinpath(get_name_hash(self.name)).exists()
         return
 
     @pytest.mark.parametrize(params, matrix_params)
@@ -161,7 +158,6 @@ class TestMatrixHashed(ConfigLoadingTestClass):
         assert type(result.exception) is PhibesConfigurationError
         # alert if tests are messing up actual user home dir
         assert not Path.home().joinpath(self.name).exists()
-        # assert not Path.home().joinpath(get_name_hash(self.name)).exists()
         return
 
 
@@ -184,5 +180,4 @@ class TestMatrixUnHashed(TestMatrixHashed):
         assert inst.lock_file == targ
         # alert if tests are messing up actual user home dir
         assert not Path.home().joinpath(self.name).exists()
-        # assert not Path.home().joinpath(get_name_hash(self.name)).exists()
         return

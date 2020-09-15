@@ -119,8 +119,6 @@ class CryptFactory(object, metaclass=SingletonMeta):
                 if next_id is None:
                     return None
                 crypt_id = next_id
-            if not ret_ob:
-                target_id = ''
         return ret_ob
 
     def get(
