@@ -8,7 +8,9 @@ pytest module for lib.crypto
 import pytest
 
 # Local application/library specific imports
-from phibes.crypto import create_crypt, get_crypt, list_crypts
+from phibes.crypto import create_crypt, default_id, get_crypt, list_crypts
+from phibes.crypto import register_crypt
+from phibes.crypto.crypt_aes_ctr_sha256 import CryptAesCtrPbkdf2Sha
 from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker
 
@@ -123,3 +125,22 @@ class TestCrypto(EmptyLocker):
     def test_good_auth(self, setup_and_teardown):
         # auth is 'built in' to getting a crypt for existing locker
         assert Locker(self.locker_name, self.password, create=False)
+
+
+class TestCryptFallback(object):
+
+    def setup_method(self):
+        self.pw = "s00p3rsekrit"
+        return
+
+    @pytest.mark.positive
+    @pytest.mark.parametrize("plaintext", plains)
+    def test_create_encrypt_decrypt(self, plaintext):
+        crypt_id = register_crypt(
+            CryptAesCtrPbkdf2Sha,
+            fallback_id=default_id,
+            key_rounds=100100,
+            hash_alg='SHANANA'
+        )
+        crypt = create_crypt(self.pw, crypt_id)
+        assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
