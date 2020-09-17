@@ -63,7 +63,7 @@ class Locker(object):
             path = self.conf.store_path
             # start a string for verbose error/debugging
             msgs = f"{path=}\n{name=}\n"
-            # create a list of all directories immediately under the storage path
+            # create a list of all dirs immediately under the storage path
             dirs = [s.name for s in path.glob('*') if s.is_dir()]
             msgs += f"{dirs=}\n"
             had_auth_failure = False
@@ -76,7 +76,7 @@ class Locker(object):
                 if path.joinpath(flf, LOCKER_FILE).exists()
             }
             for flf in found_lockfiles:
-                msgs += f"looking for lock file {found_lockfiles[flf].resolve()}\n"
+                msgs += f"... {found_lockfiles[flf].resolve()}\n"
                 rec = phibes_file.read(found_lockfiles[flf])
                 pw_hash = rec['body']
                 salt = rec['salt']
