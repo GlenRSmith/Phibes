@@ -14,7 +14,7 @@ import click
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import get_home_dir
 from phibes.lib import errors
-# from phibes.lib.errors import PhibesError, PhibesNotFoundError
+from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
 
 
@@ -88,12 +88,11 @@ class PhibesCliPasswordError(PhibesCliError):
     pass
 
 
-def edit_item(
+def create_item(
         locker_name,
         password,
         item_type,
         item_name,
-        overwrite,
         template_name
 ):
     """
@@ -102,73 +101,67 @@ def edit_item(
     :param password: Password of the locker
     :param item_type: Type of item to edit
     :param item_name: Name of item to edit
-    :param overwrite: Whether an existing item should be replaced
     :param template_name: Name of text template to start item with
     :return:
     """
-    draft_content = ""
     my_locker = get_locker(locker_name, password)
     try:
-        item = my_locker.get_item(item_name, item_type)
-    except errors.PhibesNotFoundError:
-        if overwrite:
-            raise PhibesCliNotFoundError(
-                f"can't overwrite non-existing {item_type}:{item_name}"
-            )
-        else:
-            item = None
-    if item:
-        if not overwrite:
+        if my_locker.get_item(item_name, item_type):
             raise PhibesCliExistsError(
                 f"file for {item_type}:{item_name} already exists\n"
-                f"overwrite=True must be specified to update\n"
+                f"please use the `edit` command to modify\n"
             )
-        else:
-            draft_content = item.content
+    except errors.PhibesNotFoundError:
+        pass
     if template_name:
         try:
-            template = my_locker.get_item(template_name, "template")
+            template = my_locker.get_item(template_name, item_type)
         except errors.PhibesNotFoundError:
             raise PhibesCliNotFoundError(
-                f"template:{template_name} not found"
+                f"{item_type}:{template_name} not found"
             )
     else:
         template = None
-    if template:
-        if item:
-            draft_content += (
-                f"\nprevious content above, "
-                f"template:{template_name} follows\n"
-            )
-        draft_content += template.content
-    else:
-        if template_name:
-            item = my_locker.create_item(
-                item_name=item_name,
-                item_type=item_type,
-                template_name=template_name
-            )
-            my_locker.add_item(item, allow_empty=True)
-        else:
-            item = my_locker.create_item(
-                item_name=item_name, item_type=item_type
-            )
+    work_file = my_locker.path.joinpath(f"{item_type}:{item_name}.tmp")
+    work_file.write_text(getattr(template, 'content', ""))
+    try:
+        os.system(f"{ConfigModel().editor} {work_file}")
+        item = my_locker.create_item(item_name=item_name, item_type=item_type)
+        item.content = work_file.read_text()
+        my_locker.add_item(item)
+    except Exception as err:
+        raise PhibesCliError(err)
+    finally:
+        work_file.unlink()
+    return
+
+
+def edit_item(
+        locker_name: str,
+        password: str,
+        item_type: str,
+        item_name: str
+):
+    """
+    Open a text editor to edit an existing item in a locker
+    :param locker_name: Name of the locker
+    :param password: Password of the locker
+    :param item_type: Type of item to edit
+    :param item_name: Name of item to edit
+    :return:
+    """
+    my_locker = get_locker(locker_name, password)
+    try:
+        item = my_locker.get_item(item_name, item_type)
+    except PhibesNotFoundError:
+        raise PhibesCliNotFoundError
+    draft_content = item.content
     work_file = my_locker.path.joinpath(f"{item_type}:{item_name}.tmp")
     work_file.write_text(draft_content)
     try:
         os.system(f"{ConfigModel().editor} {work_file}")
-        # avoid creating/changing item in storage until after this point,
-        # it would be 'astonishing' to the user to apply changes if
-        # e.g. there was an exception before they edit the item
-        if not item:
-            item = my_locker.create_item(
-                item_name=item_name, item_type=item_type
-            )
         item.content = work_file.read_text()
-        if item:
-            my_locker.update_item(item)
-        else:
-            my_locker.add_item(item)
+        my_locker.update_item(item)
     except Exception as err:
         raise PhibesCliError(err)
     finally:
