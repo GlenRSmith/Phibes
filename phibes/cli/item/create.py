@@ -9,14 +9,14 @@ import click
 
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
-from phibes.cli.lib import edit_item
+from phibes.cli.lib import create_item
 from phibes.model.locker import registered_items
 
 
-class EditItemCmd(ConfigFileLoadingCmd):
+class CreateItemCmd(ConfigFileLoadingCmd):
 
     def __init__(self):
-        super(EditItemCmd, self).__init__()
+        super(CreateItemCmd, self).__init__()
         return
 
     @staticmethod
@@ -26,6 +26,7 @@ class EditItemCmd(ConfigFileLoadingCmd):
             password,
             item_type,
             item,
+            template,
             *args, **kwargs
     ):
         """
@@ -36,12 +37,17 @@ class EditItemCmd(ConfigFileLoadingCmd):
         :param password:
         :param item_type:
         :param item:
+        :param template:
         :return:
         """
-        super(EditItemCmd, EditItemCmd).handle(
+        super(CreateItemCmd, CreateItemCmd).handle(
             config, *args, **kwargs
         )
-        return edit_item(locker, password, item_type, item)
+        if template == 'Empty':
+            template = None
+        return create_item(
+            locker, password, item_type, item, template
+        )
 
 
 options = {
@@ -56,8 +62,14 @@ options = {
         '--item',
         prompt='Item name',
         help='Name of item to edit',
+    ),
+    'template': click.option(
+        '--template',
+        prompt='Name of item to start with',
+        help='Name of item to start with',
+        default='Empty'
     )
 }
 
 
-edit_item_cmd = EditItemCmd.make_click_command('edit', options)
+create_item_cmd = CreateItemCmd.make_click_command('create-item', options)

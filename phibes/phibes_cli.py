@@ -11,6 +11,7 @@ import click
 # in-project modules
 from phibes.cli.config.create import create_config_cmd
 from phibes.cli.config.update import update_config_cmd
+from phibes.cli.item.create import create_item_cmd
 from phibes.cli.item.delete import delete_item_cmd
 from phibes.cli.item.edit import edit_item_cmd
 from phibes.cli.item.list import list_items_cmd
@@ -73,6 +74,7 @@ main.add_command(create_locker_cmd)
 main.add_command(get_locker_cmd)
 main.add_command(delete_locker_cmd)
 main.add_command(edit_item_cmd)
+main.add_command(create_item_cmd)
 main.add_command(get_item_cmd)
 main.add_command(list_items_cmd)
 main.add_command(delete_item_cmd)

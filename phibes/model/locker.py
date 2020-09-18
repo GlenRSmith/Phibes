@@ -23,13 +23,11 @@ from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
 from phibes.model import FILE_EXT, Item
 # pylint: disable=unused-import
 # Item subclasses must be loaded so __subclasses__ below will report them
-from . schema import Schema
 from . secret import Secret
 from . tag import Tag
-from . template import Template
 
 registered_items = {}
-for sub in [Schema, Secret, Tag, Template]:
+for sub in [Secret, Tag]:
     registered_items[sub.get_type_name()] = sub
 
 for cls in Item.__subclasses__():
@@ -227,7 +225,11 @@ class Locker(object):
         """
         if item_type not in self.registered_items:
             raise ValueError(
-                f"{item_type} not registered: {self.registered_items}"
+                f"{item_type=} not registered: {self.registered_items}"
+            )
+        if not item_name:
+            raise ValueError(
+                f"Empty or None {item_name=} not allowed"
             )
         type_enc = self.encrypt(item_type)
         name_enc = self.encrypt(item_name)
@@ -291,7 +293,7 @@ class Locker(object):
         item_cls = registered_items[item_type]
         new_item = item_cls(self.crypt_impl, item_name)
         if template_name:
-            template = self.get_item(template_name, "template")
+            template = self.get_item(template_name, item_type)
             if not template:
                 raise PhibesNotFoundError(
                     f"template {template_name} not found"
