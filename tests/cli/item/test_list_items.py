@@ -42,7 +42,6 @@ class TestListItems(locker_helper.PopulatedLocker):
             self.list_items, [
                 "--config", self.test_path,
                 "--locker", self.locker_name, "--password", self.password,
-                "--item_type", self.item_type,
                 "--verbose", False,
                 "--item_type", item_type
             ]
