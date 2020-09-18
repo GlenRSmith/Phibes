@@ -201,12 +201,12 @@ def get_item(
 ):
     my_locker = get_locker(locker_name, password)
     try:
-        my_locker.get_item(item_name, item_type)
+        item = my_locker.get_item(item_name, item_type)
     except errors.PhibesNotFoundError:
         raise PhibesCliNotFoundError(
             f"can't find {item_type}:{item_name}"
         )
-    return
+    return item
 
 
 def delete_item(

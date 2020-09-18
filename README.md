@@ -57,7 +57,7 @@ For each of the operations below, you will be prompted for the name and password
 - Add a Secret to your Locker
 
 ```
-./phibes_cli.py edit --item-type secret
+./phibes_cli.py create-item --item-type secret
 ```
 Your configured editor will be launched with a temporary file.
 Put your secret information in this file, save, and exit, and the contents will be encrypted and saved as a Secret in your Locker.
@@ -65,14 +65,12 @@ Put your secret information in this file, save, and exit, and the contents will 
 
 - Confirm that your Secret is in your Locker
 ```
-./phibes_cli.py secret list-all
+./phibes_cli.py list
 ```
-You will be presented a list of the names of all Secrets in the Locker.
+You will be presented a list of the names of all Items in the Locker.
 
 - See the unencrypted contents of your Secret
 ```
-./phibes_cli.py secret inspect
+./phibes_cli.py get-item --item_type secret --item <your item name>
 ```
-You will be shown your unencrypted Secret.
-
-
+You will be shown your unencrypted Secret. (You can also pass the `verbose` parameter to the `list` command.)
