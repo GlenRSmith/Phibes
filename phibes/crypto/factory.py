@@ -4,7 +4,6 @@ All available implementations are registered and accessible by name.
 """
 # Built-in library packages
 from __future__ import annotations
-# import abc
 from typing import Optional
 
 # Third party packages
@@ -64,6 +63,8 @@ class CryptFactory(object, metaclass=SingletonMeta):
         return item(**kwargs)
 
     def register_builder(self, key, builder, fallback_id=None):
+        if self._objects.get(key, None):
+            raise ValueError(f"{key} already registered")
         self._objects[key] = builder
         self._fallbacks[key] = fallback_id
 
@@ -73,10 +74,10 @@ class CryptFactory(object, metaclass=SingletonMeta):
         @return: registered builders
         @rtype: list
         """
-        val = set(self._objects.keys())
-        if None in val:
-            val.remove(None)
-        return list(val)
+        ret_val = list(self._objects.keys())
+        if None in ret_val:
+            ret_val.remove(None)
+        return ret_val
 
     def list_fallbacks(self):
         """
