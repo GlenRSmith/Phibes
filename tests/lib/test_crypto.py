@@ -3,6 +3,7 @@ pytest module for lib.crypto
 """
 
 # Standard library imports
+import random
 
 # Related third party imports
 import pytest
@@ -117,14 +118,12 @@ class TestCrypto(EmptyLocker):
     def test_fail_auth(self, tmp_path, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(PhibesAuthError):
-            Locker(
-                self.locker_name, wrong_pw, create=False
-            )
+            Locker.get(self.locker_name, wrong_pw)
 
     @pytest.mark.positive
     def test_good_auth(self, setup_and_teardown):
         # auth is 'built in' to getting a crypt for existing locker
-        assert Locker(self.locker_name, self.password, create=False)
+        assert Locker.get(self.locker_name, self.password)
 
 
 class TestCryptFallback(object):
@@ -140,7 +139,7 @@ class TestCryptFallback(object):
             CryptAesCtrPbkdf2Sha,
             fallback_id=default_id,
             key_rounds=100100,
-            hash_alg='SHANANA'
+            hash_alg=str(random.randint(1000, 9999))
         )
         crypt = create_crypt(self.pw, crypt_id)
         assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext

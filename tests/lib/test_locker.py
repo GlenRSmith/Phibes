@@ -24,7 +24,7 @@ class TestLocker(EmptyLocker):
     def custom_setup(self, tmp_path):
         super(TestLocker, self).custom_setup(tmp_path)
         try:
-            if Locker(self.locker_name, self.password):
+            if Locker.get(self.locker_name, self.password):
                 Locker.delete(self.locker_name, self.password)
         except Exception:
             pass
@@ -38,10 +38,8 @@ class TestLocker(EmptyLocker):
 
     @pytest.mark.positive
     def test_good(self, tmp_path, datadir, setup_and_teardown):
-        Locker(self.locker_name, self.password, create=True)
-        found = Locker(
-            self.locker_name, self.password, create=False
-        )
+        Locker.create(self.locker_name, self.password)
+        found = Locker.get(self.locker_name, self.password)
         assert found
         return
 
@@ -112,9 +110,7 @@ class TestAuth(EmptyLocker):
     def test_fail_auth(self, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(PhibesAuthError):
-            self.my_locker = Locker(
-                self.locker_name, wrong_pw, create=False
-            )
+            self.my_locker = Locker.get(self.locker_name, wrong_pw)
 
     def custom_setup(self, tmp_path):
         super(TestAuth, self).custom_setup(tmp_path)

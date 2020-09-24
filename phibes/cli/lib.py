@@ -216,7 +216,7 @@ def delete_item(
         item_name: str
 ):
     try:
-        my_locker = Locker(locker_name, password)
+        my_locker = Locker.get(locker_name, password)
     except errors.PhibesNotFoundError:
         raise PhibesCliNotFoundError(
             f"Locker {locker_name} not found"

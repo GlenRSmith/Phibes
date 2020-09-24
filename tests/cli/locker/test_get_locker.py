@@ -44,7 +44,7 @@ class TestMatrixHashed(ConfigLoadingTestClass):
             Locker.delete(self.name, self.pw)
         except PhibesNotFoundError:
             pass
-        Locker(self.name, self.pw, create=True)
+        Locker.create(self.name, self.pw)
         return
 
     def custom_teardown(self, tmp_path):
@@ -60,7 +60,7 @@ class TestMatrixHashed(ConfigLoadingTestClass):
     def prep_and_run(
             self, config_arg, cmd_inst, arg_dict, chg_hash
     ):
-        inst = Locker(self.name, self.pw)
+        inst = Locker.get(self.name, self.pw)
         assert inst
         if config_arg:
             arg_list = ["--config", self.test_path]
@@ -88,8 +88,9 @@ class TestMatrixHashed(ConfigLoadingTestClass):
             config_arg, command_instance, {}, chg_hash=False
         )
         assert result
+        print(f"{result}")
         assert result.exit_code == 0
-        inst = Locker(self.name, self.pw)
+        inst = Locker.get(self.name, self.pw)
         hash_dir = inst.crypt_impl.hash_name(self.name)
         targ = self.test_path/hash_dir/LOCKER_FILE
         assert inst.lock_file == targ
@@ -176,7 +177,7 @@ class TestMatrixUnHashed(TestMatrixHashed):
         assert result
         assert result.exit_code == 0
         targ = self.test_path/self.name/LOCKER_FILE
-        inst = Locker(self.name, self.pw)
+        inst = Locker.get(self.name, self.pw)
         assert inst.lock_file == targ
         # alert if tests are messing up actual user home dir
         assert not Path.home().joinpath(self.name).exists()

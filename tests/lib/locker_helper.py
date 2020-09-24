@@ -3,6 +3,7 @@ EmptyLocker class used by several tests for setup, teardown
 """
 
 # Standard library imports
+import random
 
 # Related third party imports
 
@@ -10,6 +11,7 @@ EmptyLocker class used by several tests for setup, teardown
 from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import ConfigModel, set_home_dir
 from phibes.lib.config import load_config_file, write_config_file
+from phibes.crypto import list_crypts
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Item, Locker
 
@@ -59,23 +61,40 @@ class EmptyLocker(ConfigLoadingTestClass):
     my_locker = None
     locker_name = "my_locker"
     password = "StaplerRadioPersonWomanMan"
+    lockers = {}
 
     def custom_setup(self, tmp_path):
         super(EmptyLocker, self).custom_setup(tmp_path)
+        # if self.lockers != {}:
+        #     raise ValueError(f"{self.lockers=}")
+        for name in self.lockers:
+            try:
+                Locker.delete(name, self.password)
+            except PhibesNotFoundError:
+                pass
+        self.lockers = {}
         try:
-            if Locker(self.locker_name, self.password):
-                Locker.delete(self.locker_name, self.password)
+            Locker.delete(self.locker_name, self.password)
         except PhibesNotFoundError:
             pass
         finally:
-            self.my_locker = Locker(
-                self.locker_name, self.password, create=True
-            )
+            self.my_locker = Locker.create(self.locker_name, self.password)
+            for crypt_id in list_crypts():
+                wart = str(random.randint(1000, 9999))
+                while self.locker_name + str(wart) in self.lockers:
+                    wart = str(random.randint(1000, 9999))
+                name = self.locker_name + wart
+                EmptyLocker.lockers[name] = Locker.create(
+                    name, self.password, crypt_id
+                )
         return
 
     def custom_teardown(self, tmp_path):
-        super(EmptyLocker, self).custom_teardown(tmp_path)
         Locker.delete(self.locker_name, self.password)
+        for name in EmptyLocker.lockers:
+            Locker.delete(name, self.password)
+        EmptyLocker.lockers = {}
+        super(EmptyLocker, self).custom_teardown(tmp_path)
         return
 
 
@@ -83,21 +102,21 @@ class PopulatedLocker(EmptyLocker):
 
     def custom_setup(self, tmp_path):
         super(PopulatedLocker, self).custom_setup(tmp_path)
+        all_lockers = list(self.lockers.values())
+        all_lockers.append(self.my_locker)
         for item_type in self.my_locker.registered_items.keys():
             content = (
                 f"here is some stuff\n"
                 f"password: HardHat\n"
                 f"{item_type}:{item_type}_name\n"
             )
-            pth = self.my_locker.get_item_path(
-                f"{item_type}", f"{item_type}_name"
-            )
-            new_item = Item(
-                self.my_locker.crypt_impl,
-                f"{item_type}_name"
-            )
-            new_item.content = content
-            new_item.save(pth)
+            for lck in all_lockers:
+                pth = lck.get_item_path(
+                    f"{item_type}", f"{item_type}_name"
+                )
+                new_item = Item(lck.crypt_impl, f"{item_type}_name")
+                new_item.content = content
+                new_item.save(pth)
         return
 
     def custom_teardown(self, tmp_path):
