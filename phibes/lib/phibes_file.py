@@ -51,7 +51,8 @@ def write(
         timestamp: str,
         body: str,
         overwrite: bool = False,
-        allow_empty: bool = False
+        allow_empty: bool = False,
+        allow_newline: bool = False,
 ) -> None:
     """
     Write the salt, timestamp, and body to the specified pth file
@@ -62,6 +63,7 @@ def write(
     :param body: body
     :param overwrite: whether to overwrite an existing file
     :param allow_empty: whether to allow writing file with no/empty body
+    :param allow_newline: whether to allow `n` in the body
     :return: None
     """
     if pth.exists() and not overwrite:
@@ -70,13 +72,16 @@ def write(
         )
     if not body and not allow_empty:
         raise AttributeError(f"Record has no content!")
-    if ("\n" in salt or "\n" in timestamp) or (body and "\n" in body):
+    if (
+            ("\n" in salt or "\n" in timestamp)
+            or (body and not allow_newline and "\n" in body)
+    ):
         raise ValueError(
             f"File fields can not contain newline char\n"
-            f"salt: {salt}\n"
-            f"crypt_id: {crypt_id}\n"
-            f"timestamp: {timestamp}\n"
-            f"body: {body}\n"
+            f"salt: [{salt}]\n"
+            f"crypt_id: [{crypt_id}]\n"
+            f"timestamp: [{timestamp}]\n"
+            f"body: [{body}]\n"
         )
     with pth.open("w") as cipher_file:
         cipher_file.write(
