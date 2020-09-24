@@ -18,11 +18,12 @@ class HashPlain(HashIfc):
 
     def __init__(self, **kwargs):
         super(HashPlain, self).__init__(**kwargs)
+        self.length_bytes = kwargs.get('length_bytes')
 
     def hash_str(
-            self, plaintext: str, salt: str, rounds: int, length_bytes: int
+            self, plaintext: str, salt: str
     ) -> str:
-        return f"{plaintext}, {salt}, {rounds}, {length_bytes}"
+        return f"{plaintext}-{salt}-{self.length_bytes}"
 
 
 class CryptPlain(EncryptionIfc):
@@ -85,15 +86,15 @@ class CryptPlainPlain(CryptIfc):
         super(CryptPlainPlain, self).__init__(
             password, pw_hash, salt, **kwargs
         )
-        self._hasher = HashPlain()
+        self._hasher = HashPlain(**kwargs)
         self._crypter = CryptPlain('', salt)
         # self.key = key
-        self.pw_hash = pw_hash
-        self.salt = salt
+        self.pw_hash = "pw_hash"
+        self.salt = ("salt", salt)[salt is not None]
         return
 
     def _hash_str(self, message, salt, length):
-        return self._hasher.hash_str(message, salt, length)
+        return self._hasher.hash_str(message, salt)
 
     def hash_name(self, name: str, salt: Optional[str] = '0000') -> str:
         return self._hash_str(name, salt, 8)
@@ -104,7 +105,7 @@ class CryptPlainPlain(CryptIfc):
 
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
         salt = ('', salt)[bool(salt)]
-        return ciphertext.rstrip(salt)
+        return f"{ciphertext.rstrip(salt)}"
 
 
 def decrypt(ciphertext: str, salt: str) -> str:
