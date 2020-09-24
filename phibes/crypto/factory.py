@@ -143,9 +143,7 @@ class CryptFactory(object, metaclass=SingletonMeta):
         @return: Crypt
         @rtype: crypt_ifc.CryptIfc
         """
-        # print(f"CryptFactory.get {kwargs=}")
         builder = self._objects.get(crypt_id)
-        # print(f"CryptFactory builder {builder}")
         if not builder:
             raise ValueError(crypt_id)
         # Return the result of `__call__` on the registered item
@@ -163,6 +161,13 @@ class CryptWrapper(object):
         self.init_kwargs = init_kwargs
         CryptFactory().register_builder(self.crypt_id, self, fallback_id)
         return
+
+    def __str__(self):
+        return (
+            f"{self.crypt_id=}\n"
+            f"{self.crypt_class=}\n"
+            f"{self.init_kwargs=}\n"
+        )
 
     def __call__(
             self,
