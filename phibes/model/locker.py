@@ -99,8 +99,7 @@ class Locker(object):
             if had_auth_failure:
                 raise PhibesAuthError(f"{path} {name}\n{msgs}")
             raise PhibesNotFoundError(
-                f"no matching Locker: {path} {name}\n"
-                f"Did you mean to pass create=True?\n{msgs}"
+                f"no matching Locker: {path} {name}\n{msgs}"
             )
         elif len(valid_crypts) > 1:
             raise PhibesConfigurationError(
