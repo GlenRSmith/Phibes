@@ -65,8 +65,6 @@ class EmptyLocker(ConfigLoadingTestClass):
 
     def custom_setup(self, tmp_path):
         super(EmptyLocker, self).custom_setup(tmp_path)
-        # if self.lockers != {}:
-        #     raise ValueError(f"{self.lockers=}")
         for name in self.lockers:
             try:
                 Locker.delete(name, self.password)
@@ -90,10 +88,6 @@ class EmptyLocker(ConfigLoadingTestClass):
         return
 
     def custom_teardown(self, tmp_path):
-        Locker.delete(self.locker_name, self.password)
-        for name in EmptyLocker.lockers:
-            Locker.delete(name, self.password)
-        EmptyLocker.lockers = {}
         super(EmptyLocker, self).custom_teardown(tmp_path)
         return
 
