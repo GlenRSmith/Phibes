@@ -94,10 +94,9 @@ class TestMatrixHashed(PopulatedLocker):
                 config_arg, command_instance, {'name': lck}, chg_hash=False
             )
             assert result
-            print(f"{result}")
             assert result.exit_code == 0
             inst = Locker.get(lck, self.password)
-            hash_dir = inst.crypt_impl.hash_name(self.locker_name)
+            hash_dir = inst.crypt_impl.hash_name(lck)
             targ = self.test_path/hash_dir/LOCKER_FILE
             assert inst.lock_file == targ
             # alert if tests are messing up actual user home dir
