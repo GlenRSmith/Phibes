@@ -105,12 +105,6 @@ class CryptIfc(abc.ABC):
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
         pass
 
-    # @abc.abstractmethod
-    # def encrypt_password(
-    #         self, password: str, salt: Optional[str] = None
-    # ) -> str:
-    #     pass
-
     @abc.abstractmethod
     def hash_name(
             self,
