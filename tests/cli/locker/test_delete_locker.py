@@ -23,11 +23,6 @@ class TestDeleteLocker(ConfigLoadingTestClass):
 
     name = "new_locker"
     pw = "SmellyBeansVictor"
-    test_config = {
-        "editor": "vim",
-        "hash_locker_names": "False",
-        "store_path": "."
-    }
 
     def custom_setup(self, tmp_path):
         super(TestDeleteLocker, self).custom_setup(tmp_path)
