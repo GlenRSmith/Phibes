@@ -15,6 +15,9 @@ from phibes.crypto.crypt_ifc import CryptIfc, EncryptionIfc, HashIfc
 
 
 class HashPlain(HashIfc):
+    """
+    Hashing class for retaining the original string in the "hash"
+    """
 
     def __init__(self, **kwargs):
         super(HashPlain, self).__init__(**kwargs)
@@ -23,6 +26,12 @@ class HashPlain(HashIfc):
     def hash_str(
             self, plaintext: str, salt: str
     ) -> str:
+        """
+        Hash the string
+        @param plaintext: the string to hash
+        @param salt: salt value
+        @return: hashed string
+        """
         return f"{plaintext}-{salt}-{self.length_bytes}"
 
 
@@ -65,10 +74,12 @@ class CryptPlain(EncryptionIfc):
         return secrets.token_hex(16)
 
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
-        return f"{plaintext}{salt}"
+        val = plaintext.replace("\n", chr(31))
+        return f"{val}{salt}"
 
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
-        return ciphertext[0:-len(salt)]
+        val = ciphertext.replace(chr(31), "\n")
+        return f"{val.rstrip(salt)}"
 
 
 class CryptPlainPlain(CryptIfc):
@@ -97,20 +108,30 @@ class CryptPlainPlain(CryptIfc):
         return self._hasher.hash_str(message, salt)
 
     def hash_name(self, name: str, salt: Optional[str] = '0000') -> str:
+        """
+        Hash an item that is a name
+        @param name: The name
+        @param salt: Optional salt
+        @return: the hashed name
+        """
         return self._hash_str(name, salt, 8)
 
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
+        """
+        Encrypt the plaintext using self._crypter
+        @param plaintext: Text to encrypt
+        @param salt: Optional salt
+        @return: encrypted string
+        """
         salt = ('', salt)[bool(salt)]
-        return f"{plaintext}{salt}"
+        return self._crypter.encrypt(plaintext, salt)
 
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
+        """
+        Decrypt the ciphertext using self._crypter
+        @param ciphertext: encrypted text
+        @param salt: salt used in encryption
+        @return: decrypted string
+        """
         salt = ('', salt)[bool(salt)]
-        return f"{ciphertext.rstrip(salt)}"
-
-
-def decrypt(ciphertext: str, salt: str) -> str:
-    return ciphertext[0:-len(salt)]
-
-
-def plain_encrypt(plaintext: str, salt: str) -> str:
-    return f"{plaintext}{salt}"
+        return self._crypter.decrypt(ciphertext, salt)
