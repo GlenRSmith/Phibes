@@ -97,9 +97,9 @@ class Locker(object):
                 valid_crypts[flf] = crypt_inst
         if len(valid_crypts) == 0:
             if had_auth_failure:
-                raise PhibesAuthError(f"{path} {name}\n{msgs}")
+                raise PhibesAuthError(f"{msgs}")
             raise PhibesNotFoundError(
-                f"no matching Locker: {path} {name}\n{msgs}"
+                f"no matching Locker: {msgs}"
             )
         elif len(valid_crypts) > 1:
             raise PhibesConfigurationError(
@@ -109,6 +109,8 @@ class Locker(object):
         inst.crypt_impl = valid_crypts[crypt_dir]
         inst.path = path / crypt_dir
         inst.lock_file = inst.path / LOCKER_FILE
+        # if configured to hash locker names, and found&authed locker
+        # is in un-hashed dir, or vice versa, raise an error
         if conf.hash_locker_names == (crypt_dir == name):
             raise PhibesConfigurationError(
                 f"Locker {name} does not match config\n"

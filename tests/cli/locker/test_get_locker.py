@@ -65,23 +65,27 @@ class TestMatrixHashed(PopulatedLocker):
         if config_arg:
             arg_list = ["--config", self.test_path]
         else:
-            # change the configured working path to the test directory
-            update_config_option_default(cmd_inst, self.test_path)
-            # get the current config
-            config = ConfigModel()
-            # update it with the setting for this test
-            config.hash_locker_names = self.hash_locker_names
-            # persist the changed config
-            self.update_config(config)
             arg_list = []
+        # change the configured working path to the test directory
+        update_config_option_default(cmd_inst, self.test_path)
+        # get the current config
+        config = ConfigModel()
+        # update it with the setting for this test
+        config.hash_locker_names = self.hash_locker_names
+        # persist the changed config
+        self.update_config(config)
         arg_list += [
             "--locker", arg_dict.get('name', self.locker_name),
             "--password", arg_dict.get('password', self.password)
         ]
         if chg_hash:
             conf = ConfigModel()
+            tmp_val = conf.hash_locker_names
             conf.hash_locker_names = not conf.hash_locker_names
-            self.update_config(conf)
+            new_conf = self.update_config(conf)
+            new_val = new_conf.hash_locker_names
+            if tmp_val == new_val:
+                raise ValueError(f"{new_val=} {tmp_val=}")
         ret_val = CliRunner().invoke(cmd_inst, arg_list)
         return ret_val
 

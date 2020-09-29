@@ -61,7 +61,14 @@ class TestCryptImpl(object):
     def test_create_encrypt_decrypt(self, plaintext):
         for crypt_id in list_crypts():
             crypt = create_crypt(self.pw, crypt_id)
-            assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
+            step1 = crypt.encrypt(plaintext)
+            step2 = crypt.decrypt(step1)
+            assert step2 == plaintext, (
+                f"{crypt=}\n"
+                f"{plaintext=}\n"
+                f"{step1=}\n"
+                f"{step2=}\n"
+            )
 
     @pytest.mark.positive
     @pytest.mark.parametrize("plaintext", plains)

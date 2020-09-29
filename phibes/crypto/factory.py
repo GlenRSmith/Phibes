@@ -109,7 +109,7 @@ class CryptFactory(object, metaclass=SingletonMeta):
             try:
                 ret_ob = self.get(crypt_id, password, None, None, **kwargs)
                 return ret_ob
-            except Exception as err:
+            except ValueError:
                 try:
                     next_id = self._fallbacks[crypt_id]
                 except KeyError as err:

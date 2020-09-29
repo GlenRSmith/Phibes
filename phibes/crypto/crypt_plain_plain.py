@@ -90,12 +90,16 @@ class CryptPlain(EncryptionIfc):
         return secrets.token_hex(cls.salt_length_bytes)
 
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
+        if salt:
+            self.salt = salt
         val = plaintext.replace("\n", chr(31))
-        return f"{val}{salt}"
+        return f"{val}{self.salt}"
 
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
+        if salt:
+            self.salt = salt
         val = ciphertext.replace(chr(31), "\n")
-        return f"{val.rstrip(salt)}"
+        return f"{val[:-len(self.salt)]}"
 
 
 class CryptPlainPlain(CryptIfc):

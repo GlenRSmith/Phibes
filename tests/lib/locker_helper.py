@@ -51,9 +51,9 @@ class ConfigLoadingTestClass(BaseTestClass):
         conf.unlink()
         return
 
-    def update_config(self, config: ConfigModel):
+    def update_config(self, config: ConfigModel) -> ConfigModel:
         write_config_file(self.test_path, config, update=True)
-        load_config_file(self.test_path)
+        return load_config_file(self.test_path)
 
 
 class EmptyLocker(ConfigLoadingTestClass):
