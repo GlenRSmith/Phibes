@@ -11,7 +11,7 @@ import random
 from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import ConfigModel, set_home_dir
 from phibes.lib.config import load_config_file, write_config_file
-from phibes.crypto import list_crypts
+from phibes import crypto
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Item, Locker
 
@@ -77,12 +77,15 @@ class EmptyLocker(ConfigLoadingTestClass):
             pass
         finally:
             self.my_locker = Locker.create(self.locker_name, self.password)
-            for crypt_id in list_crypts():
+            # create a locker for each registered crypt instance
+            for crypt_id in crypto.list_crypts():
+                # dedupe the names with random numbers
                 wart = str(random.randint(1000, 9999))
+                # but make sure there isn't a freak collision
                 while self.locker_name + str(wart) in self.lockers:
                     wart = str(random.randint(1000, 9999))
                 name = self.locker_name + wart
-                EmptyLocker.lockers[name] = Locker.create(
+                self.lockers[name] = Locker.create(
                     name, self.password, crypt_id
                 )
         return

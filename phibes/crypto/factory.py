@@ -110,15 +110,12 @@ class CryptFactory(object, metaclass=SingletonMeta):
                 ret_ob = self.get(crypt_id, password, None, None, **kwargs)
                 return ret_ob
             except Exception as err:
-                print(f"failed to create {crypt_id}\n{err}")
                 try:
                     next_id = self._fallbacks[crypt_id]
                 except KeyError as err:
-                    raise KeyError(
-                        f"{crypt_id} {err}"
-                    )
+                    raise KeyError(f"{crypt_id} {err}")
                 if next_id is None:
-                    return None
+                    break
                 crypt_id = next_id
         return ret_ob
 

@@ -30,7 +30,7 @@ class TestCreateBase(PopulatedLocker):
 
     def custom_setup(self, tmp_path):
         super(TestCreateBase, self).custom_setup(tmp_path)
-        for name, inst in TestCreateBase.lockers.items():
+        for name, inst in self.lockers.items():
             my_item = inst.create_item(self.good_template_name, "secret")
             my_item.content = f"{self.good_template_name}:secret"
             inst.add_item(my_item)
@@ -50,17 +50,25 @@ class TestCreateBase(PopulatedLocker):
         return
 
     def custom_teardown(self, tmp_path):
+        logs = ""
         self.my_locker.delete_item(self.good_template_name, "secret")
+        logs += f"deleted {self.good_template_name} from {self.my_locker}\t"
         for name, inst in TestCreateBase.lockers.items():
-            inst.delete_item(self.good_template_name, "secret")
+            try:
+                inst.delete_item(self.good_template_name, "secret")
+                logs += f"deleted {self.good_template_name} from {name}\t"
+            except FileNotFoundError as err:
+                logs += f"fail: {name=} {inst=}\t"
+                raise FileNotFoundError(f"{logs}\n{err}")
+
         super(TestCreateBase, self).custom_teardown(tmp_path)
 
     def invoke(self, template: str = None, locker_name: str = None):
         """
         Helper method for often repeated code in test methods
-        :param template:
-        :param locker_name:
-        :return:
+        :param template: Name of item to use as template for new item
+        :param locker_name: Name of locker
+        :return: click test-runner result
         """
         if locker_name is None:
             locker_name = self.locker_name

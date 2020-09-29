@@ -159,6 +159,15 @@ class TestMatrixHashed(PopulatedLocker):
     def test_conf_hash_issue(
             self, command_instance, config_arg, setup_and_teardown
     ):
+        """
+        Tests for scenario where application configuration changes
+        "
+        @param command_instance:
+        @param config_arg:
+        @param setup_and_teardown:
+        @return:
+        @rtype:
+        """
         all_lockers = list(self.lockers.keys()) + [self.locker_name]
         for lck in all_lockers:
             result = self.prep_and_run(
@@ -168,7 +177,13 @@ class TestMatrixHashed(PopulatedLocker):
                 chg_hash=True
             )
             assert result
-            assert result.exit_code == 1
+            assert result.exit_code == 1, (
+                f"{lck} did not fail \n"
+                f"{config_arg=}\n"
+                f"{command_instance=}\n"
+                f"{self.lockers[lck].crypt_impl=}\n"
+                f"{self.lockers[lck].path=}\n"
+            )
             assert type(result.exception) is PhibesConfigurationError
             # alert if tests are messing up actual user home dir
             assert not Path.home().joinpath(self.locker_name).exists()
