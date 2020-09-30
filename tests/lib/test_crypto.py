@@ -16,31 +16,7 @@ from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker
 
 # Local test imports
-from tests.lib.test_helpers import EmptyLocker
-
-
-plains = [
-    "Easy Peasy",
-    "this is my password for bouncycastledelivery.com",
-    "this is my password \t for bouncycastledelivery.com",
-    "this is my password \n for bouncycastledelivery.com",
-    "This is just a test 1",
-    "That is just a test 2",
-    "We were just a test 3",
-    "They will just be a test 4",
-    """
-    site:www.bouncycastledelivery.com
-    username:Jenny'sMomAndDad
-    password:WeWantToThrowtheb3stbirthdayparty07
-    """,
-    """
-    {
-        'site':'www.bouncycastledelivery.com',
-        'username':'Jenny'sMomAndDad',
-        'password':'WeWantToThrowtheb3stbirthdayparty07'
-    }
-    """
-]
+from tests.lib.test_helpers import EmptyLocker, plain_texts
 
 
 class TestCryptImpl(object):
@@ -57,7 +33,7 @@ class TestCryptImpl(object):
         return
 
     @pytest.mark.positive
-    @pytest.mark.parametrize("plaintext", plains)
+    @pytest.mark.parametrize("plaintext", plain_texts)
     def test_create_encrypt_decrypt(self, plaintext):
         for crypt_id in list_crypts():
             crypt = create_crypt(self.pw, crypt_id)
@@ -71,7 +47,7 @@ class TestCryptImpl(object):
             )
 
     @pytest.mark.positive
-    @pytest.mark.parametrize("plaintext", plains)
+    @pytest.mark.parametrize("plaintext", plain_texts)
     def test_get_encrypt_decrypt(self, plaintext):
         for cid, rec in self.crypts.items():
             crypt = get_crypt(
@@ -87,7 +63,7 @@ class TestCryptImpl(object):
         :return:
         """
         crypt = create_crypt(self.pw)
-        for tt in plains:
+        for tt in plain_texts:
             ct = crypt.encrypt(tt)
             pt = crypt.decrypt(ct)
             assert pt == tt
@@ -96,12 +72,12 @@ class TestCryptImpl(object):
             crypt_id = crypt.crypt_id
             pw_hash = crypt.pw_hash
             salt = crypt.salt
-            for tt in plains:
+            for tt in plain_texts:
                 ct = crypt.encrypt(tt)
                 pt = crypt.decrypt(ct)
                 assert pt == tt
             crypt = get_crypt(crypt_id, self.pw, pw_hash, salt)
-            for tt in plains:
+            for tt in plain_texts:
                 ct = crypt.encrypt(tt)
                 pt = crypt.decrypt(ct)
                 assert pt == tt
@@ -140,7 +116,7 @@ class TestCryptFallback(object):
         return
 
     @pytest.mark.positive
-    @pytest.mark.parametrize("plaintext", plains)
+    @pytest.mark.parametrize("plaintext", plain_texts)
     def test_create_encrypt_decrypt(self, plaintext):
         crypt_id = register_crypt(
             CryptAesCtrPbkdf2Sha,

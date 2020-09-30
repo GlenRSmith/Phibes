@@ -16,6 +16,30 @@ from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Item, Locker
 
 
+plain_texts = [
+    "Easy Peasy",
+    "this is my password for bouncycastledelivery.com",
+    "this is my password \t for bouncycastledelivery.com",
+    "this is my password \n for bouncycastledelivery.com",
+    "This is just a test 1",
+    "That is just a test 2",
+    "We were just a test 3",
+    "They will just be a test 4",
+    """
+    site:www.bouncycastledelivery.com
+    username:Jenny'sMomAndDad
+    password:WeWantToThrowtheb3stbirthdayparty07
+    """,
+    """
+    {
+        'site':'www.bouncycastledelivery.com',
+        'username':'Jenny'sMomAndDad',
+        'password':'WeWantToThrowtheb3stbirthdayparty07'
+    }
+    """
+]
+
+
 class BaseTestClass(object):
 
     test_path = None
