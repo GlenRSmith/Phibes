@@ -166,8 +166,6 @@ class Locker(object):
         if not Locker.can_create(inst.path):
             raise ValueError(f"could not create {name}")
         inst.path.mkdir(exist_ok=False)
-        # if "plain" in inst.crypt_impl.crypt_id.lower():
-        #     raise ValueError(f"{inst.crypt_impl.salt}")
         phibes_file.write(
             inst.lock_file,
             inst.crypt_impl.salt,
@@ -176,8 +174,6 @@ class Locker(object):
             inst.crypt_impl.pw_hash,
             overwrite=False
         )
-        # if "plain" in inst.crypt_impl.crypt_id.lower():
-        #     raise ValueError(f"{inst.crypt_impl.crypt_id}")
         return inst
 
     @classmethod
@@ -313,6 +309,15 @@ class Locker(object):
             item_type: str,
             template_name: Optional[str] = None
     ) -> Item:
+        """
+        Creates an in-memory item, prepopulates `content` from named template
+        (if provided)
+        Client must follow up with `add_item` call to save the new item.
+        @param item_name: name of new item
+        @param item_type: type of new item
+        @param template_name: name of (optional) template item
+        @return: new in-memory item
+        """
         item_cls = registered_items[item_type]
         new_item = item_cls(self.crypt_impl, item_name)
         if template_name:
@@ -325,11 +330,24 @@ class Locker(object):
         return new_item
 
     def add_item(self, item: Item) -> None:
+        """
+        Saves the item to the locker
+        @param item: item to save
+        @return: None
+        """
         pth = self.get_item_path(item.item_type, item.name)
         item.save(pth, overwrite=False)
         return
 
-    def get_item(self, item_name: str, item_type: str) -> Optional[Item]:
+    def get_item(self, item_name: str, item_type: str) -> Item:
+        """
+        Attempts to find and return an item in the locker
+        with the given name and type.
+        Raises an exception of item isn't found
+        @param item_name: name of item
+        @param item_type: type of item (secret, etc.)
+        @return: the item
+        """
         pth = self.get_item_path(item_type, item_name)
         if pth.exists():
             item_cls = registered_items[item_type]

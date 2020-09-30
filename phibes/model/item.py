@@ -35,20 +35,18 @@ class Item(object):
         self.name = name
         self.crypt_impl = crypt_obj
         self._ciphertext = None
-        self._timestamp = None
+        self.timestamp = None
         if content:
             self.content = content
         return
 
     def save(self, pth: Path, overwrite: bool = False):
-        self._timestamp = self.crypt_impl.encrypt(
-            str(datetime.now())
-        )
+        self.timestamp = str(datetime.now())
         phibes_file.write(
             pth,
             self.salt,
             self.crypt_impl.crypt_id,
-            self._timestamp,
+            self.timestamp,
             self._ciphertext,
             overwrite=overwrite
         )
@@ -66,7 +64,7 @@ class Item(object):
         """
         rec = phibes_file.read(pth)
         self._salt = rec['salt']
-        self._timestamp = rec['timestamp']
+        self.timestamp = rec['timestamp']
         self._ciphertext = rec['body']
         # crypt_impl will have generated a random salt,
         # need to set it to the correct one for this item
@@ -105,14 +103,6 @@ class Item(object):
         """
         self._ciphertext = self.crypt_impl.encrypt(content)
         return
-
-    @property
-    def timestamp(self):
-        try:
-            ret_val = self.crypt_impl.decrypt(self._timestamp)
-        except Exception:
-            ret_val = datetime.now()
-        return str(ret_val)
 
     @property
     def ciphertext(self):
