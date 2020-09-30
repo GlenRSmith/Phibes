@@ -17,7 +17,7 @@ from phibes.phibes_cli import main
 
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
-from tests.lib.locker_helper import ConfigLoadingTestClass
+from tests.lib.test_helpers import ConfigLoadingTestClass
 
 
 params = "command_instance,crypt_id"

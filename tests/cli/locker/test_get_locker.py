@@ -20,7 +20,7 @@ from phibes.phibes_cli import main
 
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
-from tests.lib.locker_helper import PopulatedLocker
+from tests.lib.test_helpers import PopulatedLocker
 
 
 params = "command_instance,config_arg"

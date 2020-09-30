@@ -12,10 +12,10 @@ from click.testing import CliRunner
 from phibes import phibes_cli
 
 # local test code
-from tests.lib import locker_helper
+from tests.lib import test_helpers
 
 
-class TestListItems(locker_helper.PopulatedLocker):
+class TestListItems(test_helpers.PopulatedLocker):
 
     item_name = 'list_this'
     item_type = 'secret'

@@ -16,7 +16,7 @@ from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker
 
 # Local test imports
-from tests.lib.locker_helper import EmptyLocker
+from tests.lib.test_helpers import EmptyLocker
 
 
 plains = [

@@ -13,10 +13,10 @@ from phibes import phibes_cli
 from phibes.cli.lib import PhibesCliNotFoundError
 
 # local test code
-from tests.lib import locker_helper
+from tests.lib import test_helpers
 
 
-class TestGetItem(locker_helper.PopulatedLocker):
+class TestGetItem(test_helpers.PopulatedLocker):
 
     item_name = 'get_this'
     item_type = 'secret'

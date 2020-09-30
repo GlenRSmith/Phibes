@@ -12,7 +12,7 @@ from phibes.lib.errors import PhibesAuthError, PhibesNotFoundError
 from phibes.model import Locker
 
 # Local test imports
-from tests.lib.locker_helper import EmptyLocker, PopulatedLocker
+from tests.lib.test_helpers import EmptyLocker, PopulatedLocker
 
 
 class TestLocker(EmptyLocker):
