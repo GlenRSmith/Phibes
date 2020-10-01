@@ -11,7 +11,7 @@ import pytest
 from phibes.model import Secret
 
 # Local test imports
-from tests.lib.locker_helper import EmptyLocker
+from tests.lib.test_helpers import EmptyLocker
 
 
 class TestSecrets(EmptyLocker):

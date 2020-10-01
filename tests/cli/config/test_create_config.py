@@ -17,7 +17,7 @@ from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.phibes_cli import main
 
 # Local test imports
-from tests.lib.locker_helper import BaseTestClass
+from tests.lib.test_helpers import BaseTestClass
 
 
 class TestCreateConfig(BaseTestClass):

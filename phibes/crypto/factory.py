@@ -4,7 +4,6 @@ All available implementations are registered and accessible by name.
 """
 # Built-in library packages
 from __future__ import annotations
-# import abc
 from typing import Optional
 
 # Third party packages
@@ -64,6 +63,8 @@ class CryptFactory(object, metaclass=SingletonMeta):
         return item(**kwargs)
 
     def register_builder(self, key, builder, fallback_id=None):
+        if self._objects.get(key, None):
+            raise ValueError(f"{key} already registered")
         self._objects[key] = builder
         self._fallbacks[key] = fallback_id
 
@@ -73,10 +74,10 @@ class CryptFactory(object, metaclass=SingletonMeta):
         @return: registered builders
         @rtype: list
         """
-        val = set(self._objects.keys())
-        if None in val:
-            val.remove(None)
-        return list(val)
+        ret_val = list(self._objects.keys())
+        if None in ret_val:
+            ret_val.remove(None)
+        return ret_val
 
     def list_fallbacks(self):
         """
@@ -108,16 +109,13 @@ class CryptFactory(object, metaclass=SingletonMeta):
             try:
                 ret_ob = self.get(crypt_id, password, None, None, **kwargs)
                 return ret_ob
-            except Exception as err:
-                print(f"failed to create {crypt_id}\n{err}")
+            except ValueError:
                 try:
                     next_id = self._fallbacks[crypt_id]
                 except KeyError as err:
-                    raise KeyError(
-                        f"{crypt_id} {err}"
-                    )
+                    raise KeyError(f"{crypt_id} {err}")
                 if next_id is None:
-                    return None
+                    break
                 crypt_id = next_id
         return ret_ob
 
@@ -142,9 +140,7 @@ class CryptFactory(object, metaclass=SingletonMeta):
         @return: Crypt
         @rtype: crypt_ifc.CryptIfc
         """
-        # print(f"CryptFactory.get {kwargs=}")
         builder = self._objects.get(crypt_id)
-        # print(f"CryptFactory builder {builder}")
         if not builder:
             raise ValueError(crypt_id)
         # Return the result of `__call__` on the registered item
@@ -162,6 +158,13 @@ class CryptWrapper(object):
         self.init_kwargs = init_kwargs
         CryptFactory().register_builder(self.crypt_id, self, fallback_id)
         return
+
+    def __str__(self):
+        return (
+            f"{self.crypt_id=}\n"
+            f"{self.crypt_class=}\n"
+            f"{self.init_kwargs=}\n"
+        )
 
     def __call__(
             self,

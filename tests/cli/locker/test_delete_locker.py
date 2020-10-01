@@ -16,18 +16,13 @@ from phibes.phibes_cli import main
 
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
-from tests.lib.locker_helper import ConfigLoadingTestClass
+from tests.lib.test_helpers import ConfigLoadingTestClass
 
 
 class TestDeleteLocker(ConfigLoadingTestClass):
 
     name = "new_locker"
     pw = "SmellyBeansVictor"
-    test_config = {
-        "editor": "vim",
-        "hash_locker_names": "False",
-        "store_path": "."
-    }
 
     def custom_setup(self, tmp_path):
         super(TestDeleteLocker, self).custom_setup(tmp_path)
@@ -35,7 +30,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
             Locker.delete(self.name, self.pw)
         except PhibesNotFoundError:
             pass
-        Locker(self.name, self.pw, create=True)
+        Locker.create(self.name, self.pw)
         return
 
     def custom_teardown(self, tmp_path):
@@ -53,7 +48,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
     def test_delete_locker_main(
             self, setup_and_teardown, command_instance
     ):
-        inst = Locker(self.name, self.pw)
+        inst = Locker.get(self.name, self.pw)
         assert inst
         result = CliRunner().invoke(
             command_instance,
@@ -65,7 +60,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
         )
         assert result.exit_code == 0
         with pytest.raises(PhibesNotFoundError):
-            Locker(self.name, self.pw)
+            Locker.get(self.name, self.pw)
         return
 
     @pytest.mark.parametrize(
@@ -76,7 +71,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
             self, setup_and_teardown, command_instance
     ):
         update_config_option_default(command_instance, self.test_path)
-        inst = Locker(self.name, self.pw)
+        inst = Locker.get(self.name, self.pw)
         assert inst
         result = CliRunner().invoke(
             command_instance,
@@ -87,5 +82,5 @@ class TestDeleteLocker(ConfigLoadingTestClass):
         )
         assert result.exit_code == 0
         with pytest.raises(PhibesNotFoundError):
-            Locker(self.name, self.pw)
+            Locker.get(self.name, self.pw)
         return

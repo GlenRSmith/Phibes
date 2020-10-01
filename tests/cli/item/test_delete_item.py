@@ -13,7 +13,7 @@ from phibes import phibes_cli
 from phibes.lib.errors import PhibesNotFoundError
 
 # Local test imports
-from tests.lib.locker_helper import PopulatedLocker
+from tests.lib.test_helpers import PopulatedLocker
 
 
 class TestDeleteItem(PopulatedLocker):

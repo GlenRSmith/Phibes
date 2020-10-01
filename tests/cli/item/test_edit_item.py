@@ -16,7 +16,7 @@ from phibes.lib.config import set_editor, write_config_file
 
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
-from tests.lib.locker_helper import PopulatedLocker
+from tests.lib.test_helpers import PopulatedLocker
 
 
 class TestEditBase(PopulatedLocker):

@@ -3,6 +3,7 @@ pytest module for lib.crypto
 """
 
 # Standard library imports
+import random
 
 # Related third party imports
 import pytest
@@ -15,31 +16,7 @@ from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker
 
 # Local test imports
-from tests.lib.locker_helper import EmptyLocker
-
-
-plains = [
-    "Easy Peasy",
-    "this is my password for bouncycastledelivery.com",
-    "this is my password \t for bouncycastledelivery.com",
-    "this is my password \n for bouncycastledelivery.com",
-    "This is just a test 1",
-    "That is just a test 2",
-    "We were just a test 3",
-    "They will just be a test 4",
-    """
-    site:www.bouncycastledelivery.com
-    username:Jenny'sMomAndDad
-    password:WeWantToThrowtheb3stbirthdayparty07
-    """,
-    """
-    {
-        'site':'www.bouncycastledelivery.com',
-        'username':'Jenny'sMomAndDad',
-        'password':'WeWantToThrowtheb3stbirthdayparty07'
-    }
-    """
-]
+from tests.lib.test_helpers import EmptyLocker, plain_texts
 
 
 class TestCryptImpl(object):
@@ -56,14 +33,21 @@ class TestCryptImpl(object):
         return
 
     @pytest.mark.positive
-    @pytest.mark.parametrize("plaintext", plains)
+    @pytest.mark.parametrize("plaintext", plain_texts)
     def test_create_encrypt_decrypt(self, plaintext):
         for crypt_id in list_crypts():
             crypt = create_crypt(self.pw, crypt_id)
-            assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
+            step1 = crypt.encrypt(plaintext)
+            step2 = crypt.decrypt(step1)
+            assert step2 == plaintext, (
+                f"{crypt=}\n"
+                f"{plaintext=}\n"
+                f"{step1=}\n"
+                f"{step2=}\n"
+            )
 
     @pytest.mark.positive
-    @pytest.mark.parametrize("plaintext", plains)
+    @pytest.mark.parametrize("plaintext", plain_texts)
     def test_get_encrypt_decrypt(self, plaintext):
         for cid, rec in self.crypts.items():
             crypt = get_crypt(
@@ -79,7 +63,7 @@ class TestCryptImpl(object):
         :return:
         """
         crypt = create_crypt(self.pw)
-        for tt in plains:
+        for tt in plain_texts:
             ct = crypt.encrypt(tt)
             pt = crypt.decrypt(ct)
             assert pt == tt
@@ -88,12 +72,12 @@ class TestCryptImpl(object):
             crypt_id = crypt.crypt_id
             pw_hash = crypt.pw_hash
             salt = crypt.salt
-            for tt in plains:
+            for tt in plain_texts:
                 ct = crypt.encrypt(tt)
                 pt = crypt.decrypt(ct)
                 assert pt == tt
             crypt = get_crypt(crypt_id, self.pw, pw_hash, salt)
-            for tt in plains:
+            for tt in plain_texts:
                 ct = crypt.encrypt(tt)
                 pt = crypt.decrypt(ct)
                 assert pt == tt
@@ -117,14 +101,12 @@ class TestCrypto(EmptyLocker):
     def test_fail_auth(self, tmp_path, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(PhibesAuthError):
-            Locker(
-                self.locker_name, wrong_pw, create=False
-            )
+            Locker.get(self.locker_name, wrong_pw)
 
     @pytest.mark.positive
     def test_good_auth(self, setup_and_teardown):
         # auth is 'built in' to getting a crypt for existing locker
-        assert Locker(self.locker_name, self.password, create=False)
+        assert Locker.get(self.locker_name, self.password)
 
 
 class TestCryptFallback(object):
@@ -134,13 +116,13 @@ class TestCryptFallback(object):
         return
 
     @pytest.mark.positive
-    @pytest.mark.parametrize("plaintext", plains)
+    @pytest.mark.parametrize("plaintext", plain_texts)
     def test_create_encrypt_decrypt(self, plaintext):
         crypt_id = register_crypt(
             CryptAesCtrPbkdf2Sha,
             fallback_id=default_id,
             key_rounds=100100,
-            hash_alg='SHANANA'
+            hash_alg=str(random.randint(1000, 9999))
         )
         crypt = create_crypt(self.pw, crypt_id)
         assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
