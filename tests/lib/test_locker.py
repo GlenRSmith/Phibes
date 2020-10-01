@@ -75,21 +75,16 @@ class TestItemStuff(PopulatedLocker):
         return
 
     @pytest.mark.positive
-    def test_update_item(self, setup_and_teardown):
-        content = (
-            f"here is some stuff"
-            f"password: Iwashacked007"
-            f"template:my_template"
-        )
+    @pytest.mark.parametrize("plaintext", plain_texts)
+    def test_update_item(self, plaintext, setup_and_teardown):
         all_lockers = list(self.lockers.values()) + [self.my_locker]
         for lck in all_lockers:
             found = lck.get_item("secret_name", "secret")
             assert found
-            found.content = content
+            found.content = plaintext
             lck.update_item(found)
             refound = lck.get_item("secret_name", "secret")
-            test_cont = refound.content
-            assert test_cont == content
+            assert refound.content == plaintext
 
 
 class TestFileNames(EmptyLocker):
