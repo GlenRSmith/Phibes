@@ -12,7 +12,6 @@ from typing import Optional
 
 # In-project modules
 from phibes.crypto.crypt_ifc import CryptIfc, EncryptionIfc, HashIfc
-from phibes.lib.errors import PhibesAuthError
 
 
 class HashPlain(HashIfc):
@@ -24,15 +23,13 @@ class HashPlain(HashIfc):
         super(HashPlain, self).__init__(**kwargs)
         self.length_bytes = kwargs.get('length_bytes')
 
-    def hash_str(
-            self, plaintext: str, salt: str
-    ) -> str:
+    def hash_str(self, plaintext: str, **kwargs) -> str:
         """
         Hash the string
         @param plaintext: the string to hash
-        @param salt: salt value
         @return: hashed string
         """
+        salt = kwargs.get('salt')
         return f"{plaintext}-{salt}-{self.length_bytes}"
 
 
@@ -107,50 +104,31 @@ class CryptPlainPlain(CryptIfc):
     Encryption implementation for no encryption
     """
 
+    HashType = HashPlain
+    EncryptType = CryptPlain
+
     @property
     def salt(self):
         """
         salt property accessor
         :return:
         """
-        return self._crypter.salt
+        return self._encrypt.salt
 
     def __init__(
             self,
+            crypt_id: str,
             password: str,
             pw_hash: Optional[str] = None,
             salt: Optional[str] = None,
             **kwargs: dict
     ):
         super(CryptPlainPlain, self).__init__(
-            password, pw_hash, salt, **kwargs
+            crypt_id, password, pw_hash, salt, **kwargs
         )
-        creating = password and not pw_hash and not salt
-        if not (password and pw_hash and salt) and not creating:
-            pref = f"{self.__class__.__name__}\n"
-            raise ValueError(
-                f"invalid call to __init__\n"
-                f"valid calls are are:\n"
-                f"{pref}(password)\n"
-                f"{pref}(password, pw_hash, salt)\n"
-                f"{password=} {pw_hash=} {salt=} {kwargs=}"
-            )
-        self._hasher = HashPlain(**kwargs)
-        if creating:
-            salt = CryptPlain.create_salt()
-        key = self._hasher.hash_str(password, salt)
-        self._crypter = CryptPlain(key, salt)
-        auth_key = self.encrypt(self.hash_name(password, salt))
-        if not creating:
-            if not auth_key == pw_hash:
-                raise PhibesAuthError(
-                    f"{pw_hash} does not match {auth_key}"
-                )
-        self.pw_hash = auth_key
-        return
 
-    def _hash_str(self, message, salt, length):
-        return self._hasher.hash_str(message, salt)
+    def _hash_str(self, message, salt):
+        return self._hasher.hash_str(message, salt=salt)
 
     def hash_name(self, name: str, salt: Optional[str] = '0000') -> str:
         """
@@ -159,22 +137,25 @@ class CryptPlainPlain(CryptIfc):
         @param salt: Optional salt
         @return: the hashed name
         """
-        return self._hash_str(name, salt, 8)
+        return self._hash_str(name, salt)
 
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
         """
-        Encrypt the plaintext using self._crypter
+        Encrypt the plaintext using self._encrypt
         @param plaintext: Text to encrypt
         @param salt: Optional salt
         @return: encrypted string
         """
-        return self._crypter.encrypt(plaintext, salt)
+        return self._encrypt.encrypt(plaintext, salt)
 
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
         """
-        Decrypt the ciphertext using self._crypter
+        Decrypt the ciphertext using self._encrypt
         @param ciphertext: encrypted text
         @param salt: salt used in encryption
         @return: decrypted string
         """
-        return self._crypter.decrypt(ciphertext, salt)
+        return self._encrypt.decrypt(ciphertext, salt)
+
+    def create_key(self, password: str, salt: str):
+        return self._hash_str(password, salt)
