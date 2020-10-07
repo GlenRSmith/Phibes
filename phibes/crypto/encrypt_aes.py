@@ -138,10 +138,16 @@ class AesCtrIfc(EncryptionIfc):
 
 
 class CryptAes128Ctr(AesCtrIfc):
+    """
+    AesCtrIfc implementation with 16 byte keys
+    """
 
     key_length_bytes = 16
 
 
 class CryptAes256Ctr(AesCtrIfc):
+    """
+    AesCtrIfc implementation with 32 byte keys
+    """
 
     key_length_bytes = 32

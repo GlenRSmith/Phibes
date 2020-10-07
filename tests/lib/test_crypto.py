@@ -11,6 +11,7 @@ import pytest
 # Local application/library specific imports
 from phibes.crypto import create_crypt, default_id, get_crypt, list_crypts
 from phibes.crypto import register_crypt
+from phibes.crypto.factory import CryptFactory
 from phibes.crypto.crypt_aes_ctr_sha256 import CryptAesCtrPbkdf2Sha
 from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker
@@ -27,8 +28,10 @@ class TestCryptImpl(object):
         for cid in list_crypts():
             crypt_impl = create_crypt(self.pw, crypt_id=cid)
             self.crypts[cid] = {
+                'password': self.pw,
                 'pw_hash': crypt_impl.pw_hash,
-                'salt': crypt_impl.salt
+                'salt': crypt_impl.salt,
+                'crypt_impl': crypt_impl
             }
         return
 
@@ -50,10 +53,20 @@ class TestCryptImpl(object):
     @pytest.mark.parametrize("plaintext", plain_texts)
     def test_get_encrypt_decrypt(self, plaintext):
         for cid, rec in self.crypts.items():
-            crypt = get_crypt(
-                cid, self.pw, rec['pw_hash'], rec['salt']
-            )
-            assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext
+            msg = f"{cid=} {rec=}"
+            try:
+                crypt = get_crypt(
+                    cid, self.pw, rec['pw_hash'], rec['salt']
+                )
+                assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext, (
+                    f"{msg}"
+                )
+            except PhibesAuthError as pae:
+                pytest.fail(
+                    f"{msg}\n{pae}\n{self.crypts}\n{list_crypts()}"
+                    f"{CryptFactory()._objects[cid]}"
+                )
+
 
     @pytest.mark.positive
     def test_multiple_cycles(self):

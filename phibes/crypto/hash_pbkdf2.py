@@ -51,6 +51,9 @@ def pbkdf2(
 
 
 class HashPbkdf2(HashIfc):
+    """
+    Password-based key derivation function 2 wrapper class
+    """
 
     def __init__(self, **kwargs):
         super(HashPbkdf2, self).__init__(**kwargs)
@@ -58,7 +61,16 @@ class HashPbkdf2(HashIfc):
             kwargs.get('hash_alg').upper().replace('-', '')
         )
 
-    def hash_str(
-            self, plaintext: str, salt: str, rounds: int, length_bytes: int
-    ) -> str:
-        return pbkdf2(self.hash_alg, plaintext, salt, rounds, length_bytes)
+    def hash_str(self, plaintext: str, **kwargs) -> str:
+        """
+        Return the hash of the string
+        @param plaintext:
+        @param kwargs:
+        @return:
+        """
+        salt = kwargs.get('salt')
+        rounds = kwargs.get('rounds')
+        length_bytes = kwargs.get('length_bytes')
+        return pbkdf2(
+            self.hash_alg, plaintext, salt, rounds, length_bytes
+        )
