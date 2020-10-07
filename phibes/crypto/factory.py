@@ -4,7 +4,7 @@ All available implementations are registered and accessible by name.
 """
 # Built-in library packages
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Type
 
 # Third party packages
 
@@ -150,7 +150,11 @@ class CryptWrapper(object):
     """
 
     def __init__(
-            self, crypt_class, fallback_id=None, is_default=False, **init_kwargs
+            self,
+            crypt_class: Type,
+            fallback_id: str = None,
+            is_default: bool = False,
+            **init_kwargs
     ):
         """
         Construct a CryptWrapper instance
