@@ -170,7 +170,7 @@ class Locker(object):
             inst.lock_file,
             inst.crypt_impl.salt,
             inst.crypt_impl.crypt_id,
-            inst.crypt_impl.encrypt(str(datetime.now())),
+            str(datetime.now()),
             inst.crypt_impl.pw_hash,
             overwrite=False
         )
