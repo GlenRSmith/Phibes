@@ -16,5 +16,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
       - name: Test the package
-        - run: poetry install
-        - run: poetry run make test_all
+        run: |
+          poetry install
+          poetry run make test_all
