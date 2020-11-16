@@ -7,15 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - name: Setup Python
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
-
-      - name: Install dependencies with pipenv
+      - name: Set up pip and poetry
         run: |
-          pip install pipenv
-          pipenv install --deploy --dev
-
-      - run: pipenv run make test_all
+          python -m pip install --upgrade pip
+          pip install poetry
+      - name: Test the package
+        - run: pipenv run make test_all
