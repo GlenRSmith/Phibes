@@ -31,7 +31,6 @@ class Item(object):
             name: str,
             content: Optional[str] = None
     ):
-        self.item_type = self.get_type_name()
         self.name = name
         self.crypt_impl = crypt_obj
         self._ciphertext = None
@@ -72,7 +71,6 @@ class Item(object):
 
     def __str__(self):
         ret_val = "Item\n"
-        ret_val += f"type: {self.item_type}\n"
         ret_val += f"name: {self.name}\n"
         ret_val += f"timestamp: {self.timestamp}\n"
         ret_val += f"content follows (between lines)\n"
@@ -80,10 +78,6 @@ class Item(object):
         ret_val += f"{self.content}"
         ret_val += f"\n----------\n"
         return ret_val
-
-    @classmethod
-    def get_type_name(cls):
-        return str(cls).split("'")[1].split(".")[-1].lower()
 
     @property
     def content(self):

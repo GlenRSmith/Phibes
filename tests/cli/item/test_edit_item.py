@@ -11,7 +11,7 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes import phibes_cli
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.cli.lib import PhibesCliError, PhibesCliNotFoundError
+from phibes.cli.lib import PhibesCliError
 from phibes.lib.config import set_editor, write_config_file
 
 # Local test imports
@@ -22,7 +22,6 @@ from tests.lib.test_helpers import PopulatedLocker
 class TestEditBase(PopulatedLocker):
 
     test_item_name = 'gonna_edit'
-    test_item_type = 'secret'
     good_template_name = 'good_template'
     bad_template_name = 'bad_template'
     target_cmd_name = 'edit'
@@ -30,9 +29,7 @@ class TestEditBase(PopulatedLocker):
 
     def custom_setup(self, tmp_path):
         super(TestEditBase, self).custom_setup(tmp_path)
-        my_item = self.my_locker.create_item(
-            self.good_template_name, "secret"
-        )
+        my_item = self.my_locker.create_item(self.good_template_name)
         my_item.content = f"{self.good_template_name}:secret"
         self.my_locker.add_item(my_item)
         set_editor("echo 'happyclappy' >> ")
@@ -48,7 +45,7 @@ class TestEditBase(PopulatedLocker):
         return
 
     def custom_teardown(self, tmp_path):
-        self.my_locker.delete_item(self.good_template_name, "secret")
+        self.my_locker.delete_item(self.good_template_name)
         super(TestEditBase, self).custom_teardown(tmp_path)
 
     def invoke(self, template: str = None):
@@ -60,7 +57,6 @@ class TestEditBase(PopulatedLocker):
         args = [
             "--locker", self.locker_name,
             "--password", self.password,
-            "--item_type", self.test_item_type,
             "--item", self.test_item_name
         ]
         if template:
@@ -75,9 +71,7 @@ class TestEditBase(PopulatedLocker):
 
     def common_pos_asserts(self, result, expected_content):
         assert result.exit_code == 0
-        inst = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
+        inst = self.my_locker.get_item(self.test_item_name)
         assert inst
         assert inst.content == expected_content
         return
@@ -94,9 +88,7 @@ class TestEditNew(TestEditBase):
     def common_neg_asserts(self, result):
         super(TestEditNew, self).common_neg_asserts(result)
         with pytest.raises(PhibesNotFoundError):
-            self.my_locker.get_item(
-                self.test_item_name, self.test_item_type
-            )
+            self.my_locker.get_item(self.test_item_name)
         return
 
     def common_pos_asserts(self, result, expected_content):
@@ -119,10 +111,8 @@ class TestEditExists(TestEditBase):
 
     def custom_setup(self, tmp_path):
         super(TestEditExists, self).custom_setup(tmp_path)
-        my_item = self.my_locker.create_item(
-            self.test_item_name, self.test_item_type
-        )
-        my_item.content = f"{self.test_item_name}:{self.test_item_type}"
+        my_item = self.my_locker.create_item(self.test_item_name)
+        my_item.content = f"{self.test_item_name}"
         self.my_locker.add_item(my_item)
         return
 
@@ -140,9 +130,7 @@ class TestEditExists(TestEditBase):
         return
 
     def item_unchanged_asserts(self, before_item):
-        after = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
+        after = self.my_locker.get_item(self.test_item_name)
         # the item still exists and hasn't changed
         assert after is not None
         assert before_item.content == after.content
@@ -157,14 +145,10 @@ class TestEditExists(TestEditBase):
         :param datadir: pytest plugin injected
         :return:
         """
-        before = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
+        before = self.my_locker.get_item(self.test_item_name)
         result = self.invoke()
         assert result.exit_code == 0
-        inst = self.my_locker.get_item(
-            self.test_item_name, self.test_item_type
-        )
+        inst = self.my_locker.get_item(self.test_item_name)
         assert inst
         assert 'happyclappy' in inst.content
         assert before.content in inst.content

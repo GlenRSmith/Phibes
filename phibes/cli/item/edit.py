@@ -10,7 +10,6 @@ import click
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import edit_item
-from phibes.model.locker import registered_items
 
 
 class EditItemCmd(ConfigFileLoadingCmd):
@@ -24,7 +23,6 @@ class EditItemCmd(ConfigFileLoadingCmd):
             config,
             locker,
             password,
-            item_type,
             item,
             *args, **kwargs
     ):
@@ -34,24 +32,16 @@ class EditItemCmd(ConfigFileLoadingCmd):
         :param config:
         :param locker:
         :param password:
-        :param item_type:
         :param item:
         :return:
         """
         super(EditItemCmd, EditItemCmd).handle(
             config, *args, **kwargs
         )
-        return edit_item(locker, password, item_type, item)
+        return edit_item(locker, password, item)
 
 
 options = {
-    'item_type': click.option(
-        '--item_type',
-        prompt='Type of item to edit',
-        help='Type of item to edit',
-        type=click.Choice(registered_items.keys()),
-        default='secret'
-    ),
     'item': click.option(
         '--item',
         prompt='Item name',

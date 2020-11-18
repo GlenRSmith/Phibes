@@ -10,7 +10,6 @@ import click
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import create_item
-from phibes.model.locker import registered_items
 
 
 class CreateItemCmd(ConfigFileLoadingCmd):
@@ -24,7 +23,6 @@ class CreateItemCmd(ConfigFileLoadingCmd):
             config,
             locker,
             password,
-            item_type,
             item,
             template,
             *args, **kwargs
@@ -35,7 +33,6 @@ class CreateItemCmd(ConfigFileLoadingCmd):
         :param config:
         :param locker:
         :param password:
-        :param item_type:
         :param item:
         :param template:
         :return:
@@ -45,19 +42,10 @@ class CreateItemCmd(ConfigFileLoadingCmd):
         )
         if template == 'Empty':
             template = None
-        return create_item(
-            locker, password, item_type, item, template
-        )
+        return create_item(locker, password, item, template)
 
 
 options = {
-    'item_type': click.option(
-        '--item_type',
-        prompt='Type of item to edit',
-        help='Type of item to edit',
-        type=click.Choice(registered_items.keys()),
-        default='secret'
-    ),
     'item': click.option(
         '--item',
         prompt='Item name',
