@@ -19,15 +19,15 @@ class TestSecrets(EmptyLocker):
     @pytest.mark.positive
     def test_secrets(self, setup_and_teardown):
         # create some secrets
-        pth = self.my_locker.get_item_path("secret", "facebook")
+        pth = self.my_locker.get_item_path("facebook")
         s1 = Secret(self.my_locker.crypt_impl, "facebook")
         s1.content = "password:KidsBirthday"
         s1.save(pth)
-        pth = self.my_locker.get_item_path("secret", "twitter")
+        pth = self.my_locker.get_item_path("twitter")
         s2 = Secret(self.my_locker.crypt_impl, "twitter")
         s2.content = "password:KidsBirthday"
         s2.save(pth)
-        pth = self.my_locker.get_item_path("secret", "reddit")
+        pth = self.my_locker.get_item_path("reddit")
         s3 = Secret(self.my_locker.crypt_impl, "reddit")
         s3.content = "password:KidsBirthday"
         s3.save(pth)

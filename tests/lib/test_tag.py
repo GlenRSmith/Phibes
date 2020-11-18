@@ -14,16 +14,16 @@ from phibes.model import Tag
 from tests.lib.test_helpers import EmptyLocker
 
 
-class TestTags(EmptyLocker):
+class _TestTags(EmptyLocker):
 
     @pytest.mark.positive
-    def test_tags(self, setup_and_teardown):
+    def _test_tags(self, setup_and_teardown):
         # create some secrets
-        s1 = self.my_locker.create_item("facebook", "secret")
-        s2 = self.my_locker.create_item("twitter", "secret")
-        s3 = self.my_locker.create_item("reddit", "secret")
+        s1 = self.my_locker.create_item("facebook")
+        s2 = self.my_locker.create_item("twitter")
+        s3 = self.my_locker.create_item("reddit")
         # create a tag
-        t1 = self.my_locker.create_item("social_media", "tag")
+        t1 = self.my_locker.create_item("social_media")
         assert t1.list_items() == list()
         # add the secrets to the tag
         # TODO: decide whether unsaved items should be allowed.
@@ -32,7 +32,7 @@ class TestTags(EmptyLocker):
         t1.add_item(s2)
         t1.add_item(s3)
         # save the tag
-        pth = self.my_locker.get_item_path("tag", "social_media")
+        pth = self.my_locker.get_item_path("social_media")
         self.my_locker.add_item(t1)
         # list the secrets in the item
         assert "secret:facebook" in t1.content

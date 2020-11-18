@@ -41,7 +41,6 @@ class TestBackCompat:
 
     test_name = "test_locker"
     test_pw = "test_password"
-    test_item_type = "secret"
 
     def test_validate_installs(self, datadir):
         # Get the list of install directories under `tests/data`
@@ -60,7 +59,7 @@ class TestBackCompat:
             load_config_file(pt)
             lock = Locker.get(self.test_name, self.test_pw)
             for name, pt in plain_texts.items():
-                it = lock.get_item(name, self.test_item_type)
+                it = lock.get_item(name)
                 content = (
                     f"{pt}\nsite:www.zombo.com\npassword: YouCanD0NEthing!"
                 )
@@ -85,7 +84,7 @@ class TestBackCompat:
             )
             new_lock = Locker.create(self.test_name, self.test_pw, crypt_id)
             for name, pt in plain_texts.items():
-                ni = new_lock.create_item(name, self.test_item_type)
+                ni = new_lock.create_item(name)
                 ni.content = (
                     f"{pt}\nsite:www.zombo.com\npassword: YouCanD0NEthing!"
                 )
