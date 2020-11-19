@@ -77,7 +77,8 @@ class CryptAesCtrPbkdf2Sha(CryptIfc):
             password, salt, self.key_rounds, CryptAes256Ctr.key_length_bytes
         )
 
-    def hash_name(self, name: str, salt: Optional[str] = '0000') -> str:
+    def hash_name(self, name: str, salt: Optional[str] = None) -> str:
+        salt = (self._encrypt.salt, salt)[bool(salt)]
         return self._hash_str(
             name, salt, self.hash_rounds, CryptAesCtrPbkdf2Sha.name_bytes
         )

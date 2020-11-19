@@ -9,7 +9,9 @@ from copy import copy
 import pytest
 
 # Local application/library specific imports
-from phibes.lib.errors import PhibesAuthError, PhibesNotFoundError
+from phibes.lib.errors import PhibesAuthError
+from phibes.lib.errors import PhibesExistsError
+from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
 
 # Local test imports
@@ -43,6 +45,12 @@ class TestLocker(EmptyLocker):
         found = Locker.get(self.locker_name, self.password)
         assert found
         return
+
+    @pytest.mark.negative
+    def test_duplicate(self, tmp_path, datadir, setup_and_teardown):
+        Locker.create(self.locker_name, self.password)
+        with pytest.raises(PhibesExistsError):
+            Locker.create(self.locker_name, self.password)
 
 
 class TestItemStuff(PopulatedLocker):

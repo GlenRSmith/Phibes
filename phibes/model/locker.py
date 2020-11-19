@@ -114,43 +114,49 @@ class Locker(object):
         :param password: Password for the new locker
         :param crypt_id: ID of the crypt_impl to create
         """
+        try:
+            Locker.get(name, password)
+        except PhibesNotFoundError:
+            pass
         conf = ConfigModel()
         inst = Locker()
         inst.crypt_impl = create_crypt(password, crypt_id)
+
         plain_path = conf.store_path.joinpath(name)
         hash_path = conf.store_path.joinpath(
             inst.crypt_impl.hash_name(name)
         )
         # TODO provide a merge capability?
-        plain_lock = plain_path / LOCKER_FILE
-        hash_lock = hash_path / LOCKER_FILE
+        # plain_lock = plain_path / LOCKER_FILE
+        # hash_lock = hash_path / LOCKER_FILE
         inst.path = (plain_path, hash_path)[conf.hash_locker_names]
         inst.lock_file = inst.path / LOCKER_FILE
-        err_msg = ""
-        conf_hash = conf.hash_locker_names
-        if plain_path.exists() and conf_hash:
-            if conf.hash_locker_names:
-                err_msg += "Can't create hashed dir, unhashed exists\n"
-            if plain_lock.exists():
-                err_msg += f"lock file {plain_lock.resolve()} exists\n"
-            else:
-                err_msg += f"locker dir {plain_path.resolve()} exists\n"
-        if hash_path.exists() and not conf_hash:
-            if not conf.hash_locker_names:
-                err_msg += "Can't create unhashed dir, hashed exists\n"
-            if hash_lock.exists():
-                err_msg += f"lock file {hash_lock.resolve()} exists\n"
-            else:
-                err_msg += f"locker dir {hash_path.resolve()} exists\n"
-        if err_msg:
-            raise PhibesExistsError(
-                f"Error attempting to create Locker {name}\n"
-                f"{err_msg} already exists\n"
-                f"Did you mean to pass create=False?\n"
-                f"{inst}"
-            )
+        # err_msg = ""
+        # conf_hash = conf.hash_locker_names
+        # if plain_path.exists() and conf_hash:
+        #     if conf.hash_locker_names:
+        #         err_msg += "Can't create hashed dir, unhashed exists\n"
+        #     if plain_lock.exists():
+        #         err_msg += f"lock file {plain_lock.resolve()} exists\n"
+        #     else:
+        #         err_msg += f"locker dir {plain_path.resolve()} exists\n"
+        # if hash_path.exists() and not conf_hash:
+        #     if not conf.hash_locker_names:
+        #         err_msg += "Can't create unhashed dir, hashed exists\n"
+        #     if hash_lock.exists():
+        #         err_msg += f"lock file {hash_lock.resolve()} exists\n"
+        #     else:
+        #         err_msg += f"locker dir {hash_path.resolve()} exists\n"
+        # if err_msg:
+        #     raise PhibesExistsError(
+        #         f"Error attempting to create Locker {name}\n"
+        #         f"{err_msg} already exists\n"
+        #         f"Did you mean to pass create=False?\n"
+        #         f"{inst}"
+        #     )
         if not Locker.can_create(inst.path):
             raise ValueError(f"could not create {name}")
+
         inst.path.mkdir(exist_ok=False)
         phibes_file.write(
             inst.lock_file,

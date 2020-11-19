@@ -8,7 +8,7 @@ pytest module for lib.tag
 import pytest
 
 # Local application/library specific imports
-from phibes.model import Tag
+# from phibes.model import Tag
 
 # Local test imports
 from tests.lib.test_helpers import EmptyLocker

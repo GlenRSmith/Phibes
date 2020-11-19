@@ -66,6 +66,14 @@ class EncryptionIfc(abc.ABC):
 
     @property
     @abc.abstractmethod
+    def salt(self):
+        """
+        Returns the salt property
+        """
+        pass
+
+    @property
+    @abc.abstractmethod
     def key(self):
         """
         Returns the encryption key property

@@ -38,7 +38,7 @@ class CryptPlain(EncryptionIfc):
     Encryption implementation for no encryption
     """
 
-    salt_length_bytes = 16  # arbitrary choice
+    salt_length_bytes = 4  # arbitrary choice
 
     @property
     def key(self):
@@ -130,13 +130,14 @@ class CryptPlainPlain(CryptIfc):
     def _hash_str(self, message, salt):
         return self._hasher.hash_str(message, salt=salt)
 
-    def hash_name(self, name: str, salt: Optional[str] = '0000') -> str:
+    def hash_name(self, name: str, salt: Optional[str] = None) -> str:
         """
         Hash an item that is a name
         @param name: The name
         @param salt: Optional salt
         @return: the hashed name
         """
+        salt = (self._encrypt.salt, salt)[bool(salt)]
         return self._hash_str(name, salt)
 
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
