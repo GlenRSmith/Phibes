@@ -48,16 +48,17 @@ class TestBackCompat:
         installs = data_root.listdir()
         # Each directory is named for a crypt_id, representing an installation
         # Each installation has its own .phibes.cfg and one test locker
-        pts = set()
-        nts = set()
+        installed_paths = set()
+        crypt_dirs = set()
         for install in installs:
-            pts.add(Path(install))
-            nts.add(install.basename)
+            installed_paths.add(Path(install))
+            crypt_dirs.add(install.basename)
         # The directory listing should exactly match registered crypt_ids
-        assert set(list_crypts()) == nts
-        for pt in pts:
+        assert set(list_crypts()) == crypt_dirs
+        for pt in installed_paths:
             load_config_file(pt)
             lock = Locker.get(self.test_name, self.test_pw)
+            assert len(lock.list_items()) == len(plain_texts)
             for name, pt in plain_texts.items():
                 it = lock.get_item(name)
                 content = (
