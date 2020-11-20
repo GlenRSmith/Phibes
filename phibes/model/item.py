@@ -67,7 +67,7 @@ class Item(object):
         self._ciphertext = rec['body']
         # crypt_impl will have generated a random salt,
         # need to set it to the correct one for this item
-        self.crypt_impl.iv = self._salt
+        self.crypt_impl.salt = self._salt
 
     def __str__(self):
         ret_val = "Item\n"

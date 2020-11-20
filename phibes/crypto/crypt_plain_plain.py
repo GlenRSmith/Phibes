@@ -11,7 +11,7 @@ from typing import Optional
 # Third party packages
 
 # In-project modules
-from phibes.crypto.crypt_ifc import CryptIfc, EncryptionIfc, HashIfc
+from phibes.crypto.crypt_ifc import CryptIfc, HashIfc
 
 
 class HashPlain(HashIfc):
@@ -33,87 +33,13 @@ class HashPlain(HashIfc):
         return f"{plaintext}-{salt}-{self.length_bytes}"
 
 
-class CryptPlain(EncryptionIfc):
-    """
-    Encryption implementation for no encryption
-    """
-
-    salt_length_bytes = 4  # arbitrary choice
-
-    @property
-    def key(self):
-        """
-        key property accessor
-        :return:
-        """
-        return self._key
-
-    @key.setter
-    def key(self, new_key):
-        """
-        key property mutator
-        :param new_key:
-        :return:
-        """
-        self._key = new_key
-
-    @property
-    def salt(self):
-        return self._salt
-
-    @salt.setter
-    def salt(self, new_salt: str):
-        salt = (new_salt, self.create_salt())[new_salt is None]
-        if len(bytes.fromhex(salt)) != self.salt_length_bytes:
-            raise ValueError(
-                f"salt {new_salt} is {len(bytes.fromhex(salt))} bytes long\n"
-                f"{self.salt_length_bytes} bytes required\n"
-            )
-        self._salt = salt
-
-    def __init__(self, key: str, salt: Optional[str] = None, **kwargs):
-        super(CryptPlain, self).__init__(key, salt, **kwargs)
-        self.key = key
-        self.salt = salt
-        return
-
-    @classmethod
-    def create_salt(cls):
-        """
-        Convenience method to get salt of the right length.
-        @return: new salt
-        @rtype: str, with valid hexadecimal
-        """
-        return secrets.token_hex(cls.salt_length_bytes)
-
-    def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
-        if salt:
-            self.salt = salt
-        val = plaintext.replace("\n", chr(31))
-        return f"{val}{self.salt}"
-
-    def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
-        if salt:
-            self.salt = salt
-        val = ciphertext.replace(chr(31), "\n")
-        return f"{val[:-len(self.salt)]}"
-
-
 class CryptPlainPlain(CryptIfc):
     """
     Encryption implementation for no encryption
     """
 
     HashType = HashPlain
-    EncryptType = CryptPlain
-
-    @property
-    def salt(self):
-        """
-        salt property accessor
-        :return:
-        """
-        return self._encrypt.salt
+    salt_length_bytes = 4  # arbitrary choice
 
     def __init__(
             self,
@@ -126,6 +52,16 @@ class CryptPlainPlain(CryptIfc):
         super(CryptPlainPlain, self).__init__(
             crypt_id, password, pw_hash, salt, **kwargs
         )
+        return
+
+    @classmethod
+    def create_salt(cls):
+        """
+        Convenience method to get salt of the right length.
+        @return: new salt
+        @rtype: str, with valid hexadecimal
+        """
+        return secrets.token_hex(cls.salt_length_bytes)
 
     def _hash_str(self, message, salt):
         return self._hasher.hash_str(message, salt=salt)
@@ -137,7 +73,7 @@ class CryptPlainPlain(CryptIfc):
         @param salt: Optional salt
         @return: the hashed name
         """
-        salt = (self._encrypt.salt, salt)[bool(salt)]
+        salt = (self.salt, salt)[bool(salt)]
         return self._hash_str(name, salt)
 
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
@@ -147,7 +83,10 @@ class CryptPlainPlain(CryptIfc):
         @param salt: Optional salt
         @return: encrypted string
         """
-        return self._encrypt.encrypt(plaintext, salt)
+        if salt:
+            self.salt = salt
+        val = plaintext.replace("\n", chr(31))
+        return f"{val}{self.salt}"
 
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
         """
@@ -156,7 +95,10 @@ class CryptPlainPlain(CryptIfc):
         @param salt: salt used in encryption
         @return: decrypted string
         """
-        return self._encrypt.decrypt(ciphertext, salt)
+        if salt:
+            self.salt = salt
+        val = ciphertext.replace(chr(31), "\n")
+        return f"{val[:-len(self.salt)]}"
 
     def create_key(self, password: str, salt: str):
         return self._hash_str(password, salt)

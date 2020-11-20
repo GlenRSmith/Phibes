@@ -51,74 +51,6 @@ class HashIfc(abc.ABC):
         pass
 
 
-class EncryptionIfc(abc.ABC):
-    """
-    Interface definition for encryption classes
-    """
-
-    @classmethod
-    @abc.abstractmethod
-    def create_salt(cls):
-        """
-        Creates and returns a salt suitable for this implementation
-        """
-        pass
-
-    @property
-    @abc.abstractmethod
-    def salt(self):
-        """
-        Returns the salt property
-        """
-        pass
-
-    @property
-    @abc.abstractmethod
-    def key(self):
-        """
-        Returns the encryption key property
-        """
-        pass
-
-    @key.setter
-    @abc.abstractmethod
-    def key(self, new_key):
-        """
-        Encryption key property mutator
-        """
-        pass
-
-    @abc.abstractmethod
-    def __init__(self, key: str, salt: Optional[str] = None, **kwargs):
-        """
-        Constructor
-        :param key: encryption key
-        :param salt: salt
-        :param kwargs: kwargs specific to each implementation
-        """
-        pass
-
-    @abc.abstractmethod
-    def encrypt(self, plaintext: str, salt: str) -> str:
-        """
-        Encrypts the plaintext with the salt
-        :param plaintext: str to encrypt
-        :param salt: salt to mix in
-        :return: encrypted value
-        """
-        pass
-
-    @abc.abstractmethod
-    def decrypt(self, ciphertext: str, salt: str) -> str:
-        """
-        Decrypt the ciphertext
-        :param ciphertext: encrypted text
-        :param salt: salt used when encrypting
-        :return: Original plaintext
-        """
-        pass
-
-
 """
 
 The top-level encryption/hashing class needs to expose:
@@ -147,7 +79,29 @@ class CryptIfc(abc.ABC):
     """
 
     HashType = None
-    EncryptType = None
+    salt_length_bytes = -1
+
+    @property
+    def salt(self):
+        return self._salt
+
+    @salt.setter
+    def salt(self, new_salt: str):
+        salt = (new_salt, self.create_salt())[new_salt is None]
+        if len(bytes.fromhex(salt)) != self.salt_length_bytes:
+            raise ValueError(
+                f"salt {new_salt} is {len(bytes.fromhex(salt))} bytes long\n"
+                f"{self.salt_length_bytes} bytes required\n"
+            )
+        self._salt = salt
+
+    @classmethod
+    @abc.abstractmethod
+    def create_salt(cls):
+        """
+        Creates and returns a salt suitable for this implementation
+        """
+        pass
 
     def __init__(
             self,
@@ -180,10 +134,9 @@ class CryptIfc(abc.ABC):
             )
         self.crypt_id = crypt_id
         self._hasher = self.HashType(**kwargs)
-        salt = (self.EncryptType.create_salt(), salt)[bool(salt)]
-        key = self.create_key(password, salt)
-        self._encrypt = self.EncryptType(key, salt)
-        self.pw_hash = self.encrypt(self.hash_name(password, salt))
+        self.salt = (self.create_salt(), salt)[bool(salt)]
+        self.key = self.create_key(password, self.salt)
+        self.pw_hash = self.encrypt(self.hash_name(password, self.salt))
         if pw_hash and not (self.pw_hash == pw_hash):
             raise PhibesAuthError(
                 f"{pw_hash} does not match {self.pw_hash}"
@@ -202,10 +155,22 @@ class CryptIfc(abc.ABC):
 
     @abc.abstractmethod
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
+        """
+        Encrypts the plaintext with the salt
+        :param plaintext: str to encrypt
+        :param salt: salt to mix in
+        :return: encrypted value
+        """
         pass
 
     @abc.abstractmethod
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
+        """
+        Decrypt the ciphertext
+        :param ciphertext: encrypted text
+        :param salt: salt used when encrypting
+        :return: Original plaintext
+        """
         pass
 
     @abc.abstractmethod
