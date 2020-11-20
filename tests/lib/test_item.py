@@ -88,7 +88,7 @@ class TestCreateAndSave(EmptyLocker):
         all_lockers = list(self.lockers.values()) + [self.my_locker]
         for lck in all_lockers:
             content = f"{plaintext}\ndo timestamps work?"
-            new_item = self.my_locker.create_item('any name')
+            new_item = lck.create_item('any name')
             new_item.content = content
             lck.add_item(new_item)
             new_ts = new_item.timestamp
