@@ -6,7 +6,7 @@ authors = ["Glen Smith <github@smithsrock.com>"]
 license = "GNU LESSER GENERAL PUBLIC LICENSE Version 2.1"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 click = "^7.1.2"
 pycryptodomex = "^3.9.9"
 colorama = "^0.4.4"
