@@ -87,7 +87,6 @@ class ConfigModel(object):
             hash_names: Union[bool, str] = None
     ):
         # Any of the args not passed in, get them from the environment
-        # self._store_path = store_path
         if store_path:
             # if it was passed in, use the property mutator (it validates)
             self.store_path = store_path
