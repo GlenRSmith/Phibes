@@ -10,7 +10,8 @@ from pathlib import Path
 # Local application/library specific imports
 from phibes.crypto import list_crypts
 from phibes.model import Locker
-from phibes.lib.config import ConfigModel, load_config_file, write_config_file
+from phibes.lib.config import ConfigModel
+from phibes.lib.config import load_config_file, write_config_file
 
 
 plain_texts = {
@@ -57,6 +58,8 @@ class TestBackCompat:
         assert set(list_crypts()) == crypt_dirs
         for pt in installed_paths:
             load_config_file(pt)
+            # override stored "dummy" store_path with the current installed path
+            ConfigModel(store_path=pt)
             lock = Locker.get(self.test_name, self.test_pw)
             assert len(lock.list_items()) == len(plain_texts)
             for name, pt in plain_texts.items():
@@ -75,14 +78,10 @@ class TestBackCompat:
             data_root = datadir['.']
             new_loc = Path(data_root/crypt_id)
             new_loc.mkdir()
-            write_config_file(
-                new_loc,
-                ConfigModel(
-                    store_path=new_loc.resolve().as_posix(),
-                    editor='vim',
-                    hash_names=True
-                )
+            conf = ConfigModel(
+                store_path=new_loc, editor='vim', hash_names=True
             )
+            write_config_file(new_loc, conf)
             new_lock = Locker.create(self.test_name, self.test_pw, crypt_id)
             for name, pt in plain_texts.items():
                 ni = new_lock.create_item(name)
@@ -90,3 +89,8 @@ class TestBackCompat:
                     f"{pt}\nsite:www.zombo.com\npassword: YouCanD0NEthing!"
                 )
                 new_lock.add_item(ni)
+            # after lockers are stored, stub out the store_path
+            conf._store_path = Path("/")
+            write_config_file(
+                new_loc, conf, update=True, bypass_validation=True
+            )

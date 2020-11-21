@@ -87,7 +87,7 @@ class ConfigModel(object):
             hash_names: Union[bool, str] = None
     ):
         # Any of the args not passed in, get them from the environment
-        self._store_path = store_path
+        # self._store_path = store_path
         if store_path:
             # if it was passed in, use the property mutator (it validates)
             self.store_path = store_path
@@ -215,14 +215,17 @@ def load_config_file(path):
     return conf_mod
 
 
-def write_config_file(path, config_model=None, update=False):
+def write_config_file(
+        path, config_model=None, update=False, bypass_validation=False
+):
     """
     Write a config to a path
     With no config_model, write the values currently in the environment
     """
     if config_model is None:
         config_model = ConfigModel()
-    config_model.validate()
+    if not bypass_validation:
+        config_model.validate()
     if path.exists():
         if path.is_dir():
             conf_file = path.joinpath(CONFIG_FILE_NAME)
