@@ -39,6 +39,7 @@ class TestAllCryptTypes(PopulatedLocker):
     def custom_teardown(self, tmp_path):
         super(TestAllCryptTypes, self).custom_teardown(tmp_path)
 
+    @pytest.mark.positive
     def test_good(self, tmp_path):
         for name in self.lockers.keys():
             inst = Locker.get(name, self.password)
