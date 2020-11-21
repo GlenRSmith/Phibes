@@ -38,6 +38,7 @@ flake:
 test_all:
 	pytest --cov=phibes -m positive --cov-fail-under=75
 	pytest --cov=phibes -m negative --cov-fail-under=65
+	pytest -m 'not positive and not negative'
 	flake8 phibes
 
 find_unmarked_tests:
