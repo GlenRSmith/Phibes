@@ -43,7 +43,7 @@ class TestBackCompat:
     test_name = "test_locker"
     test_pw = "test_password"
 
-    def test_validate_installs(self, datadir):
+    def _test_validate_installs(self, datadir):
         # Get the list of install directories under `tests/data`
         data_root = datadir['.']
         installs = data_root.listdir()
