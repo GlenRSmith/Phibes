@@ -39,9 +39,10 @@ def pbkdf2(
     """
     seed_bytes = seed.encode('utf-8')
     salt_bytes = bytes.fromhex(salt)
-    return hashlib.pbkdf2_hmac(
+    ret_val = hashlib.pbkdf2_hmac(
         hash_alg.value, seed_bytes, salt_bytes, rounds, dklen=key_length
     ).hex()
+    return ret_val
 
 
 class HashPbkdf2(HashIfc):

@@ -12,7 +12,7 @@ import pytest
 from phibes.crypto import create_crypt, default_id, get_crypt, list_crypts
 from phibes.crypto import register_crypt
 from phibes.crypto.factory import CryptFactory
-from phibes.crypto.crypt_aes_ctr_sha256 import CryptAesCtrPbkdf2Sha
+from phibes.crypto.crypt_aes_ctr_sha import AesCtrPbkdf2Sha
 from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker
 
@@ -122,6 +122,11 @@ class TestCrypto(EmptyLocker):
         assert Locker.get(self.locker_name, self.password)
 
 
+class BadCrypt(AesCtrPbkdf2Sha):
+    key_length_bytes = 32
+    hash_alg = str(random.randint(1000, 9999))  # bad HashAlg on purpose
+
+
 class TestCryptFallback(object):
 
     def setup_method(self):
@@ -131,11 +136,13 @@ class TestCryptFallback(object):
     @pytest.mark.positive
     @pytest.mark.parametrize("plaintext", plain_texts)
     def test_create_encrypt_decrypt(self, plaintext):
-        crypt_id = register_crypt(
-            CryptAesCtrPbkdf2Sha,
-            fallback_id=default_id,
-            key_rounds=100100,
-            hash_alg=str(random.randint(1000, 9999))
-        )
+        try:
+            crypt_id = register_crypt(
+                BadCrypt,
+                fallback_id=default_id,
+                key_rounds=100100
+            )
+        except ValueError:
+            crypt_id = "BadCryptkey_rounds100100"
         crypt = create_crypt(self.pw, crypt_id)
         assert crypt.decrypt(crypt.encrypt(plaintext)) == plaintext

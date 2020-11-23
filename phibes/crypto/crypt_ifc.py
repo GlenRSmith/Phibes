@@ -155,21 +155,19 @@ class CryptIfc(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
+    def encrypt(self, plaintext: str) -> str:
         """
         Encrypts the plaintext with the salt
         :param plaintext: str to encrypt
-        :param salt: salt to mix in
         :return: encrypted value
         """
         pass
 
     @abc.abstractmethod
-    def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
+    def decrypt(self, ciphertext: str) -> str:
         """
         Decrypt the ciphertext
         :param ciphertext: encrypted text
-        :param salt: salt used when encrypting
         :return: Original plaintext
         """
         pass

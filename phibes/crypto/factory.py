@@ -11,7 +11,6 @@ from typing import Optional, Type
 # In-project modules
 from phibes.crypto import crypt_ifc
 from phibes.lib.errors import PhibesConfigurationError
-# from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
 
 
 class SingletonMeta(type):
