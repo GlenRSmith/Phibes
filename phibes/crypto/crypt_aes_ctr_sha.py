@@ -4,6 +4,7 @@ AES256 CTR-mode encryption and PBKDF2 hashing using SHA
 """
 
 # Built-in library packages
+import abc
 import base64
 import secrets
 from typing import Optional
@@ -41,7 +42,16 @@ class CryptAesCtrPbkdf2Sha(CryptIfc):
     name_bytes = 4
     HashType = HashPbkdf2
     salt_length_bytes = AES.block_size  # 16
-    key_length_bytes = 32
+
+    @property
+    @abc.abstractmethod
+    def key_length_bytes(self):
+        pass
+
+    @key_length_bytes.setter
+    @abc.abstractmethod
+    def key_length_bytes(self, new_val: int):
+        pass
 
     @classmethod
     def create_salt(cls):
@@ -54,6 +64,8 @@ class CryptAesCtrPbkdf2Sha(CryptIfc):
         :return:
         """
         return AES.new(
+            # key must be 16, 24 or 32 bytes long
+            # respectively for *AES-128*, *AES-192* and *AES-256*.
             key=bytes.fromhex(self.key),
             mode=AES.MODE_CTR,
             counter=Counter.new(
@@ -119,7 +131,6 @@ class CryptAesCtrPbkdf2Sha(CryptIfc):
         fs_safe_cipherbytes = base64.urlsafe_b64encode(cipherbytes)
         # convert the bytes to a utf-8 str
         return fs_safe_cipherbytes.decode('utf-8')
-        # return self._encrypt.encrypt(plaintext, salt)
 
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
         if salt:
@@ -133,7 +144,6 @@ class CryptAesCtrPbkdf2Sha(CryptIfc):
         plaintext_bytes = self.cipher.decrypt(cipherbytes)
         # convert the bytes to utf-8 str
         return plaintext_bytes.decode('utf-8')
-        # return self._encrypt.decrypt(ciphertext, salt)
 
     def _hash_str(self, message, salt, rounds, length):
         return self._hasher.hash_str(
@@ -143,7 +153,7 @@ class CryptAesCtrPbkdf2Sha(CryptIfc):
     def create_key(self, password: str, salt: str):
         return self._hash_str(
             password, salt, self.key_rounds,
-            CryptAesCtrPbkdf2Sha.key_length_bytes
+            self.key_length_bytes
         )
 
     def hash_name(self, name: str, salt: Optional[str] = None) -> str:
@@ -157,3 +167,24 @@ class CryptAesCtrPbkdf2Sha(CryptIfc):
             f"{self.crypt_id=} - {type(self.crypt_id)=}"
             f"{self.salt=} - {type(self.salt)=}"
         )
+
+
+class CryptAes128CtrPbkdf2Sha(CryptAesCtrPbkdf2Sha):
+    """
+    Crypt implementation for Counter-mode AES128 encryption
+    """
+    key_length_bytes = 16
+
+
+class CryptAes192CtrPbkdf2Sha(CryptAesCtrPbkdf2Sha):
+    """
+    Crypt implementation for Counter-mode AES192 encryption
+    """
+    key_length_bytes = 24
+
+
+class CryptAes256CtrPbkdf2Sha(CryptAesCtrPbkdf2Sha):
+    """
+    Crypt implementation for Counter-mode AES256 encryption
+    """
+    key_length_bytes = 32

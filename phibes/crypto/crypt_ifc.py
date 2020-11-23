@@ -9,6 +9,7 @@ from typing import Optional
 
 # In-project modules
 from phibes.lib.errors import PhibesAuthError
+from phibes.lib.utils import class_has_callable
 
 
 class HashIfc(abc.ABC):
@@ -209,45 +210,3 @@ class CryptIfc(abc.ABC):
         return parent_abstract_methods.issubset(
             child_concrete_methods
         )
-
-
-def class_has_callable(
-        cls,
-        method,
-        abstract: Optional[bool] = None
-):
-    """
-    Helper function to see if a class has a specified method
-    If `abstract` is True, this function will require `method` to be abstract.
-    If `abstract` is False, this function will forbid `method` to be abstract.
-    If `abstract` is None, the function doesn't care whether `method` is
-    abstract.
-    @param cls: The class to test
-    @type cls: type
-    @param method: the name of the method to test
-    @type method: str
-    @param abstract: whether to require/forbid/ignore the method to be abstract
-    @type abstract: bool
-    @return: bool
-    @rtype:
-    """
-    is_abs = "__isabstractmethod__"
-    return (
-        hasattr(cls, method)
-        and callable(getattr(cls, method))
-        and (
-            not abstract
-            or (
-                hasattr(getattr(cls, method), is_abs)
-                and getattr(getattr(cls, method), is_abs)
-            )
-        )
-        and (
-            abstract is None
-            or abstract
-            or (
-                not hasattr(getattr(cls, method), is_abs)
-                or not getattr(getattr(cls, method), is_abs, True)
-            )
-        )
-    )
