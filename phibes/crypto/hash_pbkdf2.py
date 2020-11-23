@@ -27,21 +27,15 @@ def pbkdf2(
     """
 
     @param hash_alg: Hashing algorithm to iterate as pseudo-random function
-    @type hash_alg: HashAlg
     @param seed: The plaintext value to be hashed (e.g. a password)
-    @type seed: str
     @param salt: Crypto salt, pbkdf2_hmac accepts any length,
     16+ bytes is suggested, 16 bytes matches AES.block_size
-    @type salt: str
-    @param rounds:
-    @type rounds:
+    @param rounds: number of hashing iterations
     @param key_length: `dklen` is requested length of key (in bytes)
     If dklen is None, the digest size of the hash algorithm is used
     SHA512 returns 128 characters: 64 bytes.
     SHA256 returns 64 characters: 32 bytes.
-    @type key_length: int
     @return: the result of the hashing operation in hexadecimal string form
-    @rtype: str
     """
     seed_bytes = seed.encode('utf-8')
     salt_bytes = bytes.fromhex(salt)
