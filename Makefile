@@ -26,18 +26,18 @@ which:
 	which python
 
 test:
-	pytest --verbose tests
+	pytest --workers auto --verbose tests
 
 cover:
-	pytest --cov-report term-missing --cov=phibes tests -m negative
-	pytest --cov-report term-missing --cov=phibes tests -m positive
+	pytest --workers auto --cov-report term-missing --cov=phibes tests -m negative
+	pytest --workers auto --cov-report term-missing --cov=phibes tests -m positive
 
 flake:
 	flake8 phibes
 
 test_all:
-	pytest --cov=phibes -m positive --cov-fail-under=75
-	pytest --cov=phibes -m negative --cov-fail-under=65
+	pytest --workers auto --cov=phibes -m positive --cov-fail-under=75
+	pytest --workers auto --cov=phibes -m negative --cov-fail-under=65
 	pytest -m 'not positive and not negative'
 	flake8 phibes
 
