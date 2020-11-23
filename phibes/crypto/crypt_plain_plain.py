@@ -78,7 +78,7 @@ class CryptPlainPlain(CryptIfc):
 
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
         """
-        Encrypt the plaintext using self._encrypt
+        Encrypt the plaintext
         @param plaintext: Text to encrypt
         @param salt: Optional salt
         @return: encrypted string
@@ -90,7 +90,7 @@ class CryptPlainPlain(CryptIfc):
 
     def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
         """
-        Decrypt the ciphertext using self._encrypt
+        Decrypt the ciphertext
         @param ciphertext: encrypted text
         @param salt: salt used in encryption
         @return: decrypted string
