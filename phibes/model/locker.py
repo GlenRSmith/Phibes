@@ -19,8 +19,9 @@ from typing import List, Optional
 from phibes.crypto import create_crypt, get_crypt
 from phibes.lib import phibes_file
 from phibes.lib.config import ConfigModel
-# from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
-from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
+from phibes.lib.errors import PhibesExistsError
+from phibes.lib.errors import PhibesNotFoundError
+from phibes.lib.errors import PhibesUnknownError
 from phibes.model import FILE_EXT, Item
 
 
@@ -247,8 +248,7 @@ class Locker(object):
 
     def get_item(self, item_name: str) -> Item:
         """
-        Attempts to find and return an item in the locker
-        with the given name and type.
+        Attempts to find and return a named item in the locker.
         Raises an exception of item isn't found
         @param item_name: name of item
         @return: the item
@@ -257,17 +257,29 @@ class Locker(object):
         if pth.exists():
             found_item = Item(self.crypt_impl, item_name)
             found_item.read(pth)
-            # TODO: validate using salt
+            if not self.crypt_impl.salt == found_item.salt:
+                raise PhibesUnknownError(
+                    f"found item {item_name} but salt mismatch"
+                    f" which really seems impossible but here we are"
+                )
         else:
             raise PhibesNotFoundError(f"{item_name} not found")
         return found_item
 
     def update_item(self, item: Item) -> None:
+        """
+        Save `item`, allowing overwrite
+        :param item: Item instance to save
+        """
         pth = self.get_item_path(item.name)
         item.save(pth, overwrite=True)
         return
 
     def delete_item(self, item_name: str) -> None:
+        """
+        Delete item from locker
+        :param item_name: name of item to delete
+        """
         self.get_item_path(item_name).unlink()
 
     def list_items(self) -> ItemList:

@@ -24,16 +24,35 @@ class PhibesError(Exception):
 
 
 class PhibesConfigurationError(PhibesError):
+    """
+    Custom error for configuration problem
+    """
     pass
 
 
 class PhibesAuthError(PhibesError):
+    """
+    Custom error for failed auth attempt
+    """
     pass
 
 
 class PhibesNotFoundError(PhibesError):
+    """
+    Custom error for something not found
+    """
     pass
 
 
 class PhibesExistsError(PhibesError):
+    """
+    Custom error for something unexpectedly already existing
+    """
+    pass
+
+
+class PhibesUnknownError(PhibesError):
+    """
+    Custom error for problem detected but not categorized
+    """
     pass
