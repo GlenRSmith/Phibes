@@ -8,7 +8,7 @@ Line 3: the timestamp at the time the file was written
 Line 4: the user content
 
 This file interface is 'agnostic' about encryption,
-but for complete reference, the standard is that Lines 3 & 4 are
+but for complete reference, the standard is that Lines 4 is
 encrypted.
 """
 
