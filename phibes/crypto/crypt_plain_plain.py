@@ -66,14 +66,13 @@ class CryptPlainPlain(CryptIfc):
     def _hash_str(self, message, salt):
         return self._hasher.hash_str(message, salt=salt)
 
-    def hash_name(self, name: str, salt: Optional[str] = None) -> str:
+    def hash_name(self, name: str, salt: str) -> str:
         """
         Hash an item that is a name
         @param name: The name
         @param salt: Optional salt
         @return: the hashed name
         """
-        salt = (self.salt, salt)[bool(salt)]
         return self._hash_str(name, salt)
 
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:

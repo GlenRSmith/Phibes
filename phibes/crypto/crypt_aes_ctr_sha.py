@@ -124,8 +124,7 @@ class AesCtrPbkdf2Sha(CryptIfc):
             self.key_length_bytes
         )
 
-    def hash_name(self, name: str, salt: Optional[str] = None) -> str:
-        salt = (self.salt, salt)[bool(salt)]
+    def hash_name(self, name: str, salt: str) -> str:
         return self._hash_str(
             name, salt, self.hash_rounds, AesCtrPbkdf2Sha.name_bytes
         )

@@ -79,7 +79,7 @@ class TestBackCompat:
             new_loc = Path(data_root/crypt_id)
             new_loc.mkdir()
             conf = ConfigModel(
-                store_path=new_loc, editor='vim', hash_names=True
+                store_path=new_loc, editor='vim'
             )
             write_config_file(new_loc, conf)
             new_lock = Locker.create(self.test_name, self.test_pw, crypt_id)

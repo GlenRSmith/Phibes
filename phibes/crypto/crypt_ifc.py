@@ -173,11 +173,7 @@ class CryptIfc(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def hash_name(
-            self,
-            name: str,
-            salt: Optional[str] = None
-    ) -> str:
+    def hash_name(self, name: str, salt: str) -> str:
         pass
 
     @classmethod
