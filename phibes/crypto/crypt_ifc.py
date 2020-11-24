@@ -9,6 +9,7 @@ from typing import Optional
 
 # In-project modules
 from phibes.lib.errors import PhibesAuthError
+from phibes.lib.utils import class_has_callable
 
 
 class HashIfc(abc.ABC):
@@ -51,66 +52,6 @@ class HashIfc(abc.ABC):
         pass
 
 
-class EncryptionIfc(abc.ABC):
-    """
-    Interface definition for encryption classes
-    """
-
-    @classmethod
-    @abc.abstractmethod
-    def create_salt(cls):
-        """
-        Creates and returns a salt suitable for this implementation
-        """
-        pass
-
-    @property
-    @abc.abstractmethod
-    def key(self):
-        """
-        Returns the encryption key property
-        """
-        pass
-
-    @key.setter
-    @abc.abstractmethod
-    def key(self, new_key):
-        """
-        Encryption key property mutator
-        """
-        pass
-
-    @abc.abstractmethod
-    def __init__(self, key: str, salt: Optional[str] = None, **kwargs):
-        """
-        Constructor
-        :param key: encryption key
-        :param salt: salt
-        :param kwargs: kwargs specific to each implementation
-        """
-        pass
-
-    @abc.abstractmethod
-    def encrypt(self, plaintext: str, salt: str) -> str:
-        """
-        Encrypts the plaintext with the salt
-        :param plaintext: str to encrypt
-        :param salt: salt to mix in
-        :return: encrypted value
-        """
-        pass
-
-    @abc.abstractmethod
-    def decrypt(self, ciphertext: str, salt: str) -> str:
-        """
-        Decrypt the ciphertext
-        :param ciphertext: encrypted text
-        :param salt: salt used when encrypting
-        :return: Original plaintext
-        """
-        pass
-
-
 """
 
 The top-level encryption/hashing class needs to expose:
@@ -139,7 +80,29 @@ class CryptIfc(abc.ABC):
     """
 
     HashType = None
-    EncryptType = None
+    salt_length_bytes = -1
+
+    @property
+    def salt(self):
+        return self._salt
+
+    @salt.setter
+    def salt(self, new_salt: str):
+        salt = (new_salt, self.create_salt())[new_salt is None]
+        if len(bytes.fromhex(salt)) != self.salt_length_bytes:
+            raise ValueError(
+                f"salt {new_salt} is {len(bytes.fromhex(salt))} bytes long\n"
+                f"{self.salt_length_bytes} bytes required\n"
+            )
+        self._salt = salt
+
+    @classmethod
+    @abc.abstractmethod
+    def create_salt(cls):
+        """
+        Creates and returns a salt suitable for this implementation
+        """
+        pass
 
     def __init__(
             self,
@@ -172,10 +135,9 @@ class CryptIfc(abc.ABC):
             )
         self.crypt_id = crypt_id
         self._hasher = self.HashType(**kwargs)
-        salt = (self.EncryptType.create_salt(), salt)[bool(salt)]
-        key = self.create_key(password, salt)
-        self._encrypt = self.EncryptType(key, salt)
-        self.pw_hash = self.encrypt(self.hash_name(password, salt))
+        self.salt = (self.create_salt(), salt)[bool(salt)]
+        self.key = self.create_key(password, self.salt)
+        self.pw_hash = self.encrypt(self.hash_name(password, self.salt))
         if pw_hash and not (self.pw_hash == pw_hash):
             raise PhibesAuthError(
                 f"{pw_hash} does not match {self.pw_hash}"
@@ -193,11 +155,21 @@ class CryptIfc(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
+    def encrypt(self, plaintext: str) -> str:
+        """
+        Encrypts the plaintext with the salt
+        :param plaintext: str to encrypt
+        :return: encrypted value
+        """
         pass
 
     @abc.abstractmethod
-    def decrypt(self, ciphertext: str, salt: Optional[str] = None) -> str:
+    def decrypt(self, ciphertext: str) -> str:
+        """
+        Decrypt the ciphertext
+        :param ciphertext: encrypted text
+        :return: Original plaintext
+        """
         pass
 
     @abc.abstractmethod
@@ -236,45 +208,3 @@ class CryptIfc(abc.ABC):
         return parent_abstract_methods.issubset(
             child_concrete_methods
         )
-
-
-def class_has_callable(
-        cls,
-        method,
-        abstract: Optional[bool] = None
-):
-    """
-    Helper function to see if a class has a specified method
-    If `abstract` is True, this function will require `method` to be abstract.
-    If `abstract` is False, this function will forbid `method` to be abstract.
-    If `abstract` is None, the function doesn't care whether `method` is
-    abstract.
-    @param cls: The class to test
-    @type cls: type
-    @param method: the name of the method to test
-    @type method: str
-    @param abstract: whether to require/forbid/ignore the method to be abstract
-    @type abstract: bool
-    @return: bool
-    @rtype:
-    """
-    is_abs = "__isabstractmethod__"
-    return (
-        hasattr(cls, method)
-        and callable(getattr(cls, method))
-        and (
-            not abstract
-            or (
-                hasattr(getattr(cls, method), is_abs)
-                and getattr(getattr(cls, method), is_abs)
-            )
-        )
-        and (
-            abstract is None
-            or abstract
-            or (
-                not hasattr(getattr(cls, method), is_abs)
-                or not getattr(getattr(cls, method), is_abs, True)
-            )
-        )
-    )

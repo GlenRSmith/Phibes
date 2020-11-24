@@ -11,7 +11,6 @@ from typing import Optional, Type
 # In-project modules
 from phibes.crypto import crypt_ifc
 from phibes.lib.errors import PhibesConfigurationError
-# from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
 
 
 class SingletonMeta(type):
@@ -117,7 +116,8 @@ class CryptFactory(object, metaclass=SingletonMeta):
                 if next_id is None:
                     break
                 crypt_id = next_id
-        raise ValueError(f"{crypt_id}")
+        msg = f"Error retrieving {crypt_id} - availa: {self.list_wrappers()}"
+        raise ValueError(msg)
 
     def get(
             self,

@@ -11,7 +11,7 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes import phibes_cli
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.cli.lib import PhibesCliError, PhibesCliNotFoundError
+from phibes.cli.lib import PhibesCliError
 from phibes.lib.config import set_editor, write_config_file
 
 # Local test imports
@@ -31,10 +31,10 @@ class TestCreateBase(PopulatedLocker):
     def custom_setup(self, tmp_path):
         super(TestCreateBase, self).custom_setup(tmp_path)
         for name, inst in self.lockers.items():
-            my_item = inst.create_item(self.good_template_name, "secret")
+            my_item = inst.create_item(self.good_template_name)
             my_item.content = f"{self.good_template_name}:secret"
             inst.add_item(my_item)
-        my_item = self.my_locker.create_item(self.good_template_name, "secret")
+        my_item = self.my_locker.create_item(self.good_template_name)
         my_item.content = f"{self.good_template_name}:secret"
         self.my_locker.add_item(my_item)
         set_editor("echo 'happyclappy' >> ")
@@ -51,11 +51,11 @@ class TestCreateBase(PopulatedLocker):
 
     def custom_teardown(self, tmp_path):
         logs = ""
-        self.my_locker.delete_item(self.good_template_name, "secret")
+        self.my_locker.delete_item(self.good_template_name)
         logs += f"deleted {self.good_template_name} from {self.my_locker}\t"
         for name, inst in TestCreateBase.lockers.items():
             try:
-                inst.delete_item(self.good_template_name, "secret")
+                inst.delete_item(self.good_template_name)
                 logs += f"deleted {self.good_template_name} from {name}\t"
             except FileNotFoundError as err:
                 logs += f"fail: {name=} {inst=}\t"
@@ -75,7 +75,6 @@ class TestCreateBase(PopulatedLocker):
         args = [
             "--locker", (locker_name, self.locker_name)[locker_name is None],
             "--password", self.password,
-            "--item_type", self.test_item_type,
             "--item", self.test_item_name
         ]
         if template:
@@ -92,9 +91,7 @@ class TestCreateBase(PopulatedLocker):
         assert result.exit_code == 0
         if locker_inst is None:
             locker_inst = self.my_locker
-        inst = locker_inst.get_item(
-            self.test_item_name, self.test_item_type
-        )
+        inst = locker_inst.get_item(self.test_item_name)
         assert inst
         assert inst.content == expected_content
         return
@@ -111,9 +108,7 @@ class TestCreateNew(TestCreateBase):
     def common_neg_asserts(self, result):
         super(TestCreateNew, self).common_neg_asserts(result)
         with pytest.raises(PhibesNotFoundError):
-            self.my_locker.get_item(
-                self.test_item_name, self.test_item_type
-            )
+            self.my_locker.get_item(self.test_item_name)
         return
 
     def common_pos_asserts(self, result, expected_content, locker_inst=None):

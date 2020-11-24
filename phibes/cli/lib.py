@@ -91,7 +91,6 @@ class PhibesCliPasswordError(PhibesCliError):
 def create_item(
         locker_name,
         password,
-        item_type,
         item_name,
         template_name
 ):
@@ -99,34 +98,33 @@ def create_item(
     Open a text editor to edit a new or existing item in a locker
     :param locker_name: Name of the locker
     :param password: Password of the locker
-    :param item_type: Type of item to edit
     :param item_name: Name of item to edit
     :param template_name: Name of text template to start item with
     :return:
     """
     my_locker = get_locker(locker_name, password)
     try:
-        if my_locker.get_item(item_name, item_type):
+        if my_locker.get_item(item_name):
             raise PhibesCliExistsError(
-                f"file for {item_type}:{item_name} already exists\n"
+                f"file for {item_name} already exists\n"
                 f"please use the `edit` command to modify\n"
             )
     except errors.PhibesNotFoundError:
         pass
     if template_name:
         try:
-            template = my_locker.get_item(template_name, item_type)
+            template = my_locker.get_item(template_name)
         except errors.PhibesNotFoundError:
             raise PhibesCliNotFoundError(
-                f"{item_type}:{template_name} not found"
+                f"{template_name} not found"
             )
     else:
         template = None
-    work_file = my_locker.path.joinpath(f"{item_type}:{item_name}.tmp")
+    work_file = my_locker.path.joinpath(f"{item_name}.tmp")
     work_file.write_text(getattr(template, 'content', ""))
     try:
         os.system(f"{ConfigModel().editor} {work_file}")
-        item = my_locker.create_item(item_name=item_name, item_type=item_type)
+        item = my_locker.create_item(item_name=item_name)
         item.content = work_file.read_text()
         my_locker.add_item(item)
     except Exception as err:
@@ -136,27 +134,21 @@ def create_item(
     return
 
 
-def edit_item(
-        locker_name: str,
-        password: str,
-        item_type: str,
-        item_name: str
-):
+def edit_item(locker_name: str, password: str, item_name: str):
     """
     Open a text editor to edit an existing item in a locker
     :param locker_name: Name of the locker
     :param password: Password of the locker
-    :param item_type: Type of item to edit
     :param item_name: Name of item to edit
     :return:
     """
     my_locker = get_locker(locker_name, password)
     try:
-        item = my_locker.get_item(item_name, item_type)
+        item = my_locker.get_item(item_name)
     except PhibesNotFoundError:
         raise PhibesCliNotFoundError
     draft_content = item.content
-    work_file = my_locker.path.joinpath(f"{item_type}:{item_name}.tmp")
+    work_file = my_locker.path.joinpath(f"{item_name}.tmp")
     work_file.write_text(draft_content)
     try:
         os.system(f"{ConfigModel().editor} {work_file}")
@@ -169,14 +161,10 @@ def edit_item(
     return
 
 
-def present_list_items(
-        locker: str, password: str, item_type: str, verbose: bool
-):
+def present_list_items(locker: str, password: str, verbose: bool):
     ret_val = f""
-    if item_type == 'all':
-        item_type = None
     my_locker = get_locker(locker, password)
-    items = my_locker.find_all(item_type, filter_include=True)
+    items = my_locker.list_items()
     if verbose:
         for sec in my_locker.list_items():
             ret_val += f"{sec}"
@@ -186,35 +174,24 @@ def present_list_items(
             longest = (longest, len(sec.name))[longest < len(sec.name)]
         ret_val += f"{'Item Type':>15}{'Item Name':>{longest+2}}\n"
         for sec in items:
-            ret_val += (
-                f"{str(sec.item_type).rjust(4, ' '):>15}"
-                f"{str(sec.name):>{longest+2}}\n"
-            )
+            ret_val += (f"{str(sec.name):>{longest+2}}\n")
     return ret_val
 
 
 def get_item(
         locker_name: str,
         password: str,
-        item_type: str,
         item_name: str
 ):
     my_locker = get_locker(locker_name, password)
     try:
-        item = my_locker.get_item(item_name, item_type)
+        item = my_locker.get_item(item_name)
     except errors.PhibesNotFoundError:
-        raise PhibesCliNotFoundError(
-            f"can't find {item_type}:{item_name}"
-        )
+        raise PhibesCliNotFoundError(f"can't find {item_name}")
     return item
 
 
-def delete_item(
-        locker_name: str,
-        password: str,
-        item_type: str,
-        item_name: str
-):
+def delete_item(locker_name: str, password: str, item_name: str):
     try:
         my_locker = Locker.get(locker_name, password)
     except errors.PhibesNotFoundError:
@@ -222,9 +199,9 @@ def delete_item(
             f"Locker {locker_name} not found"
         )
     try:
-        my_locker.delete_item(item_name, item_type)
+        my_locker.delete_item(item_name)
     except errors.PhibesNotFoundError:
         raise PhibesCliNotFoundError(
-            f"can't delete non-existing {item_type}:{item_name}"
+            f"can't delete non-existing {item_name}"
         )
     return

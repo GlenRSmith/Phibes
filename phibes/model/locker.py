@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 import shutil
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 # Third party packages
 
@@ -21,18 +21,6 @@ from phibes.lib.config import ConfigModel
 from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
 from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
 from phibes.model import FILE_EXT, Item
-# pylint: disable=unused-import
-# Item subclasses must be loaded so __subclasses__ below will report them
-from . secret import Secret
-from . tag import Tag
-
-registered_items = {}
-for sub in [Secret, Tag]:
-    registered_items[sub.get_type_name()] = sub
-
-for cls in Item.__subclasses__():
-    if cls.get_type_name() not in registered_items:
-        registered_items[cls.get_type_name()] = cls
 
 
 ItemList = List[Item]
@@ -44,8 +32,6 @@ LOCKER_FILE = ".config"
 
 
 class Locker(object):
-
-    registered_items = registered_items
 
     def __init__(self):
         """
@@ -128,43 +114,49 @@ class Locker(object):
         :param password: Password for the new locker
         :param crypt_id: ID of the crypt_impl to create
         """
+        try:
+            Locker.get(name, password)
+        except PhibesNotFoundError:
+            pass
         conf = ConfigModel()
         inst = Locker()
         inst.crypt_impl = create_crypt(password, crypt_id)
+
         plain_path = conf.store_path.joinpath(name)
         hash_path = conf.store_path.joinpath(
             inst.crypt_impl.hash_name(name)
         )
         # TODO provide a merge capability?
-        plain_lock = plain_path / LOCKER_FILE
-        hash_lock = hash_path / LOCKER_FILE
+        # plain_lock = plain_path / LOCKER_FILE
+        # hash_lock = hash_path / LOCKER_FILE
         inst.path = (plain_path, hash_path)[conf.hash_locker_names]
         inst.lock_file = inst.path / LOCKER_FILE
-        err_msg = ""
-        conf_hash = conf.hash_locker_names
-        if plain_path.exists() and conf_hash:
-            if conf.hash_locker_names:
-                err_msg += "Can't create hashed dir, unhashed exists\n"
-            if plain_lock.exists():
-                err_msg += f"lock file {plain_lock.resolve()} exists\n"
-            else:
-                err_msg += f"locker dir {plain_path.resolve()} exists\n"
-        if hash_path.exists() and not conf_hash:
-            if not conf.hash_locker_names:
-                err_msg += "Can't create unhashed dir, hashed exists\n"
-            if hash_lock.exists():
-                err_msg += f"lock file {hash_lock.resolve()} exists\n"
-            else:
-                err_msg += f"locker dir {hash_path.resolve()} exists\n"
-        if err_msg:
-            raise PhibesExistsError(
-                f"Error attempting to create Locker {name}\n"
-                f"{err_msg} already exists\n"
-                f"Did you mean to pass create=False?\n"
-                f"{inst}"
-            )
+        # err_msg = ""
+        # conf_hash = conf.hash_locker_names
+        # if plain_path.exists() and conf_hash:
+        #     if conf.hash_locker_names:
+        #         err_msg += "Can't create hashed dir, unhashed exists\n"
+        #     if plain_lock.exists():
+        #         err_msg += f"lock file {plain_lock.resolve()} exists\n"
+        #     else:
+        #         err_msg += f"locker dir {plain_path.resolve()} exists\n"
+        # if hash_path.exists() and not conf_hash:
+        #     if not conf.hash_locker_names:
+        #         err_msg += "Can't create unhashed dir, hashed exists\n"
+        #     if hash_lock.exists():
+        #         err_msg += f"lock file {hash_lock.resolve()} exists\n"
+        #     else:
+        #         err_msg += f"locker dir {hash_path.resolve()} exists\n"
+        # if err_msg:
+        #     raise PhibesExistsError(
+        #         f"Error attempting to create Locker {name}\n"
+        #         f"{err_msg} already exists\n"
+        #         f"Did you mean to pass create=False?\n"
+        #         f"{inst}"
+        #     )
         if not Locker.can_create(inst.path):
             raise ValueError(f"could not create {name}")
+
         inst.path.mkdir(exist_ok=False)
         phibes_file.write(
             inst.lock_file,
@@ -231,33 +223,22 @@ class Locker(object):
                     return False
         return True
 
-    def encode_item_name(
-            self, item_type: str, item_name: str
-    ) -> str:
+    def encode_item_name(self, item_name: str) -> str:
         """
         Encode and encrypt the item type and name into the
         encrypted file name used to store Items.
 
-        :param item_type: Item type
         :param item_name: Item name
         :return: Fully encoded/encrypted file name
         """
-        if item_type not in self.registered_items:
-            raise ValueError(
-                f"{item_type=} not registered: {self.registered_items}"
-            )
         if not item_name:
             raise ValueError(
                 f"Empty or None {item_name=} not allowed"
             )
-        type_enc = self.encrypt(item_type)
         name_enc = self.encrypt(item_name)
-        encrypted_name = self.encrypt(f"{type_enc}:{name_enc}")
-        return f"{encrypted_name}.{FILE_EXT}"
+        return f"{name_enc}.{FILE_EXT}"
 
-    def decode_item_name(
-            self, file_name: str
-    ) -> Tuple[str, str]:
+    def decode_item_name(self, file_name: str) -> str:
 
         """
         Convert from encrypted, encoded filename format on disk
@@ -269,10 +250,8 @@ class Locker(object):
         # Tolerate with or without file extension
         if file_name.endswith(f".{FILE_EXT}"):
             file_name = file_name[0:-4]
-        type_enc, name_enc = self.decrypt(file_name).split(':')
-        item_type = self.decrypt(type_enc)
-        item_name = self.decrypt(name_enc)
-        return item_type, item_name
+        item_name = self.decrypt(file_name)
+        return item_name
 
     def validate(self):
         if not self.path.exists():
@@ -300,13 +279,12 @@ class Locker(object):
         """
         return self.crypt_impl.encrypt(plaintext)
 
-    def get_item_path(self, item_type: str, item_name: str) -> Path:
-        file_name = self.encode_item_name(item_type, item_name)
+    def get_item_path(self, item_name: str) -> Path:
+        file_name = self.encode_item_name(item_name)
         return self.path.joinpath(file_name)
 
     def create_item(
             self, item_name: str,
-            item_type: str,
             template_name: Optional[str] = None
     ) -> Item:
         """
@@ -314,14 +292,12 @@ class Locker(object):
         (if provided)
         Client must follow up with `add_item` call to save the new item.
         @param item_name: name of new item
-        @param item_type: type of new item
         @param template_name: name of (optional) template item
         @return: new in-memory item
         """
-        item_cls = registered_items[item_type]
-        new_item = item_cls(self.crypt_impl, item_name)
+        new_item = Item(self.crypt_impl, item_name)
         if template_name:
-            template = self.get_item(template_name, item_type)
+            template = self.get_item(template_name)
             if not template:
                 raise PhibesNotFoundError(
                     f"template {template_name} not found"
@@ -335,100 +311,44 @@ class Locker(object):
         @param item: item to save
         @return: None
         """
-        pth = self.get_item_path(item.item_type, item.name)
+        pth = self.get_item_path(item.name)
         item.save(pth, overwrite=False)
         return
 
-    def get_item(self, item_name: str, item_type: str) -> Item:
+    def get_item(self, item_name: str) -> Item:
         """
         Attempts to find and return an item in the locker
         with the given name and type.
         Raises an exception of item isn't found
         @param item_name: name of item
-        @param item_type: type of item (secret, etc.)
         @return: the item
         """
-        pth = self.get_item_path(item_type, item_name)
+        pth = self.get_item_path(item_name)
         if pth.exists():
-            item_cls = registered_items[item_type]
-            found_item = item_cls(self.crypt_impl, item_name)
+            found_item = Item(self.crypt_impl, item_name)
             found_item.read(pth)
             # TODO: validate using salt
         else:
-            raise PhibesNotFoundError(
-                f"{item_type}:{item_name} not found"
-            )
+            raise PhibesNotFoundError(f"{item_name} not found")
         return found_item
 
     def update_item(self, item: Item) -> None:
-        pth = self.get_item_path(item.item_type, item.name)
+        pth = self.get_item_path(item.name)
         item.save(pth, overwrite=True)
         return
 
-    def delete_item(self, item_name: str, item_type: str) -> None:
-        self.get_item_path(item_type, item_name).unlink()
+    def delete_item(self, item_name: str) -> None:
+        self.get_item_path(item_name).unlink()
 
-    def list_items(self, item_type=None) -> ItemList:
+    def list_items(self) -> ItemList:
         """
         Return a list of Items of the specified type in this locker
-        :param item_type: type of Items (e.g. Secret) to list, None = all
         :return:
         """
-        if item_type:
-            if type(item_type) is set:
-                item_type = list(item_type)
-            if type(item_type) is not list:
-                item_type = [item_type]
-            missing_types = []
-            for it in item_type:
-                if it not in registered_items:
-                    missing_types.append(it)
-            if missing_types:
-                raise ValueError(
-                    f"{missing_types} not found in {registered_items}")
-        else:
-            item_type = registered_items
         items = []
         item_gen = self.path.glob(f"*.{FILE_EXT}")
         for item_path in [it for it in item_gen]:
-            inst_type, inst_name = self.decode_item_name(item_path.name)
-            if inst_type:
-                if inst_type not in registered_items:
-                    raise ValueError(f"{item_type} is not a valid item type")
-                else:
-                    if inst_type in item_type:
-                        found = self.get_item(inst_name, inst_type)
-                        items.append(found)
-        return items
-
-    def find_all(self, item_type_filter=None, filter_include=True):
-        """
-        Find matching items in a locker
-        Default invocation returns all items.
-        :param item_type_filter: list of item types to include/exclude
-        :param filter_include: whether item_type_filter is `include` or exclude
-        :return: list of matching items
-        """
-        if not item_type_filter and not filter_include:
-            raise ValueError(f"You are asking to exclude all item types!")
-        if not item_type_filter:
-            item_type_filter = set(Locker.registered_items)
-        else:
-            if type(item_type_filter) is set:
-                pass
-            if type(item_type_filter) is list:
-                item_type_filter = set(item_type_filter)
-            elif type(item_type_filter) is str:
-                item_type_filter = {item_type_filter}
-            else:
-                raise TypeError(
-                    f"unexpected arg type {type(item_type_filter)}"
-                )
-        if not item_type_filter <= set(Locker.registered_items):
-            unknown_types = item_type_filter - set(Locker.registered_items)
-            raise ValueError(
-                f"{unknown_types} not found in {set(Locker.registered_items)}")
-        if not filter_include:
-            item_type_filter = set(Locker.registered_items) - item_type_filter
-        items = self.list_items(item_type_filter)
+            inst_name = self.decode_item_name(item_path.name)
+            found = self.get_item(inst_name)
+            items.append(found)
         return items

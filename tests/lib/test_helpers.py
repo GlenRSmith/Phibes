@@ -125,19 +125,16 @@ class PopulatedLocker(EmptyLocker):
         super(PopulatedLocker, self).custom_setup(tmp_path)
         all_lockers = list(self.lockers.values())
         all_lockers.append(self.my_locker)
-        for item_type in self.my_locker.registered_items.keys():
-            content = (
-                f"here is some stuff\n"
-                f"password: HardHat\n"
-                f"{item_type}:{item_type}_name\n"
-            )
-            for lck in all_lockers:
-                pth = lck.get_item_path(
-                    f"{item_type}", f"{item_type}_name"
-                )
-                new_item = Item(lck.crypt_impl, f"{item_type}_name")
-                new_item.content = content
-                new_item.save(pth)
+        content = (
+            f"here is some stuff\n"
+            f"password: HardHat\n"
+            f"some name\n"
+        )
+        for lck in all_lockers:
+            pth = lck.get_item_path("secret_name")
+            new_item = Item(lck.crypt_impl, "secret_name")
+            new_item.content = content
+            new_item.save(pth)
         return
 
     def custom_teardown(self, tmp_path):
