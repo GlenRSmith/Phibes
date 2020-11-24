@@ -20,7 +20,6 @@ class TestConfig(object):
         load_config_file(Path(datadir["default.json"]))
         test_config = ConfigModel()
         assert test_config.editor == 'vim'
-        assert test_config.hash_locker_names
         assert test_config.store_path == Path('.')
 
     @pytest.mark.positive
@@ -28,7 +27,6 @@ class TestConfig(object):
         load_config_file(Path(datadir["hash_false.json"]))
         test_config = ConfigModel()
         assert test_config.editor == 'vim'
-        assert not test_config.hash_locker_names
         assert test_config.store_path == Path('.')
 
     @pytest.mark.positive
@@ -36,5 +34,4 @@ class TestConfig(object):
         load_config_file(Path(datadir["path_home.json"]))
         test_config = ConfigModel()
         assert test_config.editor == 'vim'
-        assert test_config.hash_locker_names
         assert test_config.store_path == Path('~')

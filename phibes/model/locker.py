@@ -7,6 +7,7 @@ A Locker has other data on the file system, but that file
 
 # Built-in library packages
 from __future__ import annotations
+import base64
 from datetime import datetime
 from pathlib import Path
 import shutil
@@ -18,7 +19,7 @@ from typing import List, Optional
 from phibes.crypto import create_crypt, get_crypt
 from phibes.lib import phibes_file
 from phibes.lib.config import ConfigModel
-from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
+# from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
 from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
 from phibes.model import FILE_EXT, Item
 
@@ -32,6 +33,9 @@ LOCKER_FILE = ".config"
 
 
 class Locker(object):
+    """
+    Locker model object
+    """
 
     def __init__(self):
         """
@@ -41,6 +45,27 @@ class Locker(object):
         self.lock_file = None
         self.crypt_impl = None
         return
+
+    @staticmethod
+    def get_stored_name(name: str) -> str:
+        """
+        Return the stored name for the user-provided name
+        :param name: User-provided locker name
+        :return: Name encoded for use in storage (e.g. file system dir)
+        """
+        return base64.urlsafe_b64encode(name.encode()).rstrip(b"=").decode()
+
+    @staticmethod
+    def get_name(stored_name: str) -> str:
+        """
+        Return the user-provided name for the stored name
+        :param stored_name: name of locker on storage
+        :return: user-provided locker name
+        """
+        padding = 4 - (len(stored_name.encode()) % 4)
+        return base64.urlsafe_b64decode(
+            stored_name.encode() + (b"=" * padding)
+        ).decode()
 
     @classmethod
     def get(cls, name: str, password: str):
@@ -54,56 +79,20 @@ class Locker(object):
         path = conf.store_path
         # start a string for verbose error/debugging
         msgs = f"{path=}\n{name=}\n"
-        # create a list of all dirs immediately under the storage path
-        dirs = [s.name for s in path.glob('*') if s.is_dir()]
-        msgs += f"{dirs=}\n"
-        had_auth_failure = False
-        valid_crypts = {}
-        # We don't know the name hash until after we confirm the crypt impl
-        # so just pick up every directory that has a lock file in it
-        found_lockfiles = {
-            flf: path.joinpath(flf, LOCKER_FILE)
-            for flf in dirs
-            if path.joinpath(flf, LOCKER_FILE).exists()
-        }
-        for flf in found_lockfiles:
-            msgs += f"... {found_lockfiles[flf].resolve()}\n"
-            rec = phibes_file.read(found_lockfiles[flf])
+        full_path = conf.store_path / Locker.get_stored_name(name)
+        lockfile = full_path / LOCKER_FILE
+        if not lockfile.exists():
+            raise PhibesNotFoundError(msgs)
+        else:
+            inst.path = full_path
+            inst.lock_file = lockfile
+            msgs += f"... {lockfile.resolve()}\n"
+            rec = phibes_file.read(lockfile)
             pw_hash = rec['body']
             salt = rec['salt']
             crypt_id = rec['crypt_id']
-            try:
-                msgs += f"trying {crypt_id=} {password=} {pw_hash=}\n"
-                crypt_inst = get_crypt(crypt_id, password, pw_hash, salt)
-            except PhibesAuthError:
-                had_auth_failure = True
-                msgs += f"auth fail {crypt_id=} {password=} {pw_hash=}\n"
-                continue
-            if crypt_inst.hash_name(name) == flf or name == flf:
-                valid_crypts[flf] = crypt_inst
-        if len(valid_crypts) == 0:
-            if had_auth_failure:
-                raise PhibesAuthError(f"{msgs}")
-            raise PhibesNotFoundError(
-                f"no matching Locker: {msgs}"
-            )
-        elif len(valid_crypts) > 1:
-            raise PhibesConfigurationError(
-                f"multiple crypts found {valid_crypts}\n{msgs}"
-            )
-        crypt_dir = (list(valid_crypts.keys()))[0]
-        inst.crypt_impl = valid_crypts[crypt_dir]
-        inst.path = path / crypt_dir
-        inst.lock_file = inst.path / LOCKER_FILE
-        # if configured to hash locker names, and found&authed locker
-        # is in un-hashed dir, or vice versa, raise an error
-        if conf.hash_locker_names == (crypt_dir == name):
-            raise PhibesConfigurationError(
-                f"Locker {name} does not match config\n"
-                f"Valid lock path: {inst.lock_file.resolve()}\n"
-                f"Hash name setting: {conf.hash_locker_names}\n"
-                f"Full config: {conf}"
-            )
+            msgs += f"trying {crypt_id=} {password=} {pw_hash=}\n"
+            inst.crypt_impl = get_crypt(crypt_id, password, pw_hash, salt)
         return inst
 
     @classmethod
@@ -118,45 +107,16 @@ class Locker(object):
             Locker.get(name, password)
         except PhibesNotFoundError:
             pass
-        conf = ConfigModel()
         inst = Locker()
         inst.crypt_impl = create_crypt(password, crypt_id)
-
-        plain_path = conf.store_path.joinpath(name)
-        hash_path = conf.store_path.joinpath(
-            inst.crypt_impl.hash_name(name)
+        inst.path = Path(
+            ConfigModel().store_path.joinpath(
+                Locker.get_stored_name(name)
+            )
         )
-        # TODO provide a merge capability?
-        # plain_lock = plain_path / LOCKER_FILE
-        # hash_lock = hash_path / LOCKER_FILE
-        inst.path = (plain_path, hash_path)[conf.hash_locker_names]
         inst.lock_file = inst.path / LOCKER_FILE
-        # err_msg = ""
-        # conf_hash = conf.hash_locker_names
-        # if plain_path.exists() and conf_hash:
-        #     if conf.hash_locker_names:
-        #         err_msg += "Can't create hashed dir, unhashed exists\n"
-        #     if plain_lock.exists():
-        #         err_msg += f"lock file {plain_lock.resolve()} exists\n"
-        #     else:
-        #         err_msg += f"locker dir {plain_path.resolve()} exists\n"
-        # if hash_path.exists() and not conf_hash:
-        #     if not conf.hash_locker_names:
-        #         err_msg += "Can't create unhashed dir, hashed exists\n"
-        #     if hash_lock.exists():
-        #         err_msg += f"lock file {hash_lock.resolve()} exists\n"
-        #     else:
-        #         err_msg += f"locker dir {hash_path.resolve()} exists\n"
-        # if err_msg:
-        #     raise PhibesExistsError(
-        #         f"Error attempting to create Locker {name}\n"
-        #         f"{err_msg} already exists\n"
-        #         f"Did you mean to pass create=False?\n"
-        #         f"{inst}"
-        #     )
         if not Locker.can_create(inst.path):
             raise ValueError(f"could not create {name}")
-
         inst.path.mkdir(exist_ok=False)
         phibes_file.write(
             inst.lock_file,

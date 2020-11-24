@@ -12,12 +12,14 @@ import click
 from phibes.cli.command_base import PhibesCommandBase
 from phibes.cli.lib import PhibesCliExistsError, PhibesCliError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
-from phibes.lib.config import DEFAULT_EDITOR, DEFAULT_HASH_LOCKER_NAMES
-from phibes.lib.config import DEFAULT_STORE_PATH
+from phibes.lib.config import DEFAULT_EDITOR, DEFAULT_STORE_PATH
 from phibes.lib.config import get_home_dir, write_config_file
 
 
 class CreateConfigCmd(PhibesCommandBase):
+    """
+    Class for user command to create a configuration file
+    """
 
     def __int__(self):
         super(CreateConfigCmd, self).__init__()
@@ -28,7 +30,6 @@ class CreateConfigCmd(PhibesCommandBase):
             path: pathlib.Path,
             store_path: pathlib.Path,
             editor: str,
-            hash_names: bool,
             *args, **kwargs
     ):
         """
@@ -39,7 +40,7 @@ class CreateConfigCmd(PhibesCommandBase):
         )
         try:
             new_config = ConfigModel(
-                store_path=store_path, editor=editor, hash_names=hash_names
+                store_path=store_path, editor=editor
             )
             new_config.validate()
             write_config_file(path, new_config)
@@ -71,12 +72,6 @@ options = {
         help='shell-invocable editor to use with the `edit` command',
         type=str,
         default=DEFAULT_EDITOR
-    ),
-    'hash_locker_names': click.option(
-        '--hash_names',
-        prompt='Do you want your stored locker names obfuscated?',
-        type=bool,
-        default=DEFAULT_HASH_LOCKER_NAMES
     ),
 }
 

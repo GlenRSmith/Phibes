@@ -21,7 +21,6 @@ from phibes.lib.errors import PhibesConfigurationError
 CONFIG_FILE_NAME = '.phibes.cfg'
 DEFAULT_STORE_PATH = '.phibes'
 DEFAULT_EDITOR = environ.get('EDITOR', 'unknown')
-DEFAULT_HASH_LOCKER_NAMES = True
 HOME_DIR = None
 
 
@@ -45,13 +44,24 @@ def set_home_dir(path: Path) -> None:
 
 
 class ConfigModel(object):
-
+    """
+    Configuration model class
+    """
     @property
     def store_path(self) -> Path:
+        """
+        Accessor for configuration store path
+        :return: protected _store_path attribute
+        """
         return self._store_path
 
     @store_path.setter
     def store_path(self, new_val: Union[Path, str]):
+        """
+        Mutator for configuration store path
+        :param new_val: new path to assign
+        :return: None
+        """
         if type(new_val) is str:
             new_val = Path(new_val)
         self._validate_store_path(new_val)
@@ -60,31 +70,27 @@ class ConfigModel(object):
 
     @property
     def editor(self) -> str:
+        """
+        Accessor for configuration editor
+        :return: protected _editor attribute
+        """
         return self._editor
 
     @editor.setter
     def editor(self, new_val: str):
+        """
+        Mutator for configuration editor
+        :param new_val: new editor to assign
+        :return: None
+        """
         self._validate_editor(new_val)
         self._editor = new_val
-        return
-
-    @property
-    def hash_locker_names(self) -> bool:
-        return self._hash_locker_names
-
-    @hash_locker_names.setter
-    def hash_locker_names(self, new_val: Union[bool, str]):
-        if type(new_val) is str:
-            new_val = new_val.lower() != "false"
-        self._validate_hash_names(new_val)
-        self._hash_locker_names = new_val
         return
 
     def __init__(
             self,
             store_path: Union[Path, str] = None,
-            editor: str = None,
-            hash_names: Union[bool, str] = None
+            editor: str = None
     ):
         # Any of the args not passed in, get them from the environment
         if store_path:
@@ -96,14 +102,6 @@ class ConfigModel(object):
             self.editor = editor
         else:
             self._editor = environ.get("PHIBES_EDITOR", None)
-        if hash_names is not None:
-            self.hash_locker_names = hash_names
-        else:
-            tmp_val = environ.get("PHIBES_HASH_LOCKER_NAMES", None)
-            if tmp_val == "FALSE":
-                self._hash_locker_names = False
-            else:
-                self._hash_locker_names = True
         self.apply()
         return
 
@@ -111,8 +109,7 @@ class ConfigModel(object):
         # Some things are not json serializable, e.g. Path
         ret_val = {
             "store_path": str(self.store_path.resolve()),
-            "editor": self.editor,
-            "hash_locker_names": self.hash_locker_names
+            "editor": self.editor
         }
         return json.dumps(ret_val, indent=4)
 
@@ -139,14 +136,6 @@ class ConfigModel(object):
             )
         return
 
-    @staticmethod
-    def _validate_hash_names(val):
-        if type(val) is not bool:
-            raise PhibesConfigurationError(
-                f"hash_locker_names must be bool, {val} is {type(val)}"
-            )
-        return
-
     def validate(self):
         failures = []
         # Trigger the field validation in each property mutator
@@ -156,10 +145,6 @@ class ConfigModel(object):
             failures.append(f"{err}\n")
         try:
             self.editor = self._editor
-        except TypeError as err:
-            failures.append(f"{err}\n")
-        try:
-            self.hash_locker_names = self._hash_locker_names
         except TypeError as err:
             failures.append(f"{err}\n")
         if failures:
@@ -173,10 +158,6 @@ class ConfigModel(object):
         self.validate()
         environ['PHIBES_STORE_PATH'] = f"{self._store_path}"
         environ['PHIBES_EDITOR'] = f"{self._editor}"
-        if self._hash_locker_names:
-            environ['PHIBES_HASH_LOCKER_NAMES'] = "TRUE"
-        else:
-            environ['PHIBES_HASH_LOCKER_NAMES'] = "FALSE"
 
 
 def set_editor(editor: str):
@@ -207,8 +188,7 @@ def load_config_file(path):
         conf_dict = json.loads(cf.read())
     conf_mod = ConfigModel(
         conf_dict['store_path'],
-        conf_dict['editor'],
-        conf_dict['hash_locker_names']
+        conf_dict['editor']
     )
     conf_mod.apply()
     return conf_mod

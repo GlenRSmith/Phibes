@@ -27,12 +27,10 @@ class TestUpdateConfig(ConfigLoadingTestClass):
 
     test_config = {
         "editor": "emacs",
-        "hash_locker_names": False,
         "store_path": "/etc"
     }
     bad_test_config = {
         "editor": "vim",
-        "hash_locker_names": False,
         "store_path": "/not/a/path/that/exists"
     }
 
@@ -61,8 +59,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
             [
                 "--path", self.test_path,
                 "--store_path", self.test_config['store_path'],
-                "--editor", self.test_config['editor'],
-                "--hash_names", self.test_config['hash_locker_names']
+                "--editor", self.test_config['editor']
             ]
         )
         assert result.exit_code == 0
@@ -71,9 +68,6 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         assert contents['editor'] == self.test_config['editor']
         mem = Path(contents['store_path']).resolve()
         disk = Path(self.test_config['store_path']).resolve()
-        assert (mem == disk)
-        mem = contents['hash_locker_names']
-        disk = self.test_config['hash_locker_names']
         assert (mem == disk)
         return
 
@@ -94,8 +88,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
             [
                 "--path", self.test_path,
                 "--store_path", self.bad_test_config['store_path'],
-                "--editor", self.bad_test_config['editor'],
-                "--hash_names", self.bad_test_config['hash_locker_names']
+                "--editor", self.bad_test_config['editor']
             ]
         )
         assert result.exit_code == 1
