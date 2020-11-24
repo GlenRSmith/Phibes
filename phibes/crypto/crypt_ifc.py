@@ -12,46 +12,6 @@ from phibes.lib.errors import PhibesAuthError
 from phibes.lib.utils import class_has_callable
 
 
-class HashIfc(abc.ABC):
-    """
-    Interface definition for hash classes
-    """
-
-    @abc.abstractmethod
-    def __init__(self, **kwargs):
-        """
-        Signature definition for constructing a HashIfc
-        In each implementation, kwargs should contain parameters
-        that will be held constant for a specific registered strategy.
-        For example, for PBKDF2, the fact that SHA256 would be a property
-        of a registered strategy, and not something passed (and possibly
-        changed to e.g. SHA128) for each item being hashed.
-        These kwargs and their values become part of the name of the
-        registered strategy.
-        That does not preclude them from being stored with the
-        crypted items.
-        @param kwargs:
-        @type kwargs:
-        """
-        pass
-
-    @abc.abstractmethod
-    def hash_str(self, plaintext: str, **kwargs) -> str:
-        """
-        Signature definition for performing a hash on a plaintext.
-        In each implementation, kwargs should contain parameters
-        that may (and possibly must) vary between invocations from
-        the same registered strategy.
-        For example, for PBKDF2, the `salt` used when hashing a string
-        should be unique for each string.
-        These kwargs and their values
-        @param plaintext: text to hash
-        @param kwargs: keyword arguments, variable per implementation
-        @return:
-        """
-        pass
-
-
 """
 
 The top-level encryption/hashing class needs to expose:
@@ -79,7 +39,6 @@ class CryptIfc(abc.ABC):
     These encompass hashing and encryption
     """
 
-    HashType = None
     salt_length_bytes = -1
 
     @property
@@ -134,15 +93,22 @@ class CryptIfc(abc.ABC):
                 f"{password=} {pw_hash=} {salt=} {kwargs=}"
             )
         self.crypt_id = crypt_id
-        self._hasher = self.HashType(**kwargs)
         self.salt = (self.create_salt(), salt)[bool(salt)]
         self.key = self.create_key(password, self.salt)
-        self.pw_hash = self.encrypt(self.hash_name(password, self.salt))
+        self.pw_hash = self.hash_pw(password)
         if pw_hash and not (self.pw_hash == pw_hash):
             raise PhibesAuthError(
                 f"{pw_hash} does not match {self.pw_hash}"
             )
         return
+
+    def hash_pw(self, password: str) -> str:
+        """
+        Hash the password
+        :param password: the password
+        :return: the hash
+        """
+        return self.encrypt(self.hash_name(password, self.salt))
 
     @abc.abstractmethod
     def create_key(self, password: str, salt: str):

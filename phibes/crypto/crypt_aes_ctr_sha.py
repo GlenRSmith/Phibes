@@ -14,7 +14,7 @@ from Cryptodome.Cipher import AES
 # In-project modules
 from phibes.crypto import aes_cipher
 from phibes.crypto.crypt_ifc import CryptIfc
-from phibes.crypto.hash_pbkdf2 import HashPbkdf2
+from phibes.crypto.hash_pbkdf2 import pbkdf2
 
 
 # TODO: revisit salt length. Only concern is if a chosen encryption
@@ -39,7 +39,6 @@ class AesCtrPbkdf2Sha(CryptIfc):
 
     # No need to vary this, so not an instance value
     name_bytes = 4
-    HashType = HashPbkdf2
     salt_length_bytes = AES.block_size  # 16
 
     @property
@@ -113,20 +112,22 @@ class AesCtrPbkdf2Sha(CryptIfc):
     def decrypt(self, ciphertext: str) -> str:
         return aes_cipher.decrypt(self.key, self.iv, ciphertext)
 
-    def _hash_str(self, message, salt, rounds, length):
-        return self._hasher.hash_str(
-            message, salt=salt, rounds=rounds, length_bytes=length
-        )
-
     def create_key(self, password: str, salt: str):
-        return self._hash_str(
-            password, salt, self.key_rounds,
+        return pbkdf2(
+            self.hash_alg,
+            password,
+            salt,
+            self.key_rounds,
             self.key_length_bytes
         )
 
     def hash_name(self, name: str, salt: str) -> str:
-        return self._hash_str(
-            name, salt, self.hash_rounds, AesCtrPbkdf2Sha.name_bytes
+        return pbkdf2(
+            self.hash_alg,
+            name,
+            salt,
+            self.hash_rounds,
+            self.name_bytes
         )
 
     def __str__(self):

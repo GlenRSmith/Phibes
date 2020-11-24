@@ -11,26 +11,18 @@ from typing import Optional
 # Third party packages
 
 # In-project modules
-from phibes.crypto.crypt_ifc import CryptIfc, HashIfc
+from phibes.crypto.crypt_ifc import CryptIfc
 
 
-class HashPlain(HashIfc):
+def hash_str(plaintext: str, salt: str, length_bytes: int) -> str:
     """
-    Hashing class for retaining the original string in the "hash"
+    Hash the string
+    :param plaintext: string to hash
+    :param salt:
+    :param length_bytes:
+    :return:
     """
-
-    def __init__(self, **kwargs):
-        super(HashPlain, self).__init__(**kwargs)
-        self.length_bytes = kwargs.get('length_bytes')
-
-    def hash_str(self, plaintext: str, **kwargs) -> str:
-        """
-        Hash the string
-        @param plaintext: the string to hash
-        @return: hashed string
-        """
-        salt = kwargs.get('salt')
-        return f"{plaintext}-{salt}-{self.length_bytes}"
+    return f"{plaintext}-{salt}-{length_bytes}"
 
 
 class CryptPlainPlain(CryptIfc):
@@ -38,7 +30,6 @@ class CryptPlainPlain(CryptIfc):
     Encryption implementation for no encryption
     """
 
-    HashType = HashPlain
     salt_length_bytes = 4  # arbitrary choice
 
     def __init__(
@@ -63,17 +54,14 @@ class CryptPlainPlain(CryptIfc):
         """
         return secrets.token_hex(cls.salt_length_bytes)
 
-    def _hash_str(self, message, salt):
-        return self._hasher.hash_str(message, salt=salt)
-
     def hash_name(self, name: str, salt: str) -> str:
         """
         Hash an item that is a name
         @param name: The name
-        @param salt: Optional salt
+        @param salt: salt
         @return: the hashed name
         """
-        return self._hash_str(name, salt)
+        return hash_str(name, salt, self.salt_length_bytes)
 
     def encrypt(self, plaintext: str, salt: Optional[str] = None) -> str:
         """
@@ -100,4 +88,4 @@ class CryptPlainPlain(CryptIfc):
         return f"{val[:-len(self.salt)]}"
 
     def create_key(self, password: str, salt: str):
-        return self._hash_str(password, salt)
+        return hash_str(password, salt, self.salt_length_bytes)
