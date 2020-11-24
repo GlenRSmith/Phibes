@@ -93,14 +93,15 @@ class TestFileNames(EmptyLocker):
         all_lockers = copy(self.lockers)
         all_lockers['default'] = self.my_locker
         for lck_name, lck in all_lockers.items():
-            fn = lck.encode_item_name("secret_name")
-            assert fn.endswith('.cry')
+            fnpath = lck.get_item_path("secret_name")
+            fn = fnpath.name
+            assert fnpath.name.endswith('.cry')
             if 'plain' not in str(type(lck.crypt_impl)):
                 assert "secret" not in fn, f"{lck.crypt_impl}"
                 assert "name" not in fn, f"{lck.crypt_impl}"
             encoded["secret"] = fn
             for it in encoded:
-                item_name = lck.decode_item_name(encoded[it])
+                item_name = lck.decrypt(encoded[it][0:-4])
                 assert item_name == f"secret_name"
 
 

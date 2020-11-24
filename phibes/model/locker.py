@@ -183,36 +183,6 @@ class Locker(object):
                     return False
         return True
 
-    def encode_item_name(self, item_name: str) -> str:
-        """
-        Encode and encrypt the item type and name into the
-        encrypted file name used to store Items.
-
-        :param item_name: Item name
-        :return: Fully encoded/encrypted file name
-        """
-        if not item_name:
-            raise ValueError(
-                f"Empty or None {item_name=} not allowed"
-            )
-        name_enc = self.encrypt(item_name)
-        return f"{name_enc}.{FILE_EXT}"
-
-    def decode_item_name(self, file_name: str) -> str:
-
-        """
-        Convert from encrypted, encoded filename format on disk
-        and return the item type and name used to create the filename.
-
-        :param file_name:
-        :return:
-        """
-        # Tolerate with or without file extension
-        if file_name.endswith(f".{FILE_EXT}"):
-            file_name = file_name[0:-4]
-        item_name = self.decrypt(file_name)
-        return item_name
-
     def validate(self):
         if not self.path.exists():
             raise ValueError(f"Locker path {self.path} does not exist")
@@ -240,7 +210,7 @@ class Locker(object):
         return self.crypt_impl.encrypt(plaintext)
 
     def get_item_path(self, item_name: str) -> Path:
-        file_name = self.encode_item_name(item_name)
+        file_name = f"{self.encrypt(item_name)}.{FILE_EXT}"
         return self.path.joinpath(file_name)
 
     def create_item(
@@ -308,7 +278,8 @@ class Locker(object):
         items = []
         item_gen = self.path.glob(f"*.{FILE_EXT}")
         for item_path in [it for it in item_gen]:
-            inst_name = self.decode_item_name(item_path.name)
+            inst_name = self.decrypt(item_path.name[0:-4])
+            # inst_name = self.decode_item_name(item_path.name)
             found = self.get_item(inst_name)
             items.append(found)
         return items
