@@ -94,7 +94,8 @@ class TestPhibesFile(object):
             salt=self.test_salt,
             crypt_id=self.test_crypt_id,
             timestamp=self.test_timestamp,
-            body=f"{self.test_body}"
+            body=f"{self.test_body}",
+            overwrite=True
         )
         phibes_file.write(
             self.pth,
