@@ -279,7 +279,6 @@ class Locker(object):
         item_gen = self.path.glob(f"*.{FILE_EXT}")
         for item_path in [it for it in item_gen]:
             inst_name = self.decrypt(item_path.name[0:-4])
-            # inst_name = self.decode_item_name(item_path.name)
             found = self.get_item(inst_name)
             items.append(found)
         return items
