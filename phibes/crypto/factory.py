@@ -116,7 +116,8 @@ class CryptFactory(object, metaclass=SingletonMeta):
                 if next_id is None:
                     break
                 crypt_id = next_id
-        raise ValueError(f"{crypt_id}")
+        msg = f"Error retrieving {crypt_id} - availa: {self.list_wrappers()}"
+        raise ValueError(msg)
 
     def get(
             self,
