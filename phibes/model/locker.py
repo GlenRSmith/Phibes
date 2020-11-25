@@ -19,8 +19,9 @@ from typing import List, Optional
 from phibes.crypto import create_crypt, get_crypt
 from phibes.lib import phibes_file
 from phibes.lib.config import ConfigModel
-# from phibes.lib.errors import PhibesAuthError, PhibesConfigurationError
-from phibes.lib.errors import PhibesNotFoundError, PhibesExistsError
+from phibes.lib.errors import PhibesExistsError
+from phibes.lib.errors import PhibesNotFoundError
+from phibes.lib.errors import PhibesUnknownError
 from phibes.model import FILE_EXT, Item
 
 
@@ -183,36 +184,6 @@ class Locker(object):
                     return False
         return True
 
-    def encode_item_name(self, item_name: str) -> str:
-        """
-        Encode and encrypt the item type and name into the
-        encrypted file name used to store Items.
-
-        :param item_name: Item name
-        :return: Fully encoded/encrypted file name
-        """
-        if not item_name:
-            raise ValueError(
-                f"Empty or None {item_name=} not allowed"
-            )
-        name_enc = self.encrypt(item_name)
-        return f"{name_enc}.{FILE_EXT}"
-
-    def decode_item_name(self, file_name: str) -> str:
-
-        """
-        Convert from encrypted, encoded filename format on disk
-        and return the item type and name used to create the filename.
-
-        :param file_name:
-        :return:
-        """
-        # Tolerate with or without file extension
-        if file_name.endswith(f".{FILE_EXT}"):
-            file_name = file_name[0:-4]
-        item_name = self.decrypt(file_name)
-        return item_name
-
     def validate(self):
         if not self.path.exists():
             raise ValueError(f"Locker path {self.path} does not exist")
@@ -240,7 +211,7 @@ class Locker(object):
         return self.crypt_impl.encrypt(plaintext)
 
     def get_item_path(self, item_name: str) -> Path:
-        file_name = self.encode_item_name(item_name)
+        file_name = f"{self.encrypt(item_name)}.{FILE_EXT}"
         return self.path.joinpath(file_name)
 
     def create_item(
@@ -277,8 +248,7 @@ class Locker(object):
 
     def get_item(self, item_name: str) -> Item:
         """
-        Attempts to find and return an item in the locker
-        with the given name and type.
+        Attempts to find and return a named item in the locker.
         Raises an exception of item isn't found
         @param item_name: name of item
         @return: the item
@@ -287,17 +257,29 @@ class Locker(object):
         if pth.exists():
             found_item = Item(self.crypt_impl, item_name)
             found_item.read(pth)
-            # TODO: validate using salt
+            if not self.crypt_impl.salt == found_item.salt:
+                raise PhibesUnknownError(
+                    f"found item {item_name} but salt mismatch"
+                    f" which really seems impossible but here we are"
+                )
         else:
             raise PhibesNotFoundError(f"{item_name} not found")
         return found_item
 
     def update_item(self, item: Item) -> None:
+        """
+        Save `item`, allowing overwrite
+        :param item: Item instance to save
+        """
         pth = self.get_item_path(item.name)
         item.save(pth, overwrite=True)
         return
 
     def delete_item(self, item_name: str) -> None:
+        """
+        Delete item from locker
+        :param item_name: name of item to delete
+        """
         self.get_item_path(item_name).unlink()
 
     def list_items(self) -> ItemList:
@@ -308,7 +290,7 @@ class Locker(object):
         items = []
         item_gen = self.path.glob(f"*.{FILE_EXT}")
         for item_path in [it for it in item_gen]:
-            inst_name = self.decode_item_name(item_path.name)
+            inst_name = self.decrypt(item_path.name[0:-4])
             found = self.get_item(inst_name)
             items.append(found)
         return items

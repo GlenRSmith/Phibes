@@ -5,3 +5,4 @@ users
 phibes.egg-info
 basetemp
 ADR
+.coverage*

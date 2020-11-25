@@ -11,6 +11,7 @@ from typing import Optional, Type
 # In-project modules
 from phibes.crypto import crypt_ifc
 from phibes.lib.errors import PhibesConfigurationError
+from phibes.lib.utils import validate_child
 
 
 class SingletonMeta(type):
@@ -168,7 +169,7 @@ class CryptWrapper(object):
         )
         self.crypt_class = crypt_class
         # as early as possible, validate `crypt_class` fulfills CryptIfc
-        crypt_ifc.CryptIfc.validate_child(crypt_class)
+        validate_child(crypt_ifc.CryptIfc, crypt_class)
         # keeps the init_kwargs to pass to `crypt_class` c'tor
         self.init_kwargs = init_kwargs
         CryptFactory().register_wrapper(

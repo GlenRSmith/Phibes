@@ -118,8 +118,5 @@ class PhibesRecordHandler(object):
             )
         return f"{salt}\n{crypt_id}\n{timestamp}\n{body}\n"
 
-    def read(self):
-        return
-
     def __repr__(self):
         return
