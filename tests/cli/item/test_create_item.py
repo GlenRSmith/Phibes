@@ -37,7 +37,7 @@ class TestCreateBase(PopulatedLocker):
         my_item = self.my_locker.create_item(self.good_template_name)
         my_item.content = f"{self.good_template_name}:secret"
         self.my_locker.add_item(my_item)
-        set_editor("echo 'happyclappy' >> ")
+        set_editor('echo happyclappy>> ')
         write_config_file(tmp_path, update=True)
         try:
             self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]

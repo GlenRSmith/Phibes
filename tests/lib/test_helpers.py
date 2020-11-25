@@ -55,7 +55,6 @@ class BaseTestClass(object):
 class ConfigLoadingTestClass(BaseTestClass):
 
     editor = "vim"
-    hash_locker_names = "False"
 
     def custom_setup(self, tmp_path):
         super(ConfigLoadingTestClass, self).custom_setup(tmp_path)
