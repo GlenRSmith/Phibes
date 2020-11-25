@@ -93,6 +93,8 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         )
         assert result.exit_code == 1
         assert type(result.exception) == PhibesConfigurationError
-        assert self.bad_test_config['store_path'] in str(result)
+        # on windows, "foo/bar" ends up as "foo\\\bar" in the exception
+        for word in self.bad_test_config['store_path'].split('/'):
+            assert str(result.exception.message).count(word)
         assert target_loc.exists()
         return
