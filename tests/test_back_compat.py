@@ -38,12 +38,32 @@ plain_texts = {
 }
 
 
+def validate_locker(name, pw):
+    lock = Locker.get(name, pw)
+    assert len(lock.list_items()) == len(plain_texts)
+    for name, pt in plain_texts.items():
+        it = lock.get_item(name)
+        content = (
+            f"{pt}\nsite:www.zombo.com\npassword: YouCanD0NEthing!"
+        )
+        assert it.content == content
+    return
+
+
+def validate_install(installed_path, locker_name, pw):
+    load_config_file(installed_path)
+    # override stored "dummy" store_path with the current installed path
+    ConfigModel(store_path=installed_path)
+    validate_locker(locker_name, pw)
+    return
+
+
 class TestBackCompat:
 
     test_name = "test_locker"
     test_pw = "test_password"
 
-    def _test_validate_installs(self, datadir):
+    def test_validate_installs(self, datadir):
         # Get the list of install directories under `tests/data`
         data_root = datadir['.']
         installs = data_root.listdir()
@@ -55,19 +75,14 @@ class TestBackCompat:
             installed_paths.add(Path(install))
             crypt_dirs.add(install.basename)
         # The directory listing should exactly match registered crypt_ids
-        assert set(list_crypts()) == crypt_dirs
+        warnings = ""
+        for item in set(list_crypts()) - crypt_dirs:
+            warnings += f"Registered crypt {item} missing test install\n"
+        for item in crypt_dirs - set(list_crypts()):
+            warnings += f"No crypt registered matching test install {item}\n"
+        assert not warnings
         for pt in installed_paths:
-            load_config_file(pt)
-            # override stored "dummy" store_path with the current installed path
-            ConfigModel(store_path=pt)
-            lock = Locker.get(self.test_name, self.test_pw)
-            assert len(lock.list_items()) == len(plain_texts)
-            for name, pt in plain_texts.items():
-                it = lock.get_item(name)
-                content = (
-                    f"{pt}\nsite:www.zombo.com\npassword: YouCanD0NEthing!"
-                )
-                assert it.content == content
+            validate_install(pt, self.test_name, self.test_pw)
 
     def _test_create_installs(self, datadir):
         """
