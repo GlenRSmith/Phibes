@@ -34,7 +34,6 @@ class TestCreateLocker(ConfigLoadingTestClass):
     pw = "SmellyBeansVictor"
     test_config = {
         "editor": "vim",
-        "hash_locker_names": "False",
         "store_path": "."
     }
 
