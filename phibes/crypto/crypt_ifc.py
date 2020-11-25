@@ -12,26 +12,9 @@ from phibes.lib.errors import PhibesAuthError
 from phibes.lib.utils import class_has_callable
 
 
-"""
-The top-level encryption/hashing class needs to expose:
-
-- create an instance with arguments:
-    - password
-    - password, salt
-    - name, password
-    - name, password, salt
-
-- 'regular' encrypt with argument `plaintext`
-- 'regular' decrypt with argument `ciphertext`
-- password hashing (e.g. pbkdf2, argon2, etc.) with argument `password`
-- name hashing (can just use pw hashing fwiw) with argument `plaintext`
-- authentication with arguments `password`, `ciphertext`
-"""
-
-
 class CryptIfc(abc.ABC):
     """
-    Interface definition for cryption classes
+    Interface definition for encryption classes
     These encompass hashing and encryption
     """
 
