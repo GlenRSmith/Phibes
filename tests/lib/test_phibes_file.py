@@ -130,7 +130,8 @@ class TestPhibesFile(object):
             crypt_id=self.test_crypt_id,
             timestamp=self.test_timestamp,
             body="",
-            allow_empty=True
+            allow_empty=True,
+            overwrite=True
         )
         result = phibes_file.read(self.pth)
         assert result['salt'] == self.test_salt
