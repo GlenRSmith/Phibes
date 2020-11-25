@@ -1,5 +1,5 @@
 """
-Interface definition for crypt/hash-ing classes
+Interface definition for crypt classes
 """
 # Built-in library packages
 import abc
@@ -13,11 +13,7 @@ from phibes.lib.utils import class_has_callable
 
 
 """
-
 The top-level encryption/hashing class needs to expose:
-
-* Some of the operations imply there is a salt already set,
-  and that is why salt isn't enumerated on them
 
 - create an instance with arguments:
     - password
@@ -75,8 +71,7 @@ class CryptIfc(abc.ABC):
         Common constructor for all Crypt classes
         A CryptIfc instance is created/gotten when a locker is created/gotten.
         Like the Locker, it is created using just the password,
-        and gotten using the password plus
-        the pw_hash and salt from the locker file.
+        and gotten using the password, and the pw_hash & salt from the locker.
         :param crypt_id: unique registered ID for this crypt
         :param password: User password
         :param pw_hash: Previously-stored hash, passed for existing items
@@ -141,21 +136,6 @@ class CryptIfc(abc.ABC):
     @abc.abstractmethod
     def hash_name(self, name: str, salt: str) -> str:
         pass
-
-    @classmethod
-    def validate_child(cls, subclass):
-        if not cls.__subclasshook__(subclass):
-            missing = {
-                name for name in dir(cls)
-                if class_has_callable(cls, name, abstract=True)
-            } - {
-                name for name in dir(cls)
-                if class_has_callable(subclass, name, abstract=False)
-            }
-            raise ValueError(
-                f"{subclass} is missing implementation for {missing}"
-            )
-        return
 
     @classmethod
     def __subclasshook__(cls, subclass):

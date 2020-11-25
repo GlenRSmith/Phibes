@@ -47,3 +47,31 @@ def class_has_callable(
             )
         )
     )
+
+
+def validate_child(parent_class, candidate_child_class):
+    """
+
+    :param parent_class:
+    :type parent_class:
+    :param candidate_child_class:
+    :type candidate_child_class:
+    :return:
+    :rtype:
+    """
+    if not parent_class.__subclasshook__(candidate_child_class):
+        missing = {
+            name for name in dir(parent_class)
+            if class_has_callable(
+                parent_class, name, abstract=True
+            )
+        } - {
+            name for name in dir(parent_class)
+            if class_has_callable(
+                candidate_child_class, name, abstract=False
+            )
+        }
+        raise ValueError(
+            f"{candidate_child_class} is missing implementation for {missing}"
+        )
+    return
