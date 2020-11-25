@@ -11,7 +11,7 @@ from phibes.crypto.crypt_aes_ctr_sha import Aes256CtrPbkdf2Sha256
 from phibes.crypto.crypt_aes_ctr_sha import Aes256CtrPbkdf2Sha512
 from phibes.crypto.crypt_plain_plain import CryptPlainPlain
 
-register_crypt(CryptPlainPlain, length_bytes=8)
+register_crypt(CryptPlainPlain)
 aes128_256 = register_crypt(
     Aes128CtrPbkdf2Sha256, key_rounds=100100
 )
