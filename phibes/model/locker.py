@@ -71,24 +71,31 @@ class Locker(object):
     @classmethod
     def get(cls, name: str, password: str):
         """
-        Opening an interface to an existing locker
+        Opening an interface to a named, existing locker
         :param name: The name of the locker
         :param password: Password for the locker
         """
         conf = ConfigModel()
-        inst = Locker()
-        path = conf.store_path
-        # start a string for verbose error/debugging
-        msgs = f"{path=}\n{name=}\n"
         full_path = conf.store_path / Locker.get_stored_name(name)
-        lockfile = full_path / LOCKER_FILE
-        if not lockfile.exists():
+        return Locker.get_anonymous(full_path, password)
+
+    @classmethod
+    def get_anonymous(cls, storage_path: Path, password: str):
+        """
+        Opening an interface to an existing locker
+        :param storage_path: The filesystem path to the locker
+        :param password: Password for the locker
+        """
+        inst = Locker()
+        # start a string for verbose error/debugging
+        msgs = f"{storage_path=}\n"
+        inst.lock_file = storage_path / LOCKER_FILE
+        if not inst.lock_file.exists():
             raise PhibesNotFoundError(msgs)
         else:
-            inst.path = full_path
-            inst.lock_file = lockfile
-            msgs += f"... {lockfile.resolve()}\n"
-            rec = phibes_file.read(lockfile)
+            inst.path = storage_path
+            msgs += f"... {inst.lock_file.resolve()}\n"
+            rec = phibes_file.read(inst.lock_file)
             pw_hash = rec['body']
             salt = rec['salt']
             crypt_id = rec['crypt_id']
@@ -99,7 +106,7 @@ class Locker(object):
     @classmethod
     def create(cls, name: str, password: str, crypt_id: str = None):
         """
-        Create a Locker object
+        Create a named Locker object
         :param name: The name of the locker. Must be unique in storage
         :param password: Password for the new locker
         :param crypt_id: ID of the crypt_impl to create
@@ -108,17 +115,32 @@ class Locker(object):
             Locker.get(name, password)
         except PhibesNotFoundError:
             pass
+        storage_path = Path(
+            ConfigModel().store_path.joinpath(Locker.get_stored_name(name))
+        )
+        if not Locker.can_create(storage_path):
+            raise ValueError(f"could not create {name}")
+        storage_path.mkdir(exist_ok=False)
+        return Locker.create_anonymous(storage_path, password, crypt_id)
+
+    @classmethod
+    def create_anonymous(cls, storage_path: Path, password: str, crypt_id: str = None):
+        """
+        Create a Locker object
+        :param storage_path: Filesystem path for storage of locker
+        :param password: Password for the new locker
+        :param crypt_id: ID of the crypt_impl to create
+        """
+        try:
+            Locker.get_anonymous(storage_path, password)
+        except PhibesNotFoundError:
+            pass
         inst = Locker()
         inst.crypt_impl = create_crypt(password, crypt_id)
-        inst.path = Path(
-            ConfigModel().store_path.joinpath(
-                Locker.get_stored_name(name)
-            )
-        )
+        inst.path = storage_path
         inst.lock_file = inst.path / LOCKER_FILE
-        if not Locker.can_create(inst.path):
-            raise ValueError(f"could not create {name}")
-        inst.path.mkdir(exist_ok=False)
+        if not Locker.can_create(inst.path, remove_if_empty=False):
+            raise ValueError(f"could not create {storage_path}")
         phibes_file.write(
             inst.lock_file,
             inst.crypt_impl.salt,
@@ -180,8 +202,6 @@ class Locker(object):
             else:
                 if remove_if_empty:
                     locker_path.rmdir()
-                else:
-                    return False
         return True
 
     def validate(self):
