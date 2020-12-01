@@ -124,7 +124,9 @@ class Locker(object):
         return Locker.create_anonymous(storage_path, password, crypt_id)
 
     @classmethod
-    def create_anonymous(cls, storage_path: Path, password: str, crypt_id: str = None):
+    def create_anonymous(
+            cls, storage_path: Path, password: str, crypt_id: str = None
+    ):
         """
         Create a Locker object
         :param storage_path: Filesystem path for storage of locker
@@ -163,6 +165,19 @@ class Locker(object):
             raise PhibesNotFoundError(
                 f"Locker {name} not found to delete!\n"
                 f"{ConfigModel().store_path}\n"
+            )
+
+    @classmethod
+    def delete_anonymous(cls, storage_path: Path, password: str):
+        try:
+            inst = Locker.get_anonymous(storage_path, password)
+        except FileNotFoundError:
+            inst = None
+        if inst:
+            shutil.rmtree(storage_path)
+        else:
+            raise PhibesNotFoundError(
+                f"Locker {storage_path} not found to delete!\n"
             )
 
     @classmethod
