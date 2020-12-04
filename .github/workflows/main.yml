@@ -23,3 +23,8 @@ jobs:
         run: |
           poetry install
           poetry run make test_all
+  test_success:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - run: echo Success!
