@@ -23,7 +23,7 @@ from pathlib import Path
 
 def read(pth: Path) -> dict:
     """
-    Read the file at pth, return a dict with uniform keys
+    Read the file at default_path, return a dict with uniform keys
     :param pth:
     :return:
     """
@@ -54,7 +54,7 @@ def write(
         allow_empty: bool = False
 ) -> None:
     """
-    Write the salt, timestamp, and body to the specified pth file
+    Write the salt, timestamp, and body to the specified default_path file
     :param pth: Path object to write
     :param salt: salt value
     :param crypt_id: ID of crypt handler
