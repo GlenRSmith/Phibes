@@ -10,6 +10,7 @@ import pathlib
 import click
 
 # in-project modules
+from phibes.crypto import default_id, list_crypts
 
 
 class MappedChoices(object):
@@ -104,6 +105,13 @@ def validate_item_name(
     return value
 
 
+crypt_choices = MappedChoices(
+    prompt='Crypt ID (accept default)\n',
+    choices=list_crypts(),
+    default_val=default_id,
+    help="Encryption type, usually best to accept default"
+)
+crypt_option = crypt_choices.get_click_option("--crypt_id")
 item_name_option = click.option(
     '--item',
     prompt='Item name',
