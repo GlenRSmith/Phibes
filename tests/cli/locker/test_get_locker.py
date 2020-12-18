@@ -86,7 +86,12 @@ class TestMatrixHashed(PopulatedLocker):
                 config_arg, command_instance, {'name': lck}
             )
             assert result
-            assert result.exit_code == 0
+            assert result.exit_code == 0, (
+                f"{config_arg=}\n"
+                f"{command_instance=}\n"
+                f"{command_instance.params=}\n"
+                f"{dir(command_instance)=}\n"
+            )
             inst = Locker.get(lck, self.password)
             stored_name = Locker.get_stored_name(lck)
             targ = self.test_path/stored_name/LOCKER_FILE
