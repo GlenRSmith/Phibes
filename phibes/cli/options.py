@@ -12,6 +12,61 @@ import click
 # in-project modules
 
 
+class MappedChoices(object):
+    """
+    Utility class that enables verbose prompt showing each choice while
+    allowing a simple numeric entry for selection
+    """
+    def __init__(
+            self, prompt: str, choices: list, default_val: str, help: str
+    ):
+        self.default_choice = None
+        self.prompt = prompt
+        self.help = help
+        # create a dict of integer keys to 'choices'
+        self.choice_dict = dict(
+            zip([str(i) for i in list(range(len(choices)))], choices)
+        )
+        for k, v in self.choice_dict.items():
+            if v == default_val:
+                self.default_choice = k
+                self.prompt += f"{k}: {v}*\n"
+            else:
+                self.prompt += f"{k}: {v}\n"
+        if not self.default_choice:
+            raise ValueError(f"{default_val} missing from {choices}")
+        self.choice = click.Choice(list(self.choice_dict.keys()))
+        return
+
+    def get_click_option(self, opt_str: str) -> click.Option:
+        """
+        returns a click command option configured with values passed to c'tor
+        :param opt_str: the `--` option string for this option
+        :return: click option
+        """
+        return click.option(
+            opt_str,
+            type=self.choice,
+            prompt=self.prompt,
+            help=self.help,
+            default=self.default_choice
+        )
+
+    def update_choices(self, ctx: click.Context, target_name: str):
+        """
+        Modifies the named command option in the passed context
+        using the property values of this instance
+        :param ctx: context
+        :param target_name: name of option to modify
+        :return:
+        """
+        for p in ctx.command.params:
+            if p.name == target_name:
+                p.type = self.choice
+                p.prompt = self.prompt
+                p.default = self.default_choice
+
+
 def validate_locker_path(
         ctx: click.Context, param: click.Option, value: pathlib.Path
 ):
