@@ -9,9 +9,9 @@ import click
 
 # in-project modules
 from phibes.cli.command_base import PhibesCommandBareBase
-from phibes.cli.command_base import crypt_choices, crypt_option
 from phibes.cli.command_base import config_option
 from phibes.cli.lib import PhibesCliExistsError
+from phibes.cli.options import crypt_choices, crypt_option
 from phibes.cli.options import locker_name_option
 from phibes.cli.options import new_password_option
 from phibes.lib.errors import PhibesExistsError
