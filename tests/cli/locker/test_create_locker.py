@@ -10,7 +10,8 @@ from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
-from phibes.cli.locker.create import create_locker_cmd, crypt_choices
+from phibes.cli.locker.create import create_locker_cmd
+from phibes.cli.options import crypt_choices
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
 from phibes.phibes_cli import main
@@ -67,7 +68,6 @@ class TestCreateLocker(ConfigLoadingTestClass):
                 "--crypt_id", crypt_id
             ]
         )
-        print(f"\n\n{result=}\n")
         assert result.exit_code == 0
         assert "created" in result.output
         return
