@@ -261,7 +261,7 @@ def get_crypt(crypt_id, password, pw_hash, salt):
     return CryptFactory().get(crypt_id, password, pw_hash, salt)
 
 
-def list_crypts():
+def list_crypts() -> list:
     """
     Returns a list of the `crypt_id`s of all registered crypts
     """
