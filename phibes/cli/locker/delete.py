@@ -39,7 +39,6 @@ class DeleteLockerCmd(ConfigFileLoadingCmd):
         else:
             click.echo(f"locker dir {inst.path} not removed")
         click.echo(f"Locker deleted {locker}")
-        return
 
 
 options = {}

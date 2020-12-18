@@ -10,6 +10,7 @@ import click
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import edit_item
+from phibes.cli.options import item_name_option
 
 
 class EditItemCmd(ConfigFileLoadingCmd):
@@ -41,13 +42,5 @@ class EditItemCmd(ConfigFileLoadingCmd):
         return edit_item(locker, password, item)
 
 
-options = {
-    'item': click.option(
-        '--item',
-        prompt='Item name',
-        help='Name of item to edit',
-    )
-}
-
-
+options = {'item': item_name_option}
 edit_item_cmd = EditItemCmd.make_click_command('edit', options)

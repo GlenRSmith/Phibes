@@ -10,6 +10,7 @@ import click
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import get_item as help_get_item
+from phibes.cli.options import item_name_option
 
 
 class GetItemCmd(ConfigFileLoadingCmd):
@@ -35,13 +36,5 @@ class GetItemCmd(ConfigFileLoadingCmd):
         click.echo(f"{my_item}")
 
 
-options = {
-    'item': click.option(
-        '--item',
-        prompt='Item name',
-        help='Name of item to get',
-    )
-}
-
-
+options = {'item': item_name_option}
 get_item_cmd = GetItemCmd.make_click_command('get-item', options)

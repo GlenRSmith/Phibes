@@ -9,10 +9,15 @@ import click
 
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
+from phibes.cli.lib import get_locker
 from phibes.cli.lib import present_list_items
+from phibes.cli.options import verbose_item_option
 
 
 class ListItemsCmd(ConfigFileLoadingCmd):
+    """
+    Command to list items in a locker
+    """
 
     def __init__(self):
         super(ListItemsCmd, self).__init__()
@@ -33,20 +38,11 @@ class ListItemsCmd(ConfigFileLoadingCmd):
         super(ListItemsCmd, ListItemsCmd).handle(
             config, *args, **kwargs
         )
-        click.echo(
-            present_list_items(locker, password, verbose)
+        locker_inst = get_locker(
+            locker_name=locker, password=password
         )
+        click.echo(present_list_items(locker_inst, verbose))
 
 
-options = {
-    'verbose': click.option(
-        '--verbose',
-        prompt='Verbose',
-        help='Present entire contents of each item',
-        default=False,
-        type=bool
-    )
-}
-
-
+options = {'verbose': verbose_item_option}
 list_items_cmd = ListItemsCmd.make_click_command('list', options)
