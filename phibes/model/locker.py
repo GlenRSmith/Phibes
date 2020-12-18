@@ -45,7 +45,25 @@ class Locker(object):
         self.path = None
         self.lock_file = None
         self.crypt_impl = None
+        self.timestamp = None
         return
+
+    @staticmethod
+    def get_pw_hash(storage_path: Path) -> str:
+        """
+        Method to get the stored password hash without authenticating
+        :param storage_path: Filesystem path to the locker
+        :return: pw_hash
+        """
+        msgs = f"{storage_path}\n"
+        lock_file = storage_path / LOCKER_FILE
+        if not lock_file.exists():
+            raise PhibesNotFoundError(msgs)
+        else:
+            msgs += f"... {lock_file.resolve()}\n"
+            rec = phibes_file.read(lock_file)
+            pw_hash = rec['body']
+        return pw_hash
 
     @staticmethod
     def get_stored_name(name: str) -> str:
@@ -77,6 +95,17 @@ class Locker(object):
         """
         conf = ConfigModel()
         full_path = conf.store_path / Locker.get_stored_name(name)
+        return Locker.get_named(ConfigModel().store_path, name, password)
+
+    @classmethod
+    def get_named(cls, base_path: Path, name: str, password: str):
+        """
+        Opening an interface to a named, existing locker
+        :param base_path: The filesystem path to the locker
+        :param name: The name of the locker
+        :param password: Password for the locker
+        """
+        full_path = base_path / Locker.get_stored_name(name)
         return Locker.get_anonymous(full_path, password)
 
     @classmethod
@@ -101,6 +130,7 @@ class Locker(object):
             crypt_id = rec['crypt_id']
             msgs += f"trying {crypt_id=} {password=} {pw_hash=}\n"
             inst.crypt_impl = get_crypt(crypt_id, password, pw_hash, salt)
+            inst.timestamp = rec['timestamp']
         return inst
 
     @classmethod
@@ -249,27 +279,15 @@ class Locker(object):
         file_name = f"{self.encrypt(item_name)}.{FILE_EXT}"
         return self.path.joinpath(file_name)
 
-    def create_item(
-            self, item_name: str,
-            template_name: Optional[str] = None
-    ) -> Item:
+    def create_item(self, item_name: str) -> Item:
         """
         Creates an in-memory item, prepopulates `content` from named template
         (if provided)
         Client must follow up with `add_item` call to save the new item.
         @param item_name: name of new item
-        @param template_name: name of (optional) template item
         @return: new in-memory item
         """
-        new_item = Item(self.crypt_impl, item_name)
-        if template_name:
-            template = self.get_item(template_name)
-            if not template:
-                raise PhibesNotFoundError(
-                    f"template {template_name} not found"
-                )
-            new_item.content = template.content
-        return new_item
+        return Item(self.crypt_impl, item_name)
 
     def add_item(self, item: Item) -> None:
         """
