@@ -34,6 +34,12 @@ COMMON_OPTIONS = {
     'password': password_option
 }
 
+# These are the variables I need to unravel.
+# locker name - not relevant in a "cwd" locker scenario.
+# password
+# editor (from config)
+# store_path (from config) - not relevant in a "cwd" locker scenario.
+
 
 class PhibesCommandBareBase(abc.ABC):
     """
@@ -78,20 +84,68 @@ class PhibesCommandBareBase(abc.ABC):
         )(cls.handle)
 
 
-class PhibesCommandBase(PhibesCommandBareBase):
+# class PhibesCommandBase(PhibesCommandBareBase):
+#     """
+#     Base command class with default options included
+#     """
+#
+#     options = copy.deepcopy(COMMON_OPTIONS)
+#
+#     def __init__(self):
+#         super(PhibesCommandBase, self).__init__()
+#
+#     @staticmethod
+#     def handle(*args, **kwargs) -> None:
+#         """per-command handler callback"""
+#         super(PhibesCommandBase, PhibesCommandBase).handle(*args, **kwargs)
+#
+#     @classmethod
+#     def make_click_command(
+#             cls,
+#             cmd_name: str,
+#             initial_options: dict = None,
+#             *args, **kwargs
+#     ) -> click.command:
+#         """
+#         Creates a click command with common options and specific options.
+#         Takes a command name, a python function, and a dict of options,
+#         and returns a named click.command
+#         """
+#         exclude_common = kwargs.pop('exclude_common', False)
+#         if not exclude_common:
+#             # Being careful not to mutate the module-level dict
+#             options = copy.deepcopy(COMMON_OPTIONS)
+#             # Merge the passed-in options dict into the common options dict.
+#             # This exposes the ability to override any of the common options,
+#             # such as making the `password` option issue a confirmation prompt.
+#             options.update(initial_options)
+#         else:
+#             options = initial_options
+#         return super().make_click_command(cmd_name, options)
+
+
+class ConfigFileLoadingCmd(PhibesCommandBareBase):
     """
-    Base command class with default options included
+    Base command class for commands that allow passing in a config path
     """
 
     options = copy.deepcopy(COMMON_OPTIONS)
 
     def __init__(self):
-        super(PhibesCommandBase, self).__init__()
+        super(ConfigFileLoadingCmd, self).__init__()
 
     @staticmethod
-    def handle(*args, **kwargs) -> None:
-        """per-command handler callback"""
-        super(PhibesCommandBase, PhibesCommandBase).handle(*args, **kwargs)
+    def handle(config_file: pathlib.Path, *args, **kwargs):
+        """
+        Callback for commands that rely on/allow for a config file,
+        Should be invoked in the child handler before additional logic
+        @param config_file: Config file path
+        """
+        super(ConfigFileLoadingCmd, ConfigFileLoadingCmd).handle(
+            *args, **kwargs
+        )
+        load_config_file(config_file)
+        return
 
     @classmethod
     def make_click_command(
@@ -116,25 +170,3 @@ class PhibesCommandBase(PhibesCommandBareBase):
         else:
             options = initial_options
         return super().make_click_command(cmd_name, options)
-
-
-class ConfigFileLoadingCmd(PhibesCommandBase):
-    """
-    Base command class for commands that allow passing in a config path
-    """
-
-    def __init__(self):
-        super(ConfigFileLoadingCmd, self).__init__()
-
-    @staticmethod
-    def handle(config_file: pathlib.Path, *args, **kwargs):
-        """
-        Callback for commands that rely on/allow for a config file,
-        Should be invoked in the child handler before additional logic
-        @param config_file: Config file path
-        """
-        super(ConfigFileLoadingCmd, ConfigFileLoadingCmd).handle(
-            *args, **kwargs
-        )
-        load_config_file(config_file)
-        return

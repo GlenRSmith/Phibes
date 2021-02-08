@@ -7,7 +7,7 @@ Package configuration
 import json
 from os import environ
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 # Third party packages
 
@@ -22,6 +22,36 @@ CONFIG_FILE_NAME = '.phibes.cfg'
 DEFAULT_STORE_PATH = '.phibes'
 DEFAULT_EDITOR = environ.get('EDITOR', 'unknown')
 HOME_DIR = None
+
+"""
+After installing the package, there is no config file, no environment vars.
+
+Certain operations require specific environment variables to be set.
+
+There are command-line dependencies and core dependencies.
+I don't know how well I'll be able to partition them for the stages.
+
+Preferred editor is clearly a CLI-only requirement.
+It is used for adding/editing items.
+Those commands have a --editor option.
+If it is provided, the operation will be attempted 
+
+
+"""
+
+
+
+def get_editor() -> str:
+    """
+    Get the user's configured editor, or raise an exception
+    @return: editor as configured in environment
+    """
+    editor = environ.get('PHIBES_EDITOR', environ.get('EDITOR'))
+    if not editor:
+        raise PhibesConfigurationError(
+            "`PHIBES_EDITOR` or `EDITOR` must be set in environment"
+        )
+    return editor
 
 
 def get_home_dir() -> Path:
@@ -43,12 +73,24 @@ def set_home_dir(path: Path) -> None:
     return
 
 
+def get_store_path(config_path: Optional[Path] = None) -> Optional[Path]:
+    """
+    get the configured store_path
+    :param config_path: optional config path
+    :return: the configured store path
+    """
+    if config_path is None:
+        return None
+    conf = load_config_file(config_path)
+    return conf.store_path
+
+
 class ConfigModel(object):
     """
     Configuration model class
     """
     @property
-    def store_path(self) -> Path:
+    def store_path(self) -> Optional[Path]:
         """
         Accessor for configuration store path
         :return: protected _store_path attribute
@@ -56,7 +98,7 @@ class ConfigModel(object):
         return self._store_path
 
     @store_path.setter
-    def store_path(self, new_val: Union[Path, str]):
+    def store_path(self, new_val: Optional[Union[Path, str]]):
         """
         Mutator for configuration store path
         :param new_val: new path to assign
@@ -114,7 +156,9 @@ class ConfigModel(object):
         return json.dumps(ret_val, indent=4)
 
     @staticmethod
-    def _validate_store_path(val: Path):
+    def _validate_store_path(val: Optional[Path]):
+        if val is None:
+            return
         if not isinstance(val, Path):
             raise PhibesConfigurationError(
                 f"store_path must be a Path, {val} is {type(val)}"
@@ -187,7 +231,7 @@ def load_config_file(path):
     with conf_file.open('r') as cf:
         conf_dict = json.loads(cf.read())
     conf_mod = ConfigModel(
-        conf_dict['store_path'],
+        conf_dict.get('store_path'),
         conf_dict['editor']
     )
     conf_mod.apply()
