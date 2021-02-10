@@ -30,7 +30,7 @@ ItemList = List[Item]
 # HexStr = Match[HEX_REGEX]
 # str(type(self)).split("'")[1].split(".")[-1].lower()
 
-LOCKER_FILE = ".config"
+LOCKER_FILE = "locker.config"
 
 
 class Locker(object):
@@ -134,45 +134,42 @@ class Locker(object):
         return inst
 
     @classmethod
-    def create(cls, name: str, password: str, crypt_id: str = None):
-        """
-        Create a named Locker object
-        :param name: The name of the locker. Must be unique in storage
-        :param password: Password for the new locker
-        :param crypt_id: ID of the crypt_impl to create
-        """
-        try:
-            Locker.get(name, password)
-        except PhibesNotFoundError:
-            pass
-        storage_path = Path(
-            ConfigModel().store_path.joinpath(Locker.get_stored_name(name))
-        )
-        if not Locker.can_create(storage_path):
-            raise ValueError(f"could not create {name}")
-        storage_path.mkdir(exist_ok=False)
-        return Locker.create_anonymous(storage_path, password, crypt_id)
-
-    @classmethod
-    def create_anonymous(
-            cls, storage_path: Path, password: str, crypt_id: str = None
+    def create(
+            cls, password: str,
+            crypt_id: str,
+            name: str = None,
+            path: str = None
     ):
         """
         Create a Locker object
-        :param storage_path: Filesystem path for storage of locker
         :param password: Password for the new locker
         :param crypt_id: ID of the crypt_impl to create
+        :param name: The optional name of the locker. Must be unique in storage
+        :param path: The optional path to the locker.
         """
+        if path is None:
+            storage_path = Path(ConfigModel().store_path)
+        else:
+            storage_path = path
+        if name:
+            storage_path = storage_path / Locker.get_stored_name(name)
+            try:
+                storage_path.mkdir(exist_ok=False)
+            except FileExistsError as err:
+                raise PhibesExistsError(err)
+        if not Locker.can_create(storage_path, remove_if_empty=False):
+            raise ValueError(f"could not create {storage_path}")
         try:
-            Locker.get_anonymous(storage_path, password)
+            if name:
+                Locker.get(name, password)
+            else:
+                Locker.get_anonymous(storage_path, password)
         except PhibesNotFoundError:
             pass
         inst = Locker()
         inst.crypt_impl = create_crypt(password, crypt_id)
         inst.path = storage_path
         inst.lock_file = inst.path / LOCKER_FILE
-        if not Locker.can_create(inst.path, remove_if_empty=False):
-            raise ValueError(f"could not create {storage_path}")
         phibes_file.write(
             inst.lock_file,
             inst.crypt_impl.salt,

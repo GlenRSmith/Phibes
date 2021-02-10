@@ -10,6 +10,7 @@ import pytest
 
 # Local application/library specific imports
 from phibes.cli.locker.delete import delete_locker_cmd
+from phibes import crypto
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
 from phibes.phibes_cli import main
@@ -30,8 +31,8 @@ class TestDeleteLocker(ConfigLoadingTestClass):
             Locker.delete(self.name, self.pw)
         except PhibesNotFoundError:
             pass
-        Locker.create(self.name, self.pw)
-        return
+        crypt_id = crypto.list_crypts()[0]
+        Locker.create(password=self.pw, crypt_id=crypt_id, name=self.name)
 
     def custom_teardown(self, tmp_path):
         super(TestDeleteLocker, self).custom_teardown(tmp_path)
@@ -39,7 +40,6 @@ class TestDeleteLocker(ConfigLoadingTestClass):
             Locker.delete(self.name, self.pw)
         except PhibesNotFoundError:
             pass
-        return
 
     @pytest.mark.parametrize(
         "command_instance", [delete_locker_cmd, main.commands['delete-locker']]

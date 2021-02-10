@@ -129,7 +129,7 @@ locker_name_option = click.option(
     prompt='Locker name',
     type=str,
     default=getpass.getuser(),
-    help="Name of locker, defaults to local OS username"
+    help="Name of locker, defaults to OS username. Will be encoded "
 )
 locker_path_option = click.option(
     '--path',

@@ -57,7 +57,7 @@ class PhibesCommandBareBase(abc.ABC):
         Handler for CLI commands as implemented by each Command class
         """
         for kw in kwargs:
-            if kwargs[kw]:
+            if kwargs[kw] and kw in env_vars:
                 environ[env_vars[kw]] = kwargs[kw]
 
     @classmethod

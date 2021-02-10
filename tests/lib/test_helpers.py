@@ -8,10 +8,10 @@ import random
 # Related third party imports
 
 # Local application/library specific imports
+from phibes import crypto
 from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import ConfigModel, set_home_dir
 from phibes.lib.config import load_config_file, write_config_file
-from phibes import crypto
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Item, Locker
 
@@ -98,7 +98,11 @@ class EmptyLocker(ConfigLoadingTestClass):
         except PhibesNotFoundError:
             pass
         finally:
-            self.my_locker = Locker.create(self.locker_name, self.password)
+            self.my_locker = Locker.create(
+                password=self.password,
+                crypt_id=crypto.default_id,
+                name=self.locker_name
+            )
             # create a locker for each registered crypt instance
             for crypt_id in crypto.list_crypts():
                 # dedupe the names with random numbers
@@ -108,7 +112,7 @@ class EmptyLocker(ConfigLoadingTestClass):
                     wart = str(random.randint(1000, 9999))
                 name = self.locker_name + wart
                 self.lockers[name] = Locker.create(
-                    name, self.password, crypt_id
+                    password=self.password, crypt_id=crypt_id, name=name
                 )
         return
 

@@ -40,7 +40,6 @@ If it is provided, the operation will be attempted
 """
 
 
-
 def get_editor() -> str:
     """
     Get the user's configured editor, or raise an exception
@@ -66,6 +65,7 @@ def get_home_dir() -> Path:
 
 
 def set_home_dir(path: Path) -> None:
+    """Set global home_dir"""
     global HOME_DIR
     if not path.exists():
         raise FileNotFoundError(f"{path} does not exist")
@@ -95,6 +95,7 @@ class ConfigModel(object):
         Accessor for configuration store path
         :return: protected _store_path attribute
         """
+        # ret_val = a if True else b
         return self._store_path
 
     @store_path.setter
@@ -231,7 +232,7 @@ def load_config_file(path):
     with conf_file.open('r') as cf:
         conf_dict = json.loads(cf.read())
     conf_mod = ConfigModel(
-        conf_dict.get('store_path'),
+        conf_dict.get('store_path', Path.joinpath(get_home_dir(), ".phibes")),
         conf_dict['editor']
     )
     conf_mod.apply()
