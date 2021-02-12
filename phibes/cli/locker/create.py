@@ -3,7 +3,6 @@ Click interface to create Locker
 """
 
 # core library modules
-
 # third party packages
 import click
 
