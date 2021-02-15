@@ -17,7 +17,7 @@ from phibes.cli.errors import PhibesCliExistsError
 from phibes.lib.config import CONFIG_FILE_NAME, ConfigModel, load_config_file
 from phibes.lib.config import get_editor, get_home_dir
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.model import Locker
+from phibes.model import Item, Locker
 
 CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
@@ -333,9 +333,22 @@ def present_list_items(locker_inst: Locker, verbose: bool):
     return ret_val
 
 
-def get_item(locker: Locker, item_name: str):
+def get_item(locker: Locker, item_name: str) -> Item:
+    """
+
+    @param locker:
+    @param item_name:
+    @return:
+    """
     try:
         return locker.get_item(item_name)
+    except PhibesNotFoundError as err:
+        raise PhibesCliNotFoundError(err)
+
+
+def delete_item_unity(locker: Locker, item_name: str):
+    try:
+        return locker.delete_item(item_name)
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
 

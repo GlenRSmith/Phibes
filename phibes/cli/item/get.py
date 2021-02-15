@@ -7,8 +7,8 @@ Click interface to get an item
 import click
 
 # in-project modules
-from phibes.cli.command_base import PhibesCommandBareBase
 from phibes.cli.command_base import config_option
+from phibes.cli.command_base import PhibesCommandBareBase
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.lib import get_item
 from phibes.cli.lib import get_locker_args
@@ -53,7 +53,7 @@ class GetItemCommand(PhibesCommandBareBase):
 
 class GetItemNamedLockerCmd(GetItemCommand):
     """
-    Class to create and run click command to delete a named locker
+    Class to create & run click command to get an item from a named locker
     """
 
     options = {
