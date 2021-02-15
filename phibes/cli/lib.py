@@ -14,7 +14,7 @@ import click
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.errors import PhibesCliNotFoundError
 from phibes.cli.errors import PhibesCliExistsError
-from phibes.lib.config import CONFIG_FILE_NAME
+from phibes.lib.config import CONFIG_FILE_NAME, ConfigModel, load_config_file
 from phibes.lib.config import get_editor, get_home_dir
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
@@ -104,36 +104,43 @@ COMMON_OPTIONS = {
 }
 
 
-def get_locker(locker_name, password):
+def get_locker_args(*args, **kwargs) -> Locker:
     """
-    locally-used convenience function
-    :param locker_name:
-    :param password:
-    :return:
-    """
-    try:
-        return Locker.find(locker_name, password)
-    except PhibesNotFoundError as err:
-        raise PhibesCliNotFoundError(
-            f"can't find locker {locker_name} (could be password error)"
-            f"\n{err}\n"
-        )
-
-
-def get_locker_anonymous(locker_path, password):
-    """
-    locally-used convenience function
-    :param locker_path:
-    :param password:
-    :return:
+    Get a Locker using only named arguments
+    Supports getting named and unnamed Lockers
+    kwargs:
+        password: str - Password for existing locker
+        locker: str - The name of the locker
+        path: str - The fs path to the locker, aka `storage_path`
+        config: str - The fs path to the config file with `storage_path`
+    Valid combinations
+    - password, path
+    - password, config
+    - password, path, locker
+    - password, config, locker
     """
     try:
-        return Locker.get_anonymous(locker_path, password)
-    except PhibesNotFoundError as err:
-        raise PhibesCliNotFoundError(
-            f"can't find locker {locker_path} (could be password error)"
-            f"\n{err}\n"
+        password = kwargs.pop('password')
+    except KeyError as err:
+        raise PhibesCliError(f'missing required param {err}')
+    if 'path' in kwargs:
+        pth = kwargs.pop('path')
+    elif 'config' in kwargs:
+        config = kwargs.pop('config')
+        load_config_file(config)
+        pth = ConfigModel().store_path
+    else:
+        raise PhibesCliError(
+            f'path param must be provided by param or in config file'
         )
+    # locker name is optional, only settable from command-line
+    locker = kwargs.pop('locker', None)
+    try:
+        return Locker.get(password=password, name=locker, path=pth)
+    except PhibesNotFoundError:
+        err_name = (f" with {locker=}!", f"!")[locker is None]
+        err = f"No locker found at {pth}{err_name}\n"
+        raise PhibesCliNotFoundError(err)
 
 
 def _create_item(
@@ -213,6 +220,41 @@ def _edit_item(locker_inst, item_name):
     locker_inst.update_item(item)
 
 
+def create_item_new(
+        locker: Locker,
+        item_name: str,
+        template_name: str = None,
+):
+    try:
+        if locker.get_item(item_name):
+            raise PhibesCliExistsError(
+                f"{item_name} already exists in locker\n"
+                f"please use the `edit` command to modify\n"
+            )
+    except PhibesNotFoundError:
+        pass
+    item = locker.create_item(item_name=item_name)
+    template_is_file = False
+    if template_name:
+        try:
+            # try to get a template stored by that name
+            item.content = locker.get_item(template_name).content
+        except PhibesNotFoundError:
+            try:
+                # try to find a file by that name
+                item.content = pathlib.Path(template_name).read_text()
+                template_is_file = True
+            except PhibesNotFoundError:
+                raise PhibesCliNotFoundError(f"{template_name} not found")
+            except FileNotFoundError:
+                raise PhibesCliNotFoundError(f"{template_name} not found")
+    else:
+        item.content = ''
+    if not template_is_file:
+        _user_edit_item(locker, item)
+    locker.add_item(item)
+
+
 def create_item(
         locker_name,
         password,
@@ -227,7 +269,7 @@ def create_item(
     :param template_name: Name of text template to start item with
     :return:
     """
-    my_locker = get_locker(locker_name, password)
+    my_locker = Locker.get(password=password, name=locker_name)
     return _create_item(my_locker, item_name, template_name)
 
 
@@ -245,7 +287,7 @@ def create_item_anon_locker(
     :param template_name: Name of text template to start item with
     :return:
     """
-    my_locker = get_locker_anonymous(locker_path, password)
+    my_locker = Locker.get(password=password, path=locker_path)
     return _create_item(my_locker, item_name, template_name)
 
 
@@ -257,7 +299,7 @@ def edit_item(locker_name: str, password: str, item_name: str):
     :param item_name: Name of item to edit
     :return:
     """
-    my_locker = get_locker(locker_name, password)
+    my_locker = Locker.get(password=password, name=locker_name)
     return _edit_item(my_locker, item_name)
 
 
@@ -270,7 +312,7 @@ def edit_item_anon_locker(
     :param item_name: Name of item to edit
     :return:
     """
-    my_locker = get_locker_anonymous(locker_path, password)
+    my_locker = Locker.get(password=password, path=locker_path)
     return _edit_item(my_locker, item_name)
 
 
@@ -304,7 +346,7 @@ def get_item_anon_locker(
         password: str,
         item_name: str
 ):
-    my_locker = get_locker_anonymous(locker_path, password)
+    my_locker = Locker.get(password=password, path=locker_path)
     return _get_item(my_locker, item_name)
 
 
@@ -313,13 +355,45 @@ def get_item(
         password: str,
         item_name: str
 ):
-    my_locker = get_locker(locker_name, password)
+    my_locker = Locker.get(password=password, name=locker_name)
     return _get_item(my_locker, item_name)
+
+
+def delete_item_anon_locker(
+        locker_path,
+        password,
+        item_name
+):
+    """
+    Delete an existing item in a locker
+    :param locker_path: Location of the locker
+    :param password: Password of the locker
+    :param item_name: Name of item to delete
+    :return:
+    """
+    my_locker = Locker.get(password=password, path=locker_path)
+    return _delete_item(my_locker, item_name)
+
+
+def _delete_item(locker_inst, item_name):
+    """
+    Delete an existing item in a locker
+    :param locker_inst: Instance of Locker (already authed)
+    :param item_name: Name of item to delete
+    :return:
+    """
+    try:
+        locker_inst.delete_item(item_name)
+    except PhibesNotFoundError:
+        raise PhibesCliNotFoundError(
+            f"can't delete non-existing {item_name}"
+        )
+    return
 
 
 def delete_item(locker_name: str, password: str, item_name: str):
     try:
-        my_locker = Locker.get(locker_name, password)
+        my_locker = Locker.get(password=password, name=locker_name)
     except PhibesNotFoundError:
         raise PhibesCliNotFoundError(
             f"Locker {locker_name} not found"
