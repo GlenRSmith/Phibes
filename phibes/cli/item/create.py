@@ -4,8 +4,6 @@ Click command for `create-item`
 
 # core library modules
 # third party packages
-import click
-
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd, PhibesCommandBareBase
 from phibes.cli.command_base import config_option

@@ -29,14 +29,12 @@ After installing the package, there is no config file, no environment vars.
 Certain operations require specific environment variables to be set.
 
 There are command-line dependencies and core dependencies.
-I don't know how well I'll be able to partition them for the stages.
 
+I don't know how well I'll be able to partition them for the stages.
 Preferred editor is clearly a CLI-only requirement.
 It is used for adding/editing items.
 Those commands have a --editor option.
 If it is provided, the operation will be attempted 
-
-
 """
 
 

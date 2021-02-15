@@ -3,10 +3,7 @@ Click command for `edit`
 """
 
 # core library modules
-
 # third party packages
-import click
-
 # in-project modules
 from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import edit_item

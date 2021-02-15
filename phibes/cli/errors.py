@@ -3,19 +3,9 @@ Command-line interface error definitions
 """
 
 # core library modules
-import getpass
-import os
-import pathlib
-
 # third party packages
-import click
-
 # in-project modules
-from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
-from phibes.lib.config import get_editor, get_home_dir
 from phibes.lib import errors
-from phibes.lib.errors import PhibesNotFoundError
-from phibes.model import Locker
 
 
 class PhibesCliError(errors.PhibesError):

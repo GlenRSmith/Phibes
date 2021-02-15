@@ -11,7 +11,7 @@ import base64
 from datetime import datetime
 from pathlib import Path
 import shutil
-from typing import List, Optional
+from typing import List
 
 # Third party packages
 
