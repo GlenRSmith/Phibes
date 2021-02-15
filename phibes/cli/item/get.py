@@ -8,7 +8,7 @@ import click
 
 # in-project modules
 from phibes.cli.command_base import config_option
-from phibes.cli.command_base import PhibesCommandBareBase
+from phibes.cli.command_base import PhibesCommand
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.lib import get_item
 from phibes.cli.lib import get_locker_args
@@ -18,7 +18,7 @@ from phibes.cli.options import locker_path_option
 from phibes.cli.options import password_option
 
 
-class GetItemCommand(PhibesCommandBareBase):
+class GetItemCommand(PhibesCommand):
     """
     Command to get an item from a locker
     """

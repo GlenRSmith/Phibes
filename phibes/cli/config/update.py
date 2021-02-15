@@ -9,7 +9,7 @@ import pathlib
 import click
 
 # in-project modules
-from phibes.cli.command_base import PhibesCommandBareBase
+from phibes.cli.command_base import PhibesCommand
 from phibes.cli.lib import PhibesCliExistsError, PhibesCliError
 from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
@@ -42,7 +42,7 @@ def populate_defaults():
 populate_defaults()
 
 
-class UpdateConfigCmd(PhibesCommandBareBase):
+class UpdateConfigCmd(PhibesCommand):
     """
     Class for user command to update a configuration file
     """

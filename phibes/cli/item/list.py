@@ -9,7 +9,7 @@ import click
 # in-project modules
 from phibes.cli.lib import present_list_items
 from phibes.cli.command_base import config_option
-from phibes.cli.command_base import PhibesCommandBareBase
+from phibes.cli.command_base import PhibesCommand
 from phibes.cli.lib import get_locker_args
 from phibes.cli.options import locker_name_option
 from phibes.cli.options import locker_path_option
@@ -17,7 +17,7 @@ from phibes.cli.options import password_option
 from phibes.cli.options import verbose_item_option
 
 
-class ListItemsCommand(PhibesCommandBareBase):
+class ListItemsCommand(PhibesCommand):
     """
     Command to list items in a locker
     """

@@ -7,7 +7,7 @@ Click interface to create Locker
 import click
 
 # in-project modules
-from phibes.cli.command_base import PhibesCommandBareBase
+from phibes.cli.command_base import PhibesCommand
 from phibes.cli.command_base import config_option
 from phibes.cli.errors import PhibesCliError, PhibesCliExistsError
 from phibes.cli.options import crypt_choices, crypt_option
@@ -19,7 +19,7 @@ from phibes.lib.errors import PhibesExistsError
 from phibes.model import Locker
 
 
-class CreateLockerCmd(PhibesCommandBareBase):
+class CreateLockerCmd(PhibesCommand):
     """
     Class to create and run click command to create a locker
     """

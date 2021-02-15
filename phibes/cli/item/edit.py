@@ -5,7 +5,7 @@ Click command for `edit`
 # core library modules
 # third party packages
 # in-project modules
-from phibes.cli.command_base import PhibesCommandBareBase
+from phibes.cli.command_base import PhibesCommand
 from phibes.cli.command_base import config_option
 from phibes.cli.lib import edit_item
 from phibes.cli.lib import get_locker_args
@@ -15,7 +15,7 @@ from phibes.cli.options import locker_name_option, locker_path_option
 from phibes.cli.options import password_option
 
 
-class EditItemCommand(PhibesCommandBareBase):
+class EditItemCommand(PhibesCommand):
     """
     Class to create and run click command to create and add an item to a locker
     """

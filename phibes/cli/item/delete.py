@@ -6,7 +6,7 @@ Click interface to delete Items
 # third party packages
 # in-project modules
 from phibes.cli.command_base import config_option
-from phibes.cli.command_base import PhibesCommandBareBase
+from phibes.cli.command_base import PhibesCommand
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.lib import get_locker_args
 from phibes.cli.options import item_name_option
@@ -15,7 +15,7 @@ from phibes.cli.options import locker_path_option
 from phibes.cli.options import password_option
 
 
-class DeleteItemCommand(PhibesCommandBareBase):
+class DeleteItemCommand(PhibesCommand):
     """
     Command to delete an item from a locker
     """

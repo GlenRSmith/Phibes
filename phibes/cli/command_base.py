@@ -29,7 +29,7 @@ config_option = click.option(
 )
 
 
-class PhibesCommandBareBase(abc.ABC):
+class PhibesCommand(abc.ABC):
     """
     Base command class without options
     """
