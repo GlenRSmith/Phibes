@@ -7,24 +7,24 @@ Click-based command-line interface to phibes
 # in-project modules
 from phibes.cli.config.create import create_config_cmd
 from phibes.cli.config.update import update_config_cmd
-from phibes.cli.item.create import CreateItemNamedLockerCmd
-from phibes.cli.item.delete import DeleteItemNamedLockerCmd
-from phibes.cli.item.edit import EditItemNamedLockerCmd
-from phibes.cli.item.get import GetItemNamedLockerCmd
-from phibes.cli.item.list import ListItemsNamedLockerCmd
+from phibes.cli.item.create import CreateItemNamedLocker
+from phibes.cli.item.delete import DeleteItemNamedLocker
+from phibes.cli.item.edit import EditItemNamedLocker
+from phibes.cli.item.get import GetItemNamedLocker
+from phibes.cli.item.list import ListItemsNamedLocker
 from phibes.cli.lib import main, main_func
-from phibes.cli.locker.create import CreateNamedLockerCmd
-from phibes.cli.locker.delete import DeleteNamedLockerCmd
-from phibes.cli.locker.get import GetNamedLockerCmd
+from phibes.cli.locker.create import CreateNamedLocker
+from phibes.cli.locker.delete import DeleteNamedLocker
+from phibes.cli.locker.get import GetNamedLocker
 
-create = CreateNamedLockerCmd.make_click_command('create')
-info = GetNamedLockerCmd.make_click_command('info')
-delete = DeleteNamedLockerCmd.make_click_command('delete')
-create_item = CreateItemNamedLockerCmd.make_click_command('create-item')
-get_item = GetItemNamedLockerCmd.make_click_command('get-item')
-delete_item = DeleteItemNamedLockerCmd.make_click_command('delete-item')
-edit_item = EditItemNamedLockerCmd.make_click_command('edit')
-list_items = ListItemsNamedLockerCmd.make_click_command('list')
+create = CreateNamedLocker.make_click_command('create')
+info = GetNamedLocker.make_click_command('info')
+delete = DeleteNamedLocker.make_click_command('delete')
+create_item = CreateItemNamedLocker.make_click_command('create-item')
+get_item = GetItemNamedLocker.make_click_command('get-item')
+delete_item = DeleteItemNamedLocker.make_click_command('delete-item')
+edit_item = EditItemNamedLocker.make_click_command('edit')
+list_items = ListItemsNamedLocker.make_click_command('list')
 
 main.add_command(create)
 main.add_command(info)

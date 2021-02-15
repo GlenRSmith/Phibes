@@ -19,7 +19,7 @@ from phibes.lib.errors import PhibesExistsError
 from phibes.model import Locker
 
 
-class CreateLockerCmd(PhibesCommand):
+class CreateLocker(PhibesCommand):
     """
     Class to create and run click command to create a locker
     """
@@ -32,13 +32,13 @@ class CreateLockerCmd(PhibesCommand):
     }
 
     def __init__(self):
-        super(CreateLockerCmd, self).__init__()
+        super(CreateLocker, self).__init__()
 
     @staticmethod
     def handle(*args, **kwargs):
         """Create a new Locker"""
         # parent class sets up environment variables from args
-        super(CreateLockerCmd, CreateLockerCmd).handle(*args, **kwargs)
+        super(CreateLocker, CreateLocker).handle(*args, **kwargs)
         try:
             password = kwargs.pop('password')
             crypt_int = kwargs.pop('crypt_id')
@@ -84,7 +84,7 @@ class CreateLockerCmd(PhibesCommand):
             click.echo(f"with name {locker}")
 
 
-class CreateNamedLockerCmd(CreateLockerCmd):
+class CreateNamedLocker(CreateLocker):
     """
     Class to create and run click command to create a named locker
     """
@@ -97,4 +97,4 @@ class CreateNamedLockerCmd(CreateLockerCmd):
     }
 
     def __init__(self):
-        super(CreateNamedLockerCmd, self).__init__()
+        super(CreateNamedLocker, self).__init__()

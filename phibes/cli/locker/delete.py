@@ -14,7 +14,7 @@ from phibes.cli.options import locker_path_option
 from phibes.cli.options import password_option
 
 
-class DeleteLockerCmd(PhibesCommand):
+class DeleteLocker(PhibesCommand):
     """
     Class to create and run click command to delete a locker
     """
@@ -26,12 +26,12 @@ class DeleteLockerCmd(PhibesCommand):
     }
 
     def __init__(self):
-        super(DeleteLockerCmd, self).__init__()
+        super(DeleteLocker, self).__init__()
 
     @staticmethod
     def handle(*args, **kwargs):
         """Delete a Locker"""
-        super(DeleteLockerCmd, DeleteLockerCmd).handle(*args, **kwargs)
+        super(DeleteLocker, DeleteLocker).handle(*args, **kwargs)
         locker = kwargs.get('locker', None)
         inst = get_locker_args(*args, **kwargs)
         click.confirm(
@@ -57,7 +57,7 @@ class DeleteLockerCmd(PhibesCommand):
         click.echo(f"Locker deleted from {inst.path}")
 
 
-class DeleteNamedLockerCmd(DeleteLockerCmd):
+class DeleteNamedLocker(DeleteLocker):
     """
     Class to create and run click command to delete a named locker
     """
@@ -69,4 +69,4 @@ class DeleteNamedLockerCmd(DeleteLockerCmd):
     }
 
     def __init__(self):
-        super(DeleteNamedLockerCmd, self).__init__()
+        super(DeleteNamedLocker, self).__init__()

@@ -15,7 +15,7 @@ from phibes.cli.options import locker_name_option, locker_path_option
 from phibes.cli.options import password_option
 
 
-class EditItemCommand(PhibesCommand):
+class EditItem(PhibesCommand):
     """
     Class to create and run click command to create and add an item to a locker
     """
@@ -28,12 +28,12 @@ class EditItemCommand(PhibesCommand):
     }
 
     def __init__(self):
-        super(EditItemCommand, self).__init__()
+        super(EditItem, self).__init__()
 
     @staticmethod
     def handle(*args, **kwargs) -> None:
         """Create and edit an item in a locker"""
-        super(EditItemCommand, EditItemCommand).handle(*args, **kwargs)
+        super(EditItem, EditItem).handle(*args, **kwargs)
         try:
             item_name = kwargs.get('item')
         except KeyError as err:
@@ -42,7 +42,7 @@ class EditItemCommand(PhibesCommand):
         edit_item(locker_inst=inst, item_name=item_name)
 
 
-class EditItemNamedLockerCmd(EditItemCommand):
+class EditItemNamedLocker(EditItem):
 
     options = {
         'config': config_option,
@@ -52,4 +52,4 @@ class EditItemNamedLockerCmd(EditItemCommand):
     }
 
     def __init__(self):
-        super(EditItemNamedLockerCmd, self).__init__()
+        super(EditItemNamedLocker, self).__init__()

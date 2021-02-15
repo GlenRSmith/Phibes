@@ -14,7 +14,7 @@ from phibes.cli.options import locker_name_option, locker_path_option
 from phibes.cli.options import password_option
 
 
-class CreateItemCommand(PhibesCommand):
+class CreateItem(PhibesCommand):
     """
     Class to create and run click command to create and add an item to a locker
     """
@@ -28,12 +28,12 @@ class CreateItemCommand(PhibesCommand):
     }
 
     def __init__(self):
-        super(CreateItemCommand, self).__init__()
+        super(CreateItem, self).__init__()
 
     @staticmethod
     def handle(*args, **kwargs) -> None:
         """Create and add an item to a locker"""
-        super(CreateItemCommand, CreateItemCommand).handle(*args, **kwargs)
+        super(CreateItem, CreateItem).handle(*args, **kwargs)
         template = kwargs.get('template', None)
         if template == 'Empty':
             template = None
@@ -47,7 +47,7 @@ class CreateItemCommand(PhibesCommand):
         )
 
 
-class CreateItemNamedLockerCmd(CreateItemCommand):
+class CreateItemNamedLocker(CreateItem):
 
     options = {
         'config': config_option,
@@ -58,4 +58,4 @@ class CreateItemNamedLockerCmd(CreateItemCommand):
     }
 
     def __init__(self):
-        super(CreateItemNamedLockerCmd, self).__init__()
+        super(CreateItemNamedLocker, self).__init__()

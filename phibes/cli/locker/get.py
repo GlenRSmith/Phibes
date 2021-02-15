@@ -14,7 +14,7 @@ from phibes.cli.options import locker_path_option
 from phibes.cli.options import password_option
 
 
-class GetLockerCmd(PhibesCommand):
+class GetLocker(PhibesCommand):
     """
     Class to create and run click command to get a locker
     """
@@ -26,13 +26,13 @@ class GetLockerCmd(PhibesCommand):
     }
 
     def __init__(self):
-        super(GetLockerCmd, self).__init__()
+        super(GetLocker, self).__init__()
 
     @staticmethod
     def handle(*args, **kwargs):
         """Get a Locker"""
         # parent class sets up environment variables from args
-        super(GetLockerCmd, GetLockerCmd).handle(*args, **kwargs)
+        super(GetLocker, GetLocker).handle(*args, **kwargs)
         inst = get_locker_args(*args, **kwargs)
         if inst.path.exists():
             click.echo(f"confirmed locker dir {inst.path} exists")
@@ -44,7 +44,7 @@ class GetLockerCmd(PhibesCommand):
         return inst
 
 
-class GetNamedLockerCmd(GetLockerCmd):
+class GetNamedLocker(GetLocker):
     """
     Class to create and run click command to delete a named locker
     """
@@ -56,4 +56,4 @@ class GetNamedLockerCmd(GetLockerCmd):
     }
 
     def __init__(self):
-        super(GetNamedLockerCmd, self).__init__()
+        super(GetNamedLocker, self).__init__()

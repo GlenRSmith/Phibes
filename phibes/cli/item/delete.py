@@ -15,7 +15,7 @@ from phibes.cli.options import locker_path_option
 from phibes.cli.options import password_option
 
 
-class DeleteItemCommand(PhibesCommand):
+class DeleteItem(PhibesCommand):
     """
     Command to delete an item from a locker
     """
@@ -28,14 +28,14 @@ class DeleteItemCommand(PhibesCommand):
     }
 
     def __init__(self):
-        super(DeleteItemCommand, self).__init__()
+        super(DeleteItem, self).__init__()
 
     @staticmethod
     def handle(*args, **kwargs):
         """
         Delete an item from the locker
         """
-        super(DeleteItemCommand, DeleteItemCommand).handle(*args, **kwargs)
+        super(DeleteItem, DeleteItem).handle(*args, **kwargs)
         try:
             item_name = kwargs.get('item')
             if not item_name:
@@ -46,7 +46,7 @@ class DeleteItemCommand(PhibesCommand):
         inst.delete_item(item_name)
 
 
-class DeleteItemNamedLockerCmd(DeleteItemCommand):
+class DeleteItemNamedLocker(DeleteItem):
     """
     Class to create & run click command to delete an item from a named locker
     """
@@ -59,4 +59,4 @@ class DeleteItemNamedLockerCmd(DeleteItemCommand):
     }
 
     def __init__(self):
-        super(DeleteItemNamedLockerCmd, self).__init__()
+        super(DeleteItemNamedLocker, self).__init__()

@@ -18,7 +18,7 @@ from phibes.cli.options import locker_path_option
 from phibes.cli.options import password_option
 
 
-class GetItemCommand(PhibesCommand):
+class GetItem(PhibesCommand):
     """
     Command to get an item from a locker
     """
@@ -31,14 +31,14 @@ class GetItemCommand(PhibesCommand):
     }
 
     def __init__(self):
-        super(GetItemCommand, self).__init__()
+        super(GetItem, self).__init__()
 
     @staticmethod
     def handle(*args, **kwargs):
         """
         Get an item from the locker
         """
-        super(GetItemCommand, GetItemCommand).handle(*args, **kwargs)
+        super(GetItem, GetItem).handle(*args, **kwargs)
         try:
             item_name = kwargs.get('item')
             if not item_name:
@@ -51,7 +51,7 @@ class GetItemCommand(PhibesCommand):
         return item_inst
 
 
-class GetItemNamedLockerCmd(GetItemCommand):
+class GetItemNamedLocker(GetItem):
     """
     Class to create & run click command to get an item from a named locker
     """
@@ -64,4 +64,4 @@ class GetItemNamedLockerCmd(GetItemCommand):
     }
 
     def __init__(self):
-        super(GetItemNamedLockerCmd, self).__init__()
+        super(GetItemNamedLocker, self).__init__()

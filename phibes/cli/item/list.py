@@ -17,7 +17,7 @@ from phibes.cli.options import password_option
 from phibes.cli.options import verbose_item_option
 
 
-class ListItemsCommand(PhibesCommand):
+class ListItems(PhibesCommand):
     """
     Command to list items in a locker
     """
@@ -30,20 +30,20 @@ class ListItemsCommand(PhibesCommand):
     }
 
     def __init__(self):
-        super(ListItemsCommand, self).__init__()
+        super(ListItems, self).__init__()
 
     @staticmethod
     def handle(*args, **kwargs):
         """
         Get an item from the locker
         """
-        super(ListItemsCommand, ListItemsCommand).handle(*args, **kwargs)
+        super(ListItems, ListItems).handle(*args, **kwargs)
         verbose = kwargs.get('verbose', False)
         locker_inst = get_locker_args(*args, **kwargs)
         click.echo(present_list_items(locker_inst, verbose))
 
 
-class ListItemsNamedLockerCmd(ListItemsCommand):
+class ListItemsNamedLocker(ListItems):
     """
     Class to create & run click command to list items in a named locker
     """
@@ -56,4 +56,4 @@ class ListItemsNamedLockerCmd(ListItemsCommand):
     }
 
     def __init__(self):
-        super(ListItemsNamedLockerCmd, self).__init__()
+        super(ListItemsNamedLocker, self).__init__()
