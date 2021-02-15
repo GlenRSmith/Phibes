@@ -220,7 +220,7 @@ def _edit_item(locker_inst, item_name):
     locker_inst.update_item(item)
 
 
-def create_item_new(
+def create_item(
         locker: Locker,
         item_name: str,
         template_name: str = None,
@@ -253,42 +253,6 @@ def create_item_new(
     if not template_is_file:
         _user_edit_item(locker, item)
     locker.add_item(item)
-
-
-def create_item(
-        locker_name,
-        password,
-        item_name,
-        template_name
-):
-    """
-    Open a text editor to edit a new or existing item in a locker
-    :param locker_name: Name of the locker
-    :param password: Password of the locker
-    :param item_name: Name of item to edit
-    :param template_name: Name of text template to start item with
-    :return:
-    """
-    my_locker = Locker.get(password=password, name=locker_name)
-    return _create_item(my_locker, item_name, template_name)
-
-
-def create_item_anon_locker(
-        locker_path,
-        password,
-        item_name,
-        template_name
-):
-    """
-    Open a text editor to edit a new or existing item in a locker
-    :param locker_path: Location of the locker
-    :param password: Password of the locker
-    :param item_name: Name of item to edit
-    :param template_name: Name of text template to start item with
-    :return:
-    """
-    my_locker = Locker.get(password=password, path=locker_path)
-    return _create_item(my_locker, item_name, template_name)
 
 
 def edit_item(locker_name: str, password: str, item_name: str):
@@ -351,38 +315,6 @@ def delete_item_unity(locker: Locker, item_name: str):
         return locker.delete_item(item_name)
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
-
-
-def delete_item_anon_locker(
-        locker_path,
-        password,
-        item_name
-):
-    """
-    Delete an existing item in a locker
-    :param locker_path: Location of the locker
-    :param password: Password of the locker
-    :param item_name: Name of item to delete
-    :return:
-    """
-    my_locker = Locker.get(password=password, path=locker_path)
-    return _delete_item(my_locker, item_name)
-
-
-def _delete_item(locker_inst, item_name):
-    """
-    Delete an existing item in a locker
-    :param locker_inst: Instance of Locker (already authed)
-    :param item_name: Name of item to delete
-    :return:
-    """
-    try:
-        locker_inst.delete_item(item_name)
-    except PhibesNotFoundError:
-        raise PhibesCliNotFoundError(
-            f"can't delete non-existing {item_name}"
-        )
-    return
 
 
 def delete_item(locker_name: str, password: str, item_name: str):
