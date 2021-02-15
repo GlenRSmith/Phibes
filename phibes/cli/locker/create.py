@@ -57,11 +57,13 @@ class CreateLockerCmd(PhibesCommandBareBase):
             )
         # locker name is optional, only settable from command-line
         locker = kwargs.pop('locker', None)
+        pth = storage_path.resolve()
+        if locker:
+            pth = pth / Locker.get_stored_name(locker)
         click.confirm(
             (
                 f"Will attempt to create locker at\n"
-                f"{type(storage_path)=}\n"
-                f"{storage_path.resolve()}\n{crypt_id=}\n"
+                f"{pth}\n{crypt_id=}\n"
                 f"Enter `y` to accept, `N` to abort"
             ), abort=True
         )
@@ -96,9 +98,3 @@ class CreateNamedLockerCmd(CreateLockerCmd):
 
     def __init__(self):
         super(CreateNamedLockerCmd, self).__init__()
-
-
-create_locker_cmd = CreateLockerCmd.make_click_command('create-locker')
-create_named_locker_cmd = CreateNamedLockerCmd.make_click_command(
-    'create-locker'
-)
