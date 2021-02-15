@@ -120,13 +120,13 @@ def get_locker_args(*args, **kwargs) -> Locker:
     - password, config, locker
     """
     try:
-        password = kwargs.pop('password')
+        password = kwargs.get('password')
     except KeyError as err:
         raise PhibesCliError(f'missing required param {err}')
     if 'path' in kwargs:
-        pth = kwargs.pop('path')
+        pth = kwargs.get('path')
     elif 'config' in kwargs:
-        config = kwargs.pop('config')
+        config = kwargs.get('config')
         load_config_file(config)
         pth = ConfigModel().store_path
     else:
@@ -134,7 +134,7 @@ def get_locker_args(*args, **kwargs) -> Locker:
             f'path param must be provided by param or in config file'
         )
     # locker name is optional, only settable from command-line
-    locker = kwargs.pop('locker', None)
+    locker = kwargs.get('locker', None)
     try:
         return Locker.get(password=password, name=locker, path=pth)
     except PhibesNotFoundError:
@@ -333,30 +333,11 @@ def present_list_items(locker_inst: Locker, verbose: bool):
     return ret_val
 
 
-def _get_item(locker_inst: Locker, item_name: str):
+def get_item(locker: Locker, item_name: str):
     try:
-        item = locker_inst.get_item(item_name)
-    except PhibesNotFoundError:
-        raise PhibesCliNotFoundError(f"can't find {item_name}")
-    return item
-
-
-def get_item_anon_locker(
-        locker_path: pathlib.Path,
-        password: str,
-        item_name: str
-):
-    my_locker = Locker.get(password=password, path=locker_path)
-    return _get_item(my_locker, item_name)
-
-
-def get_item(
-        locker_name: str,
-        password: str,
-        item_name: str
-):
-    my_locker = Locker.get(password=password, name=locker_name)
-    return _get_item(my_locker, item_name)
+        return locker.get_item(item_name)
+    except PhibesNotFoundError as err:
+        raise PhibesCliNotFoundError(err)
 
 
 def delete_item_anon_locker(

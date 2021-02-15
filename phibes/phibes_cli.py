@@ -11,7 +11,7 @@ from phibes.cli.item.create import create_item_cmd
 from phibes.cli.item.delete import delete_item_cmd
 from phibes.cli.item.edit import edit_item_cmd
 from phibes.cli.item.list import list_items_cmd
-from phibes.cli.item.get import get_item_cmd
+from phibes.cli.item.get import GetItemNamedLockerCmd
 from phibes.cli.lib import main, main_func
 from phibes.cli.locker.create import CreateNamedLockerCmd
 from phibes.cli.locker.delete import DeleteNamedLockerCmd
@@ -20,13 +20,14 @@ from phibes.cli.locker.get import GetNamedLockerCmd
 create = CreateNamedLockerCmd.make_click_command('create')
 info = GetNamedLockerCmd.make_click_command('info')
 delete = DeleteNamedLockerCmd.make_click_command('delete')
+get_item = GetItemNamedLockerCmd.make_click_command('get-item')
 
 main.add_command(create)
 main.add_command(info)
 main.add_command(delete)
 main.add_command(edit_item_cmd)
 main.add_command(create_item_cmd)
-main.add_command(get_item_cmd)
+main.add_command(get_item)
 main.add_command(list_items_cmd)
 main.add_command(delete_item_cmd)
 main.add_command(create_config_cmd)
