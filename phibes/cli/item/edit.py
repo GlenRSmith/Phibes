@@ -5,39 +5,51 @@ Click command for `edit`
 # core library modules
 # third party packages
 # in-project modules
-from phibes.cli.command_base import ConfigFileLoadingCmd
+from phibes.cli.command_base import PhibesCommandBareBase
+from phibes.cli.command_base import config_option
 from phibes.cli.lib import edit_item
+from phibes.cli.lib import get_locker_args
+from phibes.cli.errors import PhibesCliError
 from phibes.cli.options import item_name_option
+from phibes.cli.options import locker_name_option, locker_path_option
+from phibes.cli.options import password_option
 
 
-class EditItemCmd(ConfigFileLoadingCmd):
+class EditItemCommand(PhibesCommandBareBase):
+    """
+    Class to create and run click command to create and add an item to a locker
+    """
+
+    options = {
+        'config': config_option,
+        'path': locker_path_option,
+        'password': password_option,
+        'item': item_name_option
+    }
 
     def __init__(self):
-        super(EditItemCmd, self).__init__()
-        return
+        super(EditItemCommand, self).__init__()
 
     @staticmethod
-    def handle(
-            config,
-            locker,
-            password,
-            item,
-            *args, **kwargs
-    ):
-        """
-        Launch editor to create/update an item in a locker
-
-        :param config:
-        :param locker:
-        :param password:
-        :param item:
-        :return:
-        """
-        super(EditItemCmd, EditItemCmd).handle(
-            config, *args, **kwargs
-        )
-        return edit_item(locker, password, item)
+    def handle(*args, **kwargs) -> None:
+        """Create and edit an item in a locker"""
+        super(EditItemCommand, EditItemCommand).handle(*args, **kwargs)
+        try:
+            item_name = kwargs.get('item')
+        except KeyError as err:
+            raise PhibesCliError(f'missing required param {err}')
+        inst = get_locker_args(*args, **kwargs)
+        edit_item(locker_inst=inst, item_name=item_name)
 
 
-options = {'item': item_name_option}
-edit_item_cmd = EditItemCmd.make_click_command('edit', options)
+class EditItemNamedLockerCmd(EditItemCommand):
+
+    options = {
+        'config': config_option,
+        'locker': locker_name_option,
+        'password': password_option,
+        'item': item_name_option
+    }
+
+    def __init__(self):
+        super(EditItemNamedLockerCmd, self).__init__()

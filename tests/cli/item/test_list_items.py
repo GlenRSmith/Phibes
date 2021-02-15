@@ -36,9 +36,12 @@ class TestListItems(test_helpers.PopulatedLocker):
 
     def invoke(self):
         return CliRunner().invoke(
-            self.list_items, [
+            catch_exceptions=False,
+            cli=self.list_items,
+            args=[
                 "--config", self.test_path,
-                "--locker", self.locker_name, "--password", self.password,
+                "--locker", self.locker_name,
+                "--password", self.password,
                 "--verbose", False
             ]
         )
@@ -46,5 +49,5 @@ class TestListItems(test_helpers.PopulatedLocker):
     @pytest.mark.positive
     def test_list_all_items(self, setup_and_teardown):
         result = self.invoke()
-        assert result.exit_code == 0
+        assert result.exit_code == 0, result.output
         return
