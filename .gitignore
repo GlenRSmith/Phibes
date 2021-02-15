@@ -6,3 +6,5 @@ phibes.egg-info
 basetemp
 ADR
 .coverage*
+build/
+dist/
