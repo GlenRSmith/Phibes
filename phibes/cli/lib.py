@@ -3,7 +3,6 @@ Support functions for command-line interface modules.
 """
 
 # core library modules
-import getpass
 import pathlib
 import subprocess
 
@@ -12,10 +11,9 @@ import click
 
 # in-project modules
 from phibes.cli.errors import PhibesCliError
-from phibes.cli.errors import PhibesCliNotFoundError
 from phibes.cli.errors import PhibesCliExistsError
-from phibes.lib.config import CONFIG_FILE_NAME, ConfigModel, load_config_file
-from phibes.lib.config import get_editor, get_home_dir
+from phibes.cli.errors import PhibesCliNotFoundError
+from phibes.lib.config import ConfigModel, get_editor, load_config_file
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Item, Locker
 
@@ -76,34 +74,6 @@ def main_func():
     main()
 
 
-COMMON_OPTIONS = {
-    'config': click.option(
-        '--config',
-        default=get_home_dir().joinpath(CONFIG_FILE_NAME),
-        type=pathlib.Path,
-        help=(
-            f"Path to config file `{CONFIG_FILE_NAME}`, "
-            f"defaults to user home"
-        ),
-        show_envvar=True,
-        envvar="PHIBES_CONFIG",
-    ),
-    'locker': click.option(
-        '--locker',
-        prompt='Locker',
-        type=str,
-        default=getpass.getuser(),
-        help="Name of locker, defaults to local OS username"
-    ),
-    'password': click.option(
-        '--password',
-        prompt='Password',
-        help='Password used when Locker was created',
-        hide_input=True
-    ),
-}
-
-
 def get_locker_args(*args, **kwargs) -> Locker:
     """
     Get a Locker using only named arguments
@@ -141,48 +111,6 @@ def get_locker_args(*args, **kwargs) -> Locker:
         err_name = (f" with {locker=}!", f"!")[locker is None]
         err = f"No locker found at {pth}{err_name}\n"
         raise PhibesCliNotFoundError(err)
-
-
-def _create_item(
-        locker_inst,
-        item_name,
-        template_name
-):
-    """
-    Open a text editor to edit a new or existing item in a locker
-    :param locker_inst: Instance of Locker (already authed)
-    :param item_name: Name of item to edit
-    :param template_name: Name of text template to start item with
-    :return:
-    """
-    try:
-        if locker_inst.get_item(item_name):
-            raise PhibesCliExistsError(
-                f"file for {item_name} already exists\n"
-                f"please use the `edit` command to modify\n"
-            )
-    except PhibesNotFoundError:
-        pass
-    item = locker_inst.create_item(item_name=item_name)
-    template_is_file = False
-    if template_name:
-        try:
-            # try to get a template stored by that name
-            item.content = locker_inst.get_item(template_name).content
-        except PhibesNotFoundError:
-            try:
-                # try to find a file by that name
-                item.content = pathlib.Path(template_name).read_text()
-                template_is_file = True
-            except PhibesNotFoundError:
-                raise PhibesCliNotFoundError(f"{template_name} not found")
-            except FileNotFoundError:
-                raise PhibesCliNotFoundError(f"{template_name} not found")
-    else:
-        item.content = ''
-    if not template_is_file:
-        _user_edit_item(locker_inst, item)
-    locker_inst.add_item(item)
 
 
 def _user_edit_item(locker_inst: Locker, item):
