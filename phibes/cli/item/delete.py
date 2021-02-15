@@ -3,45 +3,60 @@ Click interface to delete Items
 """
 
 # core library modules
-
 # third party packages
-import click
-
 # in-project modules
-from phibes.cli.command_base import ConfigFileLoadingCmd
-from phibes.cli.lib import delete_item as del_item
+from phibes.cli.command_base import config_option
+from phibes.cli.command_base import PhibesCommandBareBase
+from phibes.cli.errors import PhibesCliError
+from phibes.cli.lib import get_locker_args
+from phibes.cli.options import item_name_option
+from phibes.cli.options import locker_name_option
+from phibes.cli.options import locker_path_option
+from phibes.cli.options import password_option
 
 
-class DeleteItemCmd(ConfigFileLoadingCmd):
+class DeleteItemCommand(PhibesCommandBareBase):
+    """
+    Command to delete an item from a locker
+    """
+
+    options = {
+        'config': config_option,
+        'password': password_option,
+        'path': locker_path_option,
+        'item': item_name_option
+    }
 
     def __init__(self):
-        super(DeleteItemCmd, self).__init__()
-        return
+        super(DeleteItemCommand, self).__init__()
 
     @staticmethod
-    def handle(config, locker, password, item, *args, **kwargs):
+    def handle(*args, **kwargs):
         """
-        Remove the named Item from the Locker
-        :param config:
-        :param locker:
-        :param password:
-        :param item:
-        :return:
+        Delete an item from the locker
         """
-        super(DeleteItemCmd, DeleteItemCmd).handle(
-            config, *args, **kwargs
-        )
-        del_item(locker, password, item)
+        super(DeleteItemCommand, DeleteItemCommand).handle(*args, **kwargs)
+        try:
+            item_name = kwargs.get('item')
+            if not item_name:
+                raise KeyError('item')
+        except KeyError as err:
+            raise PhibesCliError(f'missing required param {err}')
+        inst = get_locker_args(*args, **kwargs)
+        inst.delete_item(item_name)
 
 
-options = {
-    'item': click.option(
-        '--item',
-        prompt='Item name',
-        type=str,
-        help='The name of the item to delete'
-    )
-}
+class DeleteItemNamedLockerCmd(DeleteItemCommand):
+    """
+    Class to create & run click command to delete an item from a named locker
+    """
 
+    options = {
+        'config': config_option,
+        'password': password_option,
+        'locker': locker_name_option,
+        'item': item_name_option
+    }
 
-delete_item_cmd = DeleteItemCmd.make_click_command('delete-item', options)
+    def __init__(self):
+        super(DeleteItemNamedLockerCmd, self).__init__()
