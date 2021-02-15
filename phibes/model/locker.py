@@ -46,7 +46,6 @@ class Locker(object):
         self.lock_file = None
         self.crypt_impl = None
         self.timestamp = None
-        return
 
     @staticmethod
     def get_pw_hash(storage_path: Path) -> str:
@@ -87,37 +86,22 @@ class Locker(object):
         ).decode()
 
     @classmethod
-    def get(cls, name: str, password: str):
+    def get(cls, password: str, name: str = None, path: str = None) -> Locker:
         """
-        Opening an interface to a named, existing locker
-        :param name: The name of the locker
-        :param password: Password for the locker
+        Get a Locker object
+        @param password: Password for existing locker
+        @param name: The optional name of the locker
+        @param path: The optional path to the locker
+        @return: Locker instance
         """
-        conf = ConfigModel()
-        full_path = conf.store_path / Locker.get_stored_name(name)
-        return Locker.get_named(ConfigModel().store_path, name, password)
-
-    @classmethod
-    def get_named(cls, base_path: Path, name: str, password: str):
-        """
-        Opening an interface to a named, existing locker
-        :param base_path: The filesystem path to the locker
-        :param name: The name of the locker
-        :param password: Password for the locker
-        """
-        full_path = base_path / Locker.get_stored_name(name)
-        return Locker.get_anonymous(full_path, password)
-
-    @classmethod
-    def get_anonymous(cls, storage_path: Path, password: str):
-        """
-        Opening an interface to an existing locker
-        :param storage_path: The filesystem path to the locker
-        :param password: Password for the locker
-        """
-        inst = Locker()
-        # start a string for verbose error/debugging
+        if path is None:
+            storage_path = Path(ConfigModel().store_path)
+        else:
+            storage_path = path
+        if name:
+            storage_path = storage_path / Locker.get_stored_name(name)
         msgs = f"{storage_path=}\n"
+        inst = Locker()
         inst.lock_file = storage_path / LOCKER_FILE
         if not inst.lock_file.exists():
             raise PhibesNotFoundError(msgs)
@@ -160,10 +144,7 @@ class Locker(object):
         if not Locker.can_create(storage_path, remove_if_empty=False):
             raise ValueError(f"could not create {storage_path}")
         try:
-            if name:
-                Locker.get(name, password)
-            else:
-                Locker.get_anonymous(storage_path, password)
+            Locker.get(password=password, name=name, path=storage_path)
         except PhibesNotFoundError:
             pass
         inst = Locker()
@@ -181,48 +162,26 @@ class Locker(object):
         return inst
 
     @classmethod
-    def delete(cls, name: str, password: str):
+    def delete(cls, password: str, name: str = None, path: str = None):
+        """Delete a locker"""
         try:
-            inst = Locker.get(name, password)
-        except FileNotFoundError:
-            inst = None
-        if inst:
-            shutil.rmtree(inst.path)
-        else:
-            raise PhibesNotFoundError(
-                f"Locker {name} not found to delete!\n"
-                f"{ConfigModel().store_path}\n"
-            )
+            inst = Locker.get(password=password, name=name, path=path)
+        except (FileNotFoundError, PhibesNotFoundError):
+            err_path = (path, ConfigModel().store_path)[path is None]
+            err_name = (f" with {name=}!", f"!")[name is None]
+            err = f"No locker found to delete at {err_path}{err_name}\n"
+            raise PhibesNotFoundError(err)
+        inst.delete_instance(name=name)
 
-    @classmethod
-    def delete_anonymous(cls, storage_path: Path, password: str):
-        try:
-            inst = Locker.get_anonymous(storage_path, password)
-        except FileNotFoundError:
-            inst = None
-        if inst:
-            shutil.rmtree(storage_path)
-        else:
-            raise PhibesNotFoundError(
-                f"Locker {storage_path} not found to delete!\n"
-            )
-
-    @classmethod
-    def find(cls, name: str, password: str) -> Optional[Locker]:
-        """
-        Find and return the matching locker
-        :param name: Plaintext name of locker
-        :param password: Locker password
-        :return: Found Locker or None
-        """
-        try:
-            inst = Locker.get(name, password)
-        except FileNotFoundError as err:
-            raise PhibesNotFoundError(
-                f"Locker {name} not found\n"
-                f"{err}"
-            )
-        return inst
+    def delete_instance(self, name: str = None):
+        """Instance method to delete locker"""
+        items = self.list_items()
+        for it in items:
+            self.delete_item(it.name)
+        Path(self.lock_file).unlink()
+        # only remove a directory when it was created for this locker
+        if name:
+            shutil.rmtree(self.path)
 
     @classmethod
     def can_create(cls, locker_path: Path, remove_if_empty=True) -> bool:
@@ -339,8 +298,9 @@ class Locker(object):
         """
         items = []
         item_gen = self.path.glob(f"*.{FILE_EXT}")
+        ext_len = len(FILE_EXT) + 1
         for item_path in [it for it in item_gen]:
-            inst_name = self.decrypt(item_path.name[0:-4])
+            inst_name = self.decrypt(item_path.name[0:-ext_len])
             found = self.get_item(inst_name)
             items.append(found)
         return items
