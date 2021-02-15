@@ -28,15 +28,15 @@ class TestLocker(EmptyLocker):
     def custom_setup(self, tmp_path):
         super(TestLocker, self).custom_setup(tmp_path)
         try:
-            if Locker.get(self.locker_name, self.password):
-                Locker.delete(self.locker_name, self.password)
+            if Locker.get(password=self.password, name=self.locker_name):
+                Locker.delete(password=self.password, name=self.locker_name)
         except Exception:
             pass
 
     def custom_teardown(self, tmp_path):
         super(TestLocker, self).custom_teardown(tmp_path)
         try:
-            Locker.delete(self.locker_name, self.password)
+            Locker.delete(password=self.password, name=self.locker_name)
         except PhibesNotFoundError:
             pass
 
@@ -47,9 +47,8 @@ class TestLocker(EmptyLocker):
             crypt_id=crypto.default_id,
             name=self.locker_name
         )
-        found = Locker.get(self.locker_name, self.password)
+        found = Locker.get(password=self.password, name=self.locker_name)
         assert found
-        return
 
     @pytest.mark.negative
     def test_duplicate(self, tmp_path, datadir, setup_and_teardown):
@@ -124,7 +123,9 @@ class TestAuth(EmptyLocker):
     def test_fail_auth(self, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(PhibesAuthError):
-            self.my_locker = Locker.get(self.locker_name, wrong_pw)
+            self.my_locker = Locker.get(
+                password=wrong_pw, name=self.locker_name
+            )
 
     def custom_setup(self, tmp_path):
         super(TestAuth, self).custom_setup(tmp_path)

@@ -82,13 +82,13 @@ class TestCreateBase(PopulatedLocker):
         return CliRunner().invoke(self.target_cmd, args)
 
     def common_neg_asserts(self, result):
-        assert result.exit_code == 1
-        assert result.exception
+        assert result.exit_code == 1, result.output
+        assert result.exception, result.output
         assert isinstance(result.exception, PhibesCliError)
         return
 
     def common_pos_asserts(self, result, expected_content, locker_inst=None):
-        assert result.exit_code == 0
+        assert result.exit_code == 0, result.exception
         if locker_inst is None:
             locker_inst = self.my_locker
         inst = locker_inst.get_item(self.test_item_name)

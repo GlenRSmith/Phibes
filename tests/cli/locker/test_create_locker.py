@@ -10,8 +10,7 @@ from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
-from phibes.cli.locker.create import create_named_locker_cmd as create_locker_cmd
-# from phibes.cli.locker.create import create_locker_cmd
+from phibes.phibes_cli import create
 from phibes.cli.options import crypt_choices
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
@@ -23,7 +22,7 @@ from tests.lib.test_helpers import ConfigLoadingTestClass
 
 
 params = "command_instance,crypt_id"
-command_instances = [create_locker_cmd, main.commands['create-locker']]
+command_instances = [create, main.commands['create']]
 crypt_ids = list(crypt_choices.choice_dict.keys())
 matrix_params = []
 for element in itertools.product(command_instances, crypt_ids):
