@@ -50,6 +50,3 @@ class EditItemNamedLocker(EditItem):
         'password': password_option,
         'item': item_name_option
     }
-
-    def __init__(self):
-        super(EditItemNamedLocker, self).__init__()

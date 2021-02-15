@@ -67,6 +67,3 @@ class DeleteNamedLocker(DeleteLocker):
         'locker': locker_name_option,
         'password': password_option
     }
-
-    def __init__(self):
-        super(DeleteNamedLocker, self).__init__()

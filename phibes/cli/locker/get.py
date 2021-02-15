@@ -54,6 +54,3 @@ class GetNamedLocker(GetLocker):
         'locker': locker_name_option,
         'password': password_option
     }
-
-    def __init__(self):
-        super(GetNamedLocker, self).__init__()

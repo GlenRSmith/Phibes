@@ -95,6 +95,3 @@ class CreateNamedLocker(CreateLocker):
         'password': new_password_option,
         'crypt_id': crypt_option,
     }
-
-    def __init__(self):
-        super(CreateNamedLocker, self).__init__()

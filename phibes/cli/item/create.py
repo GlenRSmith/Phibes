@@ -56,6 +56,3 @@ class CreateItemNamedLocker(CreateItem):
         'item': item_name_option,
         'template': template_name_option
     }
-
-    def __init__(self):
-        super(CreateItemNamedLocker, self).__init__()

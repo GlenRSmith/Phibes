@@ -62,6 +62,3 @@ class GetItemNamedLocker(GetItem):
         'locker': locker_name_option,
         'item': item_name_option
     }
-
-    def __init__(self):
-        super(GetItemNamedLocker, self).__init__()

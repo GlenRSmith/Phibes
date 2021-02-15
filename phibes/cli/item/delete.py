@@ -57,6 +57,3 @@ class DeleteItemNamedLocker(DeleteItem):
         'locker': locker_name_option,
         'item': item_name_option
     }
-
-    def __init__(self):
-        super(DeleteItemNamedLocker, self).__init__()
