@@ -11,7 +11,7 @@ import base64
 from datetime import datetime
 from pathlib import Path
 import shutil
-from typing import List, Optional
+from typing import List
 
 # Third party packages
 
@@ -30,7 +30,7 @@ ItemList = List[Item]
 # HexStr = Match[HEX_REGEX]
 # str(type(self)).split("'")[1].split(".")[-1].lower()
 
-LOCKER_FILE = ".config"
+LOCKER_FILE = "locker.config"
 
 
 class Locker(object):
@@ -45,7 +45,24 @@ class Locker(object):
         self.path = None
         self.lock_file = None
         self.crypt_impl = None
-        return
+        self.timestamp = None
+
+    @staticmethod
+    def get_pw_hash(storage_path: Path) -> str:
+        """
+        Method to get the stored password hash without authenticating
+        :param storage_path: Filesystem path to the locker
+        :return: pw_hash
+        """
+        msgs = f"{storage_path}\n"
+        lock_file = storage_path / LOCKER_FILE
+        if not lock_file.exists():
+            raise PhibesNotFoundError(msgs)
+        else:
+            msgs += f"... {lock_file.resolve()}\n"
+            rec = phibes_file.read(lock_file)
+            pw_hash = rec['body']
+        return pw_hash
 
     @staticmethod
     def get_stored_name(name: str) -> str:
@@ -69,56 +86,71 @@ class Locker(object):
         ).decode()
 
     @classmethod
-    def get(cls, name: str, password: str):
+    def get(cls, password: str, name: str = None, path: str = None) -> Locker:
         """
-        Opening an interface to an existing locker
-        :param name: The name of the locker
-        :param password: Password for the locker
+        Get a Locker object
+        @param password: Password for existing locker
+        @param name: The optional name of the locker
+        @param path: The optional path to the locker
+        @return: Locker instance
         """
-        conf = ConfigModel()
+        if path is None:
+            storage_path = Path(ConfigModel().store_path)
+        else:
+            storage_path = path
+        if name:
+            storage_path = storage_path / Locker.get_stored_name(name)
+        msgs = f"{storage_path=}\n"
         inst = Locker()
-        path = conf.store_path
-        # start a string for verbose error/debugging
-        msgs = f"{path=}\n{name=}\n"
-        full_path = conf.store_path / Locker.get_stored_name(name)
-        lockfile = full_path / LOCKER_FILE
-        if not lockfile.exists():
+        inst.lock_file = storage_path / LOCKER_FILE
+        if not inst.lock_file.exists():
             raise PhibesNotFoundError(msgs)
         else:
-            inst.path = full_path
-            inst.lock_file = lockfile
-            msgs += f"... {lockfile.resolve()}\n"
-            rec = phibes_file.read(lockfile)
+            inst.path = storage_path
+            msgs += f"... {inst.lock_file.resolve()}\n"
+            rec = phibes_file.read(inst.lock_file)
             pw_hash = rec['body']
             salt = rec['salt']
             crypt_id = rec['crypt_id']
             msgs += f"trying {crypt_id=} {password=} {pw_hash=}\n"
             inst.crypt_impl = get_crypt(crypt_id, password, pw_hash, salt)
+            inst.timestamp = rec['timestamp']
         return inst
 
     @classmethod
-    def create(cls, name: str, password: str, crypt_id: str = None):
+    def create(
+            cls, password: str,
+            crypt_id: str,
+            name: str = None,
+            path: str = None
+    ):
         """
         Create a Locker object
-        :param name: The name of the locker. Must be unique in storage
         :param password: Password for the new locker
         :param crypt_id: ID of the crypt_impl to create
+        :param name: The optional name of the locker. Must be unique in storage
+        :param path: The optional path to the locker.
         """
+        if path is None:
+            storage_path = Path(ConfigModel().store_path)
+        else:
+            storage_path = path
+        if name:
+            storage_path = storage_path / Locker.get_stored_name(name)
+            try:
+                storage_path.mkdir(exist_ok=False)
+            except FileExistsError as err:
+                raise PhibesExistsError(err)
+        if not Locker.can_create(storage_path, remove_if_empty=False):
+            raise ValueError(f"could not create {storage_path}")
         try:
-            Locker.get(name, password)
+            Locker.get(password=password, name=name, path=storage_path)
         except PhibesNotFoundError:
             pass
         inst = Locker()
         inst.crypt_impl = create_crypt(password, crypt_id)
-        inst.path = Path(
-            ConfigModel().store_path.joinpath(
-                Locker.get_stored_name(name)
-            )
-        )
+        inst.path = storage_path
         inst.lock_file = inst.path / LOCKER_FILE
-        if not Locker.can_create(inst.path):
-            raise ValueError(f"could not create {name}")
-        inst.path.mkdir(exist_ok=False)
         phibes_file.write(
             inst.lock_file,
             inst.crypt_impl.salt,
@@ -130,35 +162,26 @@ class Locker(object):
         return inst
 
     @classmethod
-    def delete(cls, name: str, password: str):
+    def delete(cls, password: str, name: str = None, path: str = None):
+        """Delete a locker"""
         try:
-            inst = Locker.get(name, password)
-        except FileNotFoundError:
-            inst = None
-        if inst:
-            shutil.rmtree(inst.path)
-        else:
-            raise PhibesNotFoundError(
-                f"Locker {name} not found to delete!\n"
-                f"{ConfigModel().store_path}\n"
-            )
+            inst = Locker.get(password=password, name=name, path=path)
+        except (FileNotFoundError, PhibesNotFoundError):
+            err_path = (path, ConfigModel().store_path)[path is None]
+            err_name = (f" with {name=}!", f"!")[name is None]
+            err = f"No locker found to delete at {err_path}{err_name}\n"
+            raise PhibesNotFoundError(err)
+        inst.delete_instance(name=name)
 
-    @classmethod
-    def find(cls, name: str, password: str) -> Optional[Locker]:
-        """
-        Find and return the matching locker
-        :param name: Plaintext name of locker
-        :param password: Locker password
-        :return: Found Locker or None
-        """
-        try:
-            inst = Locker.get(name, password)
-        except FileNotFoundError as err:
-            raise PhibesNotFoundError(
-                f"Locker {name} not found\n"
-                f"{err}"
-            )
-        return inst
+    def delete_instance(self, name: str = None):
+        """Instance method to delete locker"""
+        items = self.list_items()
+        for it in items:
+            self.delete_item(it.name)
+        Path(self.lock_file).unlink()
+        # only remove a directory when it was created for this locker
+        if name:
+            shutil.rmtree(self.path)
 
     @classmethod
     def can_create(cls, locker_path: Path, remove_if_empty=True) -> bool:
@@ -180,8 +203,6 @@ class Locker(object):
             else:
                 if remove_if_empty:
                     locker_path.rmdir()
-                else:
-                    return False
         return True
 
     def validate(self):
@@ -214,27 +235,15 @@ class Locker(object):
         file_name = f"{self.encrypt(item_name)}.{FILE_EXT}"
         return self.path.joinpath(file_name)
 
-    def create_item(
-            self, item_name: str,
-            template_name: Optional[str] = None
-    ) -> Item:
+    def create_item(self, item_name: str) -> Item:
         """
         Creates an in-memory item, prepopulates `content` from named template
         (if provided)
         Client must follow up with `add_item` call to save the new item.
         @param item_name: name of new item
-        @param template_name: name of (optional) template item
         @return: new in-memory item
         """
-        new_item = Item(self.crypt_impl, item_name)
-        if template_name:
-            template = self.get_item(template_name)
-            if not template:
-                raise PhibesNotFoundError(
-                    f"template {template_name} not found"
-                )
-            new_item.content = template.content
-        return new_item
+        return Item(self.crypt_impl, item_name)
 
     def add_item(self, item: Item) -> None:
         """
@@ -289,8 +298,9 @@ class Locker(object):
         """
         items = []
         item_gen = self.path.glob(f"*.{FILE_EXT}")
+        ext_len = len(FILE_EXT) + 1
         for item_path in [it for it in item_gen]:
-            inst_name = self.decrypt(item_path.name[0:-4])
+            inst_name = self.decrypt(item_path.name[0:-ext_len])
             found = self.get_item(inst_name)
             items.append(found)
         return items

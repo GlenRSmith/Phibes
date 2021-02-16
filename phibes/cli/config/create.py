@@ -9,14 +9,14 @@ import pathlib
 import click
 
 # in-project modules
-from phibes.cli.command_base import PhibesCommandBase
+from phibes.cli.command_base import PhibesCommand
 from phibes.cli.lib import PhibesCliExistsError, PhibesCliError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import DEFAULT_EDITOR, DEFAULT_STORE_PATH
 from phibes.lib.config import get_home_dir, write_config_file
 
 
-class CreateConfigCmd(PhibesCommandBase):
+class CreateConfigCmd(PhibesCommand):
     """
     Class for user command to create a configuration file
     """
@@ -77,5 +77,5 @@ options = {
 
 
 create_config_cmd = CreateConfigCmd.make_click_command(
-    'create-config', options, exclude_common=True
+    'create-config', options
 )

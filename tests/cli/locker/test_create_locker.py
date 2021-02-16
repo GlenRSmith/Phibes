@@ -10,7 +10,8 @@ from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
-from phibes.cli.locker.create import create_locker_cmd, crypt_choices
+from phibes.phibes_cli import create
+from phibes.cli.options import crypt_choices
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
 from phibes.phibes_cli import main
@@ -21,7 +22,7 @@ from tests.lib.test_helpers import ConfigLoadingTestClass
 
 
 params = "command_instance,crypt_id"
-command_instances = [create_locker_cmd, main.commands['create-locker']]
+command_instances = [create, main.commands['create']]
 crypt_ids = list(crypt_choices.choice_dict.keys())
 matrix_params = []
 for element in itertools.product(command_instances, crypt_ids):
@@ -59,16 +60,16 @@ class TestCreateLocker(ConfigLoadingTestClass):
             self, setup_and_teardown, command_instance, crypt_id
     ):
         result = CliRunner().invoke(
-            command_instance,
-            [
+            cli=command_instance,
+            args=[
                 "--config", self.test_path,
                 "--locker", self.name,
                 "--password", self.pw,
                 "--crypt_id", crypt_id
-            ]
+            ],
+            input="y\n"
         )
-        print(f"\n\n{result=}\n")
-        assert result.exit_code == 0
+        assert result.exit_code == 0, f"{result.output}"
         assert "created" in result.output
         return
 
@@ -79,12 +80,13 @@ class TestCreateLocker(ConfigLoadingTestClass):
     ):
         update_config_option_default(command_instance, self.test_path)
         result = CliRunner().invoke(
-            command_instance,
-            [
+            cli=command_instance,
+            args=[
                 "--locker", self.name,
                 "--password", self.pw,
                 "--crypt_id", crypt_id
-            ]
+            ],
+            input="y\n"
         )
         print(result)
         assert result.exit_code == 0

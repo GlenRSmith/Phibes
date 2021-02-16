@@ -1,18 +1,19 @@
 """
-Click interface to get Locker
+Click interface command helpers
 """
 
 # core library modules
 import abc
-import copy
-import getpass
+from os import environ
 import pathlib
 
 # third party packages
 import click
 
 # in-project modules
-from phibes.lib.config import CONFIG_FILE_NAME, load_config_file, get_home_dir
+from phibes.cli.options import env_options, env_vars
+from phibes.lib.config import CONFIG_FILE_NAME
+from phibes.lib.config import get_home_dir
 
 
 config_option = click.option(
@@ -26,88 +27,46 @@ config_option = click.option(
     show_envvar=True,
     envvar="PHIBES_CONFIG",
 )
-locker_option = click.option(
-    '--locker',
-    prompt='Locker',
-    type=str,
-    default=getpass.getuser(),
-    help="Name of locker, defaults to local OS username"
-)
-password_option = click.option(
-    '--password',
-    prompt='Password',
-    help='Password used when Locker was created',
-    hide_input=True
-)
 
 
-COMMON_OPTIONS = {
-    'config': config_option,
-    'locker': locker_option,
-    'password': password_option
-}
+class PhibesCommand(abc.ABC):
+    """
+    Base command class without options
+    """
 
-
-class PhibesCommandBase(abc.ABC):
-
-    options = copy.deepcopy(COMMON_OPTIONS)
+    options = {}
 
     def __init__(self):
         return
 
-    # @property
-    # @abc.abstractmethod
-    # def options(self):
-    #     return
-
     @staticmethod
-    @abc.abstractmethod
-    def handle(*args, **kwargs):
-        return
+    def handle(*args, **kwargs) -> None:
+        """
+        Handler for CLI commands as implemented by each Command class
+        """
+        for kw in kwargs:
+            if kwargs[kw] and kw in env_vars:
+                environ[env_vars[kw]] = kwargs[kw]
 
     @classmethod
     def make_click_command(
             cls,
             cmd_name: str,
-            initial_options: dict,
-            exclude_common: bool = False
+            initial_options: dict = None,
+            *args, **kwargs
     ) -> click.command:
         """
-        Creates a click command with common options and specific options.
+        Creates a click command with specified options.
         Takes a command name, a python function, and a dict of options,
         and returns a named click.command
         """
-        if not exclude_common:
-            # Being careful not to mutate the module-level dict
-            options = copy.deepcopy(COMMON_OPTIONS)
-            # Merge the passed-in options dict into the common options dict.
-            # This exposes the ability to override any of the common options,
-            # such as making the `password` option issue a confirmation prompt.
-            options.update(initial_options)
-        else:
-            options = initial_options
+        if not initial_options:
+            initial_options = cls.options
+        options = initial_options
+        options.update(env_options)
         # Apply all the options to the func, the way the decorators would do
         for option in reversed(options.values()):
             option(cls.handle)
         return click.command(
             cmd_name, context_settings=dict(max_content_width=120)
         )(cls.handle)
-
-
-class ConfigFileLoadingCmd(PhibesCommandBase):
-
-    # @property
-    # def options(self):
-    #     return
-    #
-    def __init__(self):
-        super(ConfigFileLoadingCmd, self).__init__()
-        return
-
-    @staticmethod
-    def handle(config_file, *args, **kwargs):
-        super(ConfigFileLoadingCmd, ConfigFileLoadingCmd).handle(
-            *args, **kwargs
-        )
-        load_config_file(config_file)
-        return

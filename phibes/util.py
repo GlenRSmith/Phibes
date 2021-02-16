@@ -10,7 +10,7 @@ from pathlib import Path
 import click
 
 # for purposes of the CLI project, lib is being treated as third-party!
-from locker import Locker
+from phibes.model import Locker
 
 
 @click.group()
@@ -23,7 +23,7 @@ def main():
 @click.option('--password', prompt='Password', hide_input=True)
 @click.option('--filename', prompt='Name of file')
 def encrypt(name, password, filename):
-    my_locker = Locker(name, password)
+    my_locker = Locker.get(name=name, password=password)
     text_file = Path(my_locker.path).joinpath(filename)
     with text_file.open("r") as tf:
         content = tf.read()
@@ -37,7 +37,7 @@ def encrypt(name, password, filename):
 @click.option('--password', prompt='Password', hide_input=True)
 @click.option('--filename', prompt='Name of file')
 def decrypt(name, password, filename):
-    my_locker = Locker(name, password)
+    my_locker = Locker.get(name=name, password=password)
     crypt_file = Path(my_locker.path).joinpath(filename)
     with crypt_file.open("r") as cf:
         cipher_text = cf.read()

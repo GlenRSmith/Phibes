@@ -11,9 +11,11 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes import phibes_cli
 from phibes.cli.lib import PhibesCliNotFoundError
+from phibes.lib.config import ConfigModel
 
 # local test code
 from tests.lib import test_helpers
+from tests.cli.click_test_helpers import update_config_option_default
 
 
 class TestGetItem(test_helpers.PopulatedLocker):
@@ -37,25 +39,37 @@ class TestGetItem(test_helpers.PopulatedLocker):
         return
 
     def invoke(self, item_name: str):
+        # change the configured working path to the test directory
+        update_config_option_default(self.list_items, self.test_path)
+        # get the current config
+        config = ConfigModel()
+        # persist the changed config
+        self.update_config(config)
         return CliRunner().invoke(
-            self.list_items, [
+            catch_exceptions=False,
+            cli=self.list_items,
+            args=[
                 "--config", self.test_path,
-                "--locker", self.locker_name, "--password", self.password,
+                "--password", self.password,
+                "--locker", self.locker_name,
                 "--item", item_name
             ]
         )
 
     @pytest.mark.positive
-    def test_get_exact_item(self, setup_and_teardown):
+    def test_get_exact_item(self, setup_and_teardown, tmp_path):
         result = self.invoke(self.item_name)
-        assert result.exit_code == 0
+        err_report = (
+            f"{result=}\n"
+            f"{result.exception=}\n"
+            f"{result.output=}\n"
+            f"{result.exit_code=}\n"
+            f"{self.test_path=}\n"
+        )
+        assert result.exit_code == 0, err_report
         assert self.item_name in result.output
-        return
 
     @pytest.mark.positive
     def test_get_wrong_name(self, setup_and_teardown):
-        result = self.invoke(self.missing_item_name)
-        assert result.exit_code == 1
-        assert type(result.exception) is PhibesCliNotFoundError
-        return
-
+        with pytest.raises(PhibesCliNotFoundError):
+            self.invoke(self.missing_item_name)

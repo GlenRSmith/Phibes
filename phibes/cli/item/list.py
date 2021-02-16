@@ -3,50 +3,57 @@ Click interface to phibes items
 """
 
 # core library modules
-
 # third party packages
 import click
 
 # in-project modules
-from phibes.cli.command_base import ConfigFileLoadingCmd
 from phibes.cli.lib import present_list_items
+from phibes.cli.command_base import config_option
+from phibes.cli.command_base import PhibesCommand
+from phibes.cli.lib import get_locker_args
+from phibes.cli.options import locker_name_option
+from phibes.cli.options import locker_path_option
+from phibes.cli.options import password_option
+from phibes.cli.options import verbose_item_option
 
 
-class ListItemsCmd(ConfigFileLoadingCmd):
+class ListItems(PhibesCommand):
+    """
+    Command to list items in a locker
+    """
+
+    options = {
+        'config': config_option,
+        'password': password_option,
+        'path': locker_path_option,
+        'verbose': verbose_item_option
+    }
 
     def __init__(self):
-        super(ListItemsCmd, self).__init__()
-        return
+        super(ListItems, self).__init__()
 
     @staticmethod
-    def handle(
-            config, locker, password, verbose, *args, **kwargs
-    ):
+    def handle(*args, **kwargs):
         """
-        Display the (unencrypted) names of all matching Items in the Locker
-        :param config:
-        :param locker:
-        :param password:
-        :param verbose: Include unencrypted item content in the report
-        :return:
+        Get an item from the locker
         """
-        super(ListItemsCmd, ListItemsCmd).handle(
-            config, *args, **kwargs
-        )
-        click.echo(
-            present_list_items(locker, password, verbose)
-        )
+        super(ListItems, ListItems).handle(*args, **kwargs)
+        verbose = kwargs.get('verbose', False)
+        locker_inst = get_locker_args(*args, **kwargs)
+        click.echo(present_list_items(locker_inst, verbose))
 
 
-options = {
-    'verbose': click.option(
-        '--verbose',
-        prompt='Verbose',
-        help='Present entire contents of each item',
-        default=False,
-        type=bool
-    )
-}
+class ListItemsNamedLocker(ListItems):
+    """
+    Class to create & run click command to list items in a named locker
+    """
 
+    options = {
+        'config': config_option,
+        'password': password_option,
+        'locker': locker_name_option,
+        'verbose': verbose_item_option
+    }
 
-list_items_cmd = ListItemsCmd.make_click_command('list', options)
+    def __init__(self):
+        super(ListItemsNamedLocker, self).__init__()

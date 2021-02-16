@@ -3,45 +3,62 @@ Click interface to get an item
 """
 
 # core library modules
-
 # third party packages
 import click
 
 # in-project modules
-from phibes.cli.command_base import ConfigFileLoadingCmd
-from phibes.cli.lib import get_item as help_get_item
+from phibes.cli.command_base import config_option
+from phibes.cli.command_base import PhibesCommand
+from phibes.cli.errors import PhibesCliError
+from phibes.cli.lib import get_item
+from phibes.cli.lib import get_locker_args
+from phibes.cli.options import item_name_option
+from phibes.cli.options import locker_name_option
+from phibes.cli.options import locker_path_option
+from phibes.cli.options import password_option
 
 
-class GetItemCmd(ConfigFileLoadingCmd):
+class GetItem(PhibesCommand):
+    """
+    Command to get an item from a locker
+    """
+
+    options = {
+        'config': config_option,
+        'password': password_option,
+        'path': locker_path_option,
+        'item': item_name_option
+    }
 
     def __init__(self):
-        super(GetItemCmd, self).__init__()
-        return
+        super(GetItem, self).__init__()
 
     @staticmethod
-    def handle(config, locker, password, item, *args, **kwargs):
+    def handle(*args, **kwargs):
         """
-        Get the named Item from the Locker
-        :param config:
-        :param locker:
-        :param password:
-        :param item:
-        :return:
+        Get an item from the locker
         """
-        super(GetItemCmd, GetItemCmd).handle(
-            config, *args, **kwargs
-        )
-        my_item = help_get_item(locker, password, item)
-        click.echo(f"{my_item}")
+        super(GetItem, GetItem).handle(*args, **kwargs)
+        try:
+            item_name = kwargs.get('item')
+            if not item_name:
+                raise KeyError('item')
+        except KeyError as err:
+            raise PhibesCliError(f'missing required param {err}')
+        inst = get_locker_args(*args, **kwargs)
+        item_inst = get_item(locker=inst, item_name=item_name)
+        click.echo(f"{item_inst}")
+        return item_inst
 
 
-options = {
-    'item': click.option(
-        '--item',
-        prompt='Item name',
-        help='Name of item to get',
-    )
-}
+class GetItemNamedLocker(GetItem):
+    """
+    Class to create & run click command to get an item from a named locker
+    """
 
-
-get_item_cmd = GetItemCmd.make_click_command('get-item', options)
+    options = {
+        'config': config_option,
+        'password': password_option,
+        'locker': locker_name_option,
+        'item': item_name_option
+    }
