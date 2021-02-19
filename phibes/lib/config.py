@@ -18,7 +18,7 @@ from phibes.lib.errors import PhibesConfigurationError
 # TODO: provide server config, this is mostly single user, local CLI config
 
 
-CONFIG_FILE_NAME = 'phibes.txt'
+CONFIG_FILE_NAME = '.phibes.cfg'
 DEFAULT_STORE_PATH = '.phibes'
 DEFAULT_EDITOR = environ.get('EDITOR', 'unknown')
 HOME_DIR = None
