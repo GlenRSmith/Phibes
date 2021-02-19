@@ -15,7 +15,8 @@ from phibes.cli.errors import PhibesCliExistsError
 from phibes.cli.errors import PhibesCliNotFoundError
 from phibes.lib.config import ConfigModel, get_editor, load_config_file
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.model import Item, Locker
+# from phibes.model import Item
+from phibes.model import Locker
 
 CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
@@ -183,12 +184,11 @@ def edit_item(locker_inst: Locker, item_name: str):
     return locker_inst.update_item(item)
 
 
-def present_list_items(locker_inst: Locker, verbose: bool):
+def present_list_items2(items, verbose: bool):
     """Function to list items in a locker"""
     ret_val = f""
-    items = locker_inst.list_items()
     if verbose:
-        for sec in locker_inst.list_items():
+        for sec in items:
             ret_val += f"{sec}"
     else:
         longest = 10
@@ -200,17 +200,10 @@ def present_list_items(locker_inst: Locker, verbose: bool):
     return ret_val
 
 
-def get_item(locker: Locker, item_name: str) -> Item:
-    """
-
-    @param locker:
-    @param item_name:
-    @return:
-    """
-    try:
-        return locker.get_item(item_name)
-    except PhibesNotFoundError as err:
-        raise PhibesCliNotFoundError(err)
+def present_list_items(locker_inst: Locker, verbose: bool):
+    """Function to list items in a locker"""
+    items = locker_inst.list_items()
+    return present_list_items2(items, verbose)
 
 
 def delete_item_unity(locker: Locker, item_name: str):

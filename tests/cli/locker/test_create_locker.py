@@ -10,7 +10,6 @@ from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
-from phibes.phibes_cli import create
 from phibes.cli.options import crypt_choices
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
@@ -22,7 +21,7 @@ from tests.lib.test_helpers import ConfigLoadingTestClass
 
 
 params = "command_instance,crypt_id"
-command_instances = [create, main.commands['create']]
+command_instances = [main.commands['create']]
 crypt_ids = list(crypt_choices.choice_dict.keys())
 matrix_params = []
 for element in itertools.product(command_instances, crypt_ids):

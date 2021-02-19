@@ -5,35 +5,34 @@ Click-based command-line interface to phibes
 # core library modules
 # third party packages
 # in-project modules
+from phibes.cli.commands import build_cli_app
+from phibes.cli.commands import Action, Target
 from phibes.cli.config.create import create_config_cmd
 from phibes.cli.config.update import update_config_cmd
+from phibes.cli import handlers
 from phibes.cli.item.create import CreateItemNamedLocker
-from phibes.cli.item.delete import DeleteItemNamedLocker
 from phibes.cli.item.edit import EditItemNamedLocker
-from phibes.cli.item.get import GetItemNamedLocker
-from phibes.cli.item.list import ListItemsNamedLocker
 from phibes.cli.lib import main, main_func
-from phibes.cli.locker.create import CreateNamedLocker
-from phibes.cli.locker.delete import DeleteNamedLocker
-from phibes.cli.locker.get import GetNamedLocker
 
-create = CreateNamedLocker.make_click_command('create')
-info = GetNamedLocker.make_click_command('info')
-delete = DeleteNamedLocker.make_click_command('delete')
+command_dict = {
+    Target.Locker: {
+        Action.Create: {'name': 'create', 'func': handlers.create_locker},
+        Action.Get: {'name': 'info', 'func': handlers.get_locker},
+        Action.Delete: {'name': 'delete', 'func': handlers.delete_locker},
+    },
+    Target.Item: {
+        Action.Get: {'name': 'get-item', 'func': handlers.get_item},
+        Action.List: {'name': 'list', 'func': handlers.get_items},
+        Action.Delete: {'name': 'delete-item', 'func': handlers.delete_item}
+    }
+}
+build_cli_app(
+    command_dict=command_dict, click_group=main, named_locker=True
+)
 create_item = CreateItemNamedLocker.make_click_command('create-item')
-get_item = GetItemNamedLocker.make_click_command('get-item')
-delete_item = DeleteItemNamedLocker.make_click_command('delete-item')
-edit_item = EditItemNamedLocker.make_click_command('edit')
-list_items = ListItemsNamedLocker.make_click_command('list')
-
-main.add_command(create)
-main.add_command(info)
-main.add_command(delete)
-main.add_command(edit_item)
 main.add_command(create_item)
-main.add_command(get_item)
-main.add_command(list_items)
-main.add_command(delete_item)
+edit_item = EditItemNamedLocker.make_click_command('edit')
+main.add_command(edit_item)
 main.add_command(create_config_cmd)
 main.add_command(update_config_cmd)
 

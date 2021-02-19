@@ -16,7 +16,6 @@ from phibes.lib.config import ConfigModel
 from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker, LOCKER_FILE
 from phibes.phibes_cli import main
-from phibes.phibes_cli import info as info_cmd
 
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
@@ -24,7 +23,7 @@ from tests.lib.test_helpers import PopulatedLocker
 
 
 params = "command_instance,config_arg"
-command_instances = [info_cmd, main.commands['info']]
+command_instances = [main.commands['info']]
 include_config_arg = [False, True]
 matrix_params = []
 for element in itertools.product(command_instances, include_config_arg):
@@ -74,6 +73,8 @@ class TestMatrixHashed(PopulatedLocker):
             "--locker", arg_dict.get('name', self.locker_name),
             "--password", arg_dict.get('password', self.password)
         ]
+        assert 'editor' not in arg_list
+        assert '--editor' not in arg_list
         ret_val = CliRunner().invoke(
             cli=cmd_inst, args=arg_list
         )
@@ -129,7 +130,8 @@ class TestMatrixHashed(PopulatedLocker):
     @pytest.mark.parametrize(params, matrix_params)
     @pytest.mark.negative
     def test_auth_fail(self, command_instance, config_arg, setup_and_teardown):
-        all_lockers = list(self.lockers.keys()) + [self.locker_name]
+        # all_lockers = list(self.lockers.keys()) + [self.locker_name]
+        all_lockers = [self.locker_name]
         for lck in all_lockers:
             result = self.prep_and_run(
                 config_arg,
@@ -137,7 +139,7 @@ class TestMatrixHashed(PopulatedLocker):
                 {'name': lck, 'password': self.password + "mangle"}
             )
             assert result
-            assert result.exit_code == 1
+            assert result.exit_code == 1, str(result.exception)
             assert type(result.exception) is PhibesAuthError
             # prove the locker is there if you use the right auth
             result = self.prep_and_run(
@@ -146,7 +148,7 @@ class TestMatrixHashed(PopulatedLocker):
                 {'name': lck, 'password': self.password}
             )
             assert result
-            assert result.exit_code == 0
+            assert result.exit_code == 0, f"{result.exception=}"
             # alert if tests are messing up actual user home dir
             assert not Path.home().joinpath(self.locker_name).exists()
         return

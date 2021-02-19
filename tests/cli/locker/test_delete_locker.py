@@ -10,7 +10,6 @@ import pytest
 
 # Local application/library specific imports
 from phibes import crypto
-from phibes.phibes_cli import delete as delete_cmd
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
 from phibes.phibes_cli import main
@@ -43,7 +42,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
 
     @pytest.mark.parametrize(
         "command_instance",
-        [delete_cmd, main.commands['delete']]
+        [main.commands['delete']]
     )
     @pytest.mark.positive
     def test_delete_locker_main(
@@ -70,7 +69,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
 
     @pytest.mark.parametrize(
         "command_instance",
-        [delete_cmd, main.commands['delete']]
+        [main.commands['delete']]
     )
     @pytest.mark.positive
     def test_delete_locker_normal(

@@ -70,7 +70,7 @@ class ConfigLoadingTestClass(BaseTestClass):
 
     def custom_teardown(self, tmp_path):
         conf = tmp_path / CONFIG_FILE_NAME
-        conf.unlink()
+        # conf.unlink()
         return
 
     def update_config(self, config: ConfigModel) -> ConfigModel:

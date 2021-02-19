@@ -18,7 +18,7 @@ from phibes.lib.errors import PhibesConfigurationError
 # TODO: provide server config, this is mostly single user, local CLI config
 
 
-CONFIG_FILE_NAME = '.phibes.cfg'
+CONFIG_FILE_NAME = 'phibes.txt'
 DEFAULT_STORE_PATH = '.phibes'
 DEFAULT_EDITOR = environ.get('EDITOR', 'unknown')
 HOME_DIR = None
@@ -147,6 +147,14 @@ class ConfigModel(object):
         return
 
     def __str__(self):
+        # Some things are not json serializable, e.g. Path
+        ret_val = {
+            "store_path": str(self.store_path.resolve()),
+            "editor": self.editor
+        }
+        return json.dumps(ret_val, indent=4)
+
+    def __repr__(self):
         # Some things are not json serializable, e.g. Path
         ret_val = {
             "store_path": str(self.store_path.resolve()),
