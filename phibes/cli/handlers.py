@@ -3,8 +3,7 @@ Click command handler functions
 """
 # core library modules
 import enum
-
-# from pathlib import Path
+from pathlib import Path
 # import subprocess
 
 # third party packages
@@ -15,7 +14,8 @@ import click
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.errors import PhibesCliExistsError
 from phibes.cli.errors import PhibesCliNotFoundError
-from phibes.cli.lib import present_list_items2
+from phibes.cli.lib import present_list_items2, set_work_path
+from phibes.cli.lib import user_edit_local_item
 from phibes.cli.options import crypt_choices
 from phibes.lib.config import ConfigModel, load_config_file
 from phibes.lib.errors import PhibesExistsError
@@ -50,6 +50,13 @@ def make_common_kwargs(**kwargs):
     ret_val['locker'] = kwargs.get('locker', None)
     ret_val['store_type'] = StoreType.FileSystem
     ret_val['store_path'] = store_path
+    try:
+        set_work_path(str(store_path.absolute()))
+    except TypeError as err:
+        raise PhibesCliError(
+            f"{err=}"
+            f"{str(store_path.absolute())=}"
+        )
     return ret_val
 
 
@@ -127,50 +134,72 @@ def delete_locker(*args, **kwargs):
         click.echo(f"locker not removed")
 
 
-# def create_item(*args, **kwargs):
-#     req_args = make_common_kwargs(**kwargs)
-#     template = kwargs.get('template', None)
-#     if template == 'Empty':
-#         template = None
-#     try:
-#         item_name = kwargs.get('item')
-#     except KeyError as err:
-#         raise PhibesCliError(f'missing required param {err}')
-#     try:
-#         item_inst = text_views.get_item(item_name=item_name, **req_args)
-#         if item_inst:
-#             raise PhibesCliExistsError(
-#                 f"{item_name} already exists in locker\n"
-#                 f"please use the `edit` command to modify\n"
-#             )
-#     except PhibesNotFoundError:
-#         pass
-#     template_is_file = False
-#     if template:
-#         try:
-#             # try to get a template stored by that name
-#             content = text_views.get_item(template).content
-#         except PhibesNotFoundError:
-#             try:
-#                 # try to find a file by that name
-#                 content = Path(template).read_text()
-#                 template_is_file = True
-#             except PhibesNotFoundError:
-#                 raise PhibesCliNotFoundError(f"{template} not found")
-#             except FileNotFoundError:
-#                 raise PhibesCliNotFoundError(f"{template} not found")
-#     else:
-#         content = ''
-#     if not template_is_file:
-#         content = _user_edit_item(
-#             item_name=item_name, initial_content=content
-#         )
-#     return text_views.create_item(
-#         name=kwargs['item'],
-#         content=content,
-#         template_name=template,
-#         **req_args
-#     )
+def create_item(*args, **kwargs):
+    req_args = make_common_kwargs(**kwargs)
+    template = kwargs.get('template', None)
+    if template == 'Empty':
+        template = None
+    try:
+        item_name = kwargs.get('item')
+    except KeyError as err:
+        raise PhibesCliError(f'missing required param {err}')
+    try:
+        item_inst = text_views.get_item(item_name=item_name, **req_args)
+        if item_inst:
+            raise PhibesCliExistsError(
+                f"{item_name} already exists in locker\n"
+                f"please use the `edit` command to modify\n"
+            )
+    except PhibesNotFoundError:
+        pass
+    template_is_file = False
+    if template:
+        try:
+            # try to get an item stored by the template name
+            # TODO: Things like this will break when text_views
+            #       are fixed to not return objects!
+            found = text_views.get_item(item_name=template, **req_args)
+            content = found.content
+        except PhibesNotFoundError as err:
+            try:
+                # try to find a local file by that name
+                content = Path(template).read_text()
+                template_is_file = True
+            except PhibesNotFoundError:
+                raise PhibesCliNotFoundError(f"{template} not found")
+            except FileNotFoundError:
+                raise PhibesCliNotFoundError(f"{template} not found")
+    else:
+        content = ''
+    if not template_is_file:
+        content = user_edit_local_item(
+            item_name=item_name, initial_content=content
+        )
+    return text_views.create_item(
+        item_name=item_name, content=content, **req_args
+    )
+
+
+def edit_item(*args, **kwargs):
+    req_args = make_common_kwargs(**kwargs)
+    try:
+        item_name = kwargs.get('item')
+    except KeyError as err:
+        raise PhibesCliError(f'missing required param {err}')
+    try:
+        item = text_views.get_item(item_name=item_name, **req_args)
+        if not item:
+            raise PhibesNotFoundError
+    except PhibesNotFoundError:
+        raise PhibesCliNotFoundError(
+            f"{item_name} does not exist in locker\n"
+        )
+    content = user_edit_local_item(
+        item_name=item_name, initial_content=item.content
+    )
+    return text_views.update_item(
+        item_name=item_name, content=content, **req_args
+    )
 
 
 def get_item(*args, **kwargs):

@@ -88,7 +88,10 @@ class TestCreateBase(PopulatedLocker):
         return
 
     def common_pos_asserts(self, result, expected_content, locker_inst=None):
-        assert result.exit_code == 0, result.exception
+        assert result.exit_code == 0, (
+            f"{result.exception=}\n"
+            f"{result.output=}\n"
+        )
         if locker_inst is None:
             locker_inst = self.my_locker
         inst = locker_inst.get_item(self.test_item_name)

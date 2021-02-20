@@ -3,6 +3,7 @@ Support functions for command-line interface modules.
 """
 
 # core library modules
+from os import environ
 import pathlib
 import subprocess
 
@@ -13,9 +14,9 @@ import click
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.errors import PhibesCliExistsError
 from phibes.cli.errors import PhibesCliNotFoundError
-from phibes.lib.config import ConfigModel, get_editor, load_config_file
+from phibes.lib.config import ConfigModel, load_config_file
 from phibes.lib.errors import PhibesNotFoundError
-# from phibes.model import Item
+from phibes.model import Item
 from phibes.model import Locker
 
 CONTEXT_SETTINGS = dict(
@@ -114,74 +115,103 @@ def get_locker_args(*args, **kwargs) -> Locker:
         raise PhibesCliNotFoundError(err)
 
 
-def _user_edit_item(locker_inst: Locker, item):
-    work_file = None
+def get_editor() -> str:
+    """
+    Get the user's configured editor, or raise an exception
+    @return: editor as configured in environment
+    """
+    editor = environ.get('PHIBES_EDITOR', environ.get('EDITOR', None))
+    if not editor:
+        raise PhibesCliError(
+            "`PHIBES_EDITOR` or `EDITOR` must be set in environment"
+        )
+    return editor
+
+
+def get_work_path() -> pathlib.Path:
+    """
+    Get the user's configured work_path, or raise an exception
+    @return: work_path as configured in environment
+    """
+    work_path = environ.get('PHIBES_WORK_PATH', None)
+    if not work_path:
+        raise PhibesCliError(
+            "`PHIBES_WORK_PATH` must be set in environment"
+        )
+    return pathlib.Path(work_path)
+
+
+def set_work_path(work_path: str):
+    """
+    Set the work_path in the current environment.
+    Does not write to a file.
+    """
+    environ['PHIBES_WORK_PATH'] = work_path
+
+
+EDITOR_FROM_ENV = True
+WORKPATH_FROM_ENV = True
+
+
+def user_edit_file(
+        work_path: pathlib.Path, name: str, content: str
+):
+    if EDITOR_FROM_ENV:
+        editor = get_editor()
+    else:
+        conf = CliConfig()
+        editor = conf.editor
+    work_file = work_path / f"{name}.tmp"
     try:
-        work_file = locker_inst.path.joinpath(f"{item.name}.tmp")
-        work_file.write_text(item.content)
-        edit_cmd = f"{get_editor()} {work_file}"
+        work_file.write_text(content)
+        edit_cmd = f"{editor} {work_file}"
         subprocess.call(edit_cmd, shell=True)
-        # os.system(edit_cmd)
-        item.content = work_file.read_text()
+        return work_file.read_text()
     except Exception as err:
         work_file = None
         raise PhibesCliError(err)
     finally:
         if work_file:
             work_file.unlink()
+
+
+def user_edit_local_item(item_name: str, initial_content: str = ''):
+    if WORKPATH_FROM_ENV:
+        work_path = get_work_path()
+    else:
+        conf = CliConfig()
+        work_path = pathlib.Path(conf.store_path)
+    return user_edit_file(
+        work_path=work_path, name=item_name, content=initial_content
+    )
+
+
+def user_edit_item(locker: Locker, item: Item):
+    item.content = user_edit_file(
+        work_path=pathlib.Path(locker.path),
+        name=item.name,
+        content=item.content
+    )
     return item
 
 
-def create_item(
-        locker: Locker,
-        item_name: str,
-        template_name: str = None,
-):
-    try:
-        if locker.get_item(item_name):
-            raise PhibesCliExistsError(
-                f"{item_name} already exists in locker\n"
-                f"please use the `edit` command to modify\n"
-            )
-    except PhibesNotFoundError:
-        pass
-    item = locker.create_item(item_name=item_name)
-    template_is_file = False
-    if template_name:
-        try:
-            # try to get a template stored by that name
-            item.content = locker.get_item(template_name).content
-        except PhibesNotFoundError:
-            try:
-                # try to find a file by that name
-                item.content = pathlib.Path(template_name).read_text()
-                template_is_file = True
-            except PhibesNotFoundError:
-                raise PhibesCliNotFoundError(f"{template_name} not found")
-            except FileNotFoundError:
-                raise PhibesCliNotFoundError(f"{template_name} not found")
-    else:
-        item.content = ''
-    if not template_is_file:
-        _user_edit_item(locker, item)
-    locker.add_item(item)
-
-
-def edit_item(locker_inst: Locker, item_name: str):
+def edit_item(locker: Locker, item_name: str):
     """
     Open a text editor to edit an existing item in a locker
-    :param locker_inst: Instance of locker
+    :param locker: Instance of locker
     :param item_name: Name of item to edit
     :return:
     """
     try:
-        item = locker_inst.get_item(item_name)
+        item = locker.get_item(item_name)
     except PhibesNotFoundError:
-        raise PhibesCliNotFoundError(
-            f"Item `{item_name}` not found"
-        )
-    _user_edit_item(locker_inst, item)
-    return locker_inst.update_item(item)
+        raise PhibesCliNotFoundError(f"Item `{item_name}` not found")
+    item.content = user_edit_file(
+        work_path=pathlib.Path(locker.path),
+        name=item.name,
+        content=item.content
+    )
+    return locker.update_item(item)
 
 
 def present_list_items2(items, verbose: bool):
@@ -204,10 +234,3 @@ def present_list_items(locker_inst: Locker, verbose: bool):
     """Function to list items in a locker"""
     items = locker_inst.list_items()
     return present_list_items2(items, verbose)
-
-
-def delete_item_unity(locker: Locker, item_name: str):
-    try:
-        return locker.delete_item(item_name)
-    except PhibesNotFoundError as err:
-        raise PhibesCliNotFoundError(err)

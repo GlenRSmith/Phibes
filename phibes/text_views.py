@@ -43,11 +43,17 @@ def delete_locker(**kwargs):
 
 
 def create_item(item_name: str, content: str, **kwargs):
-    # not implemented
     locker = _get_locker_helper(locker_args=kwargs)
     item = locker.create_item(item_name=item_name)
     item.content = content
-    locker.add_item(item)
+    return locker.add_item(item)
+
+
+def update_item(item_name: str, content: str, **kwargs):
+    locker = _get_locker_helper(locker_args=kwargs)
+    item = locker.get_item(item_name)
+    item.content = content
+    return locker.update_item(item)
 
 
 def get_item(item_name: str, **kwargs):
