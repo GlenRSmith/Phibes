@@ -12,7 +12,6 @@ import click
 
 # in-project modules
 from phibes.cli.errors import PhibesCliError
-from phibes.cli.errors import PhibesCliExistsError
 from phibes.cli.errors import PhibesCliNotFoundError
 from phibes.lib.config import ConfigModel, load_config_file
 from phibes.lib.errors import PhibesNotFoundError
@@ -159,8 +158,7 @@ def user_edit_file(
     if EDITOR_FROM_ENV:
         editor = get_editor()
     else:
-        conf = CliConfig()
-        editor = conf.editor
+        raise PhibesCliError('not implemented')
     work_file = work_path / f"{name}.tmp"
     try:
         work_file.write_text(content)
@@ -179,8 +177,7 @@ def user_edit_local_item(item_name: str, initial_content: str = ''):
     if WORKPATH_FROM_ENV:
         work_path = get_work_path()
     else:
-        conf = CliConfig()
-        work_path = pathlib.Path(conf.store_path)
+        raise PhibesCliError('not implemented')
     return user_edit_file(
         work_path=work_path, name=item_name, content=initial_content
     )

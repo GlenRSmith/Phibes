@@ -160,7 +160,7 @@ def create_item(*args, **kwargs):
             #       are fixed to not return objects!
             found = text_views.get_item(item_name=template, **req_args)
             content = found.content
-        except PhibesNotFoundError as err:
+        except PhibesNotFoundError:
             try:
                 # try to find a local file by that name
                 content = Path(template).read_text()
