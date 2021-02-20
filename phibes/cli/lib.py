@@ -12,7 +12,6 @@ import click
 
 # in-project modules
 from phibes.cli.errors import PhibesCliError
-from phibes.cli.errors import PhibesCliExistsError
 from phibes.cli.errors import PhibesCliNotFoundError
 from phibes.lib.config import ConfigModel, load_config_file
 from phibes.lib.errors import PhibesNotFoundError

@@ -10,7 +10,7 @@ import click
 
 # in-project modules
 from phibes.cli.command_base import PhibesCommand
-from phibes.cli.lib import PhibesCliExistsError, PhibesCliError
+from phibes.cli.errors import PhibesCliExistsError, PhibesCliError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import DEFAULT_EDITOR, DEFAULT_STORE_PATH
 from phibes.lib.config import get_home_dir, write_config_file
