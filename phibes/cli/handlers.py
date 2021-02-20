@@ -61,7 +61,7 @@ def make_common_kwargs(**kwargs):
 
 
 def create_locker(*args, **kwargs):
-    """Click command hander to Create a Locker"""
+    """Create a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
         path = req_args.get('store_path')
@@ -88,7 +88,7 @@ def create_locker(*args, **kwargs):
 
 
 def get_locker(*args, **kwargs):
-    """Click command handler to Get a Locker"""
+    """Get a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
         # inst = services.get_locker(**kwargs)
@@ -107,6 +107,7 @@ def get_locker(*args, **kwargs):
 
 
 def delete_locker(*args, **kwargs):
+    """Delete a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
         inst = text_views.get_locker(**req_args)
@@ -135,6 +136,7 @@ def delete_locker(*args, **kwargs):
 
 
 def create_item(*args, **kwargs):
+    """Create an Item in a Locker"""
     req_args = make_common_kwargs(**kwargs)
     template = kwargs.get('template', None)
     if template == 'Empty':
@@ -181,6 +183,7 @@ def create_item(*args, **kwargs):
 
 
 def edit_item(*args, **kwargs):
+    """Edit the contents of an Item in a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
         item_name = kwargs.get('item')
@@ -203,7 +206,7 @@ def edit_item(*args, **kwargs):
 
 
 def get_item(*args, **kwargs):
-    """Click command handler to Get an Item"""
+    """Get and display an Item from a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
         item_inst = text_views.get_item(
@@ -218,7 +221,7 @@ def get_item(*args, **kwargs):
 
 
 def get_items(*args, **kwargs):
-    """Click command handler to Get all Items"""
+    """Get and display all Items in a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
         items = text_views.get_items(**req_args)
@@ -234,7 +237,7 @@ def get_items(*args, **kwargs):
 
 
 def delete_item(*args, **kwargs):
-    """Click command handler to Delete an Item"""
+    """Delete an Item from a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
         resp = text_views.delete_item(
