@@ -130,8 +130,7 @@ class TestMatrixHashed(PopulatedLocker):
     @pytest.mark.parametrize(params, matrix_params)
     @pytest.mark.negative
     def test_auth_fail(self, command_instance, config_arg, setup_and_teardown):
-        # all_lockers = list(self.lockers.keys()) + [self.locker_name]
-        all_lockers = [self.locker_name]
+        all_lockers = list(self.lockers.keys()) + [self.locker_name]
         for lck in all_lockers:
             result = self.prep_and_run(
                 config_arg,
