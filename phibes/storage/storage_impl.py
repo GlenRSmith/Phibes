@@ -11,7 +11,7 @@ from typing import Optional
 
 class StorageImpl(abc.ABC):
 
-    @classmethod
+    @staticmethod
     @abc.abstractmethod
     def get(cls, locker_id: str = None) -> dict:
         """
@@ -19,7 +19,7 @@ class StorageImpl(abc.ABC):
         """
         pass
 
-    @classmethod
+    @staticmethod
     @abc.abstractmethod
     def create(cls, password: str, crypt_id: str, name: str = None):
         """
@@ -30,7 +30,7 @@ class StorageImpl(abc.ABC):
         """
         pass
 
-    @classmethod
+    @staticmethod
     @abc.abstractmethod
     def delete(cls, password: str, name: str = None) -> None:
         """
@@ -41,7 +41,7 @@ class StorageImpl(abc.ABC):
         """
         pass
 
-    @classmethod
+    @staticmethod
     @abc.abstractmethod
     def get_item(cls, item_id: str, locker_id: str = None) -> dict:
         """
@@ -53,7 +53,7 @@ class StorageImpl(abc.ABC):
         """
         pass
 
-    @classmethod
+    @staticmethod
     @abc.abstractmethod
     def list_items(cls, locker_id: str = None) -> list:
         """
@@ -62,7 +62,8 @@ class StorageImpl(abc.ABC):
         """
         pass
 
-    @classmethod
+    @staticmethod
+    @abc.abstractmethod
     def add_item(
             cls, item_id: str, item_rec: dict, locker_id: str = None
     ) -> None:
@@ -71,6 +72,17 @@ class StorageImpl(abc.ABC):
         @param item_id: Item name - encrypted by caller
         @param item_rec: dict representation of item
         @param locker_id: Optional hashed locker name
+        @return: None
+        """
+        pass
+
+    @staticmethod
+    @abc.abstractmethod
+    def delete_item(item_id: str, locker_id: str = None) -> None:
+        """
+        Deletes the item from the locker
+        @param item_id: Item locker_id - encrypted by caller
+        @param locker_id: Optional hashed locker locker_id
         @return: None
         """
         pass
