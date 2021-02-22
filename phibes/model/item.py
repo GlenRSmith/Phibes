@@ -61,12 +61,29 @@ class Item(object):
         :return:
         """
         rec = phibes_file.read(pth)
-        self._salt = rec['salt']
-        self.timestamp = rec['timestamp']
-        self._ciphertext = rec['body']
+        Item.make_item_from_dict(
+            crypt_obj=self.crypt_impl,
+            name=self.name,
+            item_dict=rec,
+            item_inst=self
+        )
+
+    @classmethod
+    def make_item_from_dict(
+            cls, crypt_obj: CryptIfc,
+            name: str,
+            item_dict: dict,
+            item_inst: Item = None
+    ) -> Item:
+        if item_inst is None:
+            item_inst = Item(crypt_obj=crypt_obj, name=name)
+        item_inst._salt = item_dict['salt']
+        item_inst.timestamp = item_dict['timestamp']
+        item_inst._ciphertext = item_dict['body']
         # crypt_impl will have generated a random salt,
         # need to set it to the correct one for this item
-        self.crypt_impl.salt = self._salt
+        item_inst.crypt_impl.salt = item_inst._salt
+        return item_inst
 
     def __str__(self):
         ret_val = "Item\n"
