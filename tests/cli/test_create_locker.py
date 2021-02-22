@@ -87,7 +87,9 @@ class TestCreateLocker(ConfigLoadingTestClass):
             ],
             input="y\n"
         )
-        print(result)
-        assert result.exit_code == 0
+        assert result.exit_code == 0, (
+            f"       {result.output}       "
+            f"       {result.exit_code}       "
+        )
         assert "created" in result.output
         return
