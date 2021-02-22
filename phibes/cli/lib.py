@@ -3,7 +3,6 @@ Support functions for command-line interface modules.
 """
 
 # core library modules
-from os import environ
 import pathlib
 import subprocess
 
@@ -11,6 +10,7 @@ import subprocess
 import click
 
 # in-project modules
+from phibes.cli.cli_config import CliConfig
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.errors import PhibesCliNotFoundError
 from phibes.lib.config import ConfigModel, load_config_file
@@ -119,7 +119,7 @@ def get_editor() -> str:
     Get the user's configured editor, or raise an exception
     @return: editor as configured in environment
     """
-    editor = environ.get('PHIBES_EDITOR', environ.get('EDITOR', None))
+    editor = CliConfig().editor
     if not editor:
         raise PhibesCliError(
             "`PHIBES_EDITOR` or `EDITOR` must be set in environment"
@@ -127,39 +127,11 @@ def get_editor() -> str:
     return editor
 
 
-def get_work_path() -> pathlib.Path:
-    """
-    Get the user's configured work_path, or raise an exception
-    @return: work_path as configured in environment
-    """
-    work_path = environ.get('PHIBES_WORK_PATH', None)
-    if not work_path:
-        raise PhibesCliError(
-            "`PHIBES_WORK_PATH` must be set in environment"
-        )
-    return pathlib.Path(work_path)
-
-
-def set_work_path(work_path: str):
-    """
-    Set the work_path in the current environment.
-    Does not write to a file.
-    """
-    environ['PHIBES_WORK_PATH'] = work_path
-
-
-EDITOR_FROM_ENV = True
-WORKPATH_FROM_ENV = True
-
-
 def user_edit_file(
-        work_path: pathlib.Path, name: str, content: str
+        work_path: str, name: str, content: str
 ):
-    if EDITOR_FROM_ENV:
-        editor = get_editor()
-    else:
-        raise PhibesCliError('not implemented')
-    work_file = work_path / f"{name}.tmp"
+    editor = CliConfig().editor
+    work_file = pathlib.Path(work_path) / f"{name}.tmp"
     try:
         work_file.write_text(content)
         edit_cmd = f"{editor} {work_file}"
@@ -174,10 +146,7 @@ def user_edit_file(
 
 
 def user_edit_local_item(item_name: str, initial_content: str = ''):
-    if WORKPATH_FROM_ENV:
-        work_path = get_work_path()
-    else:
-        raise PhibesCliError('not implemented')
+    work_path = CliConfig().work_path
     return user_edit_file(
         work_path=work_path, name=item_name, content=initial_content
     )
