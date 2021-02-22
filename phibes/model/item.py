@@ -34,19 +34,18 @@ class Item(object):
         self.name = name
         self.crypt_impl = crypt_obj
         self._ciphertext = None
-        self.timestamp = None
+        self.timestamp = str(datetime.now())
         if content:
             self.content = content
         return
 
     def save(self, pth: Path, overwrite: bool = False):
-        self.timestamp = str(datetime.now())
         phibes_file.write(
-            pth,
-            self.salt,
-            self.crypt_impl.crypt_id,
-            self.timestamp,
-            self._ciphertext,
+            pth=pth,
+            salt=self.salt,
+            crypt_id=self.crypt_impl.crypt_id,
+            timestamp=self.timestamp,
+            body=self._ciphertext,
             overwrite=overwrite
         )
         return
