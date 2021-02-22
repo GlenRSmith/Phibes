@@ -10,9 +10,10 @@ from click.testing import CliRunner
 
 # Local application/library specific imports
 from phibes import phibes_cli
+from phibes.cli.cli_config import CliConfig
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.cli.lib import PhibesCliError
-from phibes.lib.config import set_editor, write_config_file
+from phibes.lib.config import write_config_file
 
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
@@ -37,7 +38,7 @@ class TestCreateBase(PopulatedLocker):
         my_item = self.my_locker.create_item(self.good_template_name)
         my_item.content = f"{self.good_template_name}:secret"
         self.my_locker.add_item(my_item)
-        set_editor('echo happyclappy>> ')
+        CliConfig().editor = 'echo happyclappy>> '
         write_config_file(tmp_path, update=True)
         try:
             self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]

@@ -4,83 +4,26 @@ Package configuration
 
 
 # Built-in library packages
+import enum
 import json
 from os import environ
 from pathlib import Path
 from typing import Optional, Union
 
 # Third party packages
-
 # In-project modules
-# Be very cautious here not to introduce cyclic imports
 from phibes.lib.errors import PhibesConfigurationError
-
-# TODO: provide server config, this is mostly single user, local CLI config
 
 
 CONFIG_FILE_NAME = '.phibes.cfg'
 DEFAULT_STORE_PATH = '.phibes'
-DEFAULT_EDITOR = environ.get('EDITOR', 'unknown')
-HOME_DIR = None
-
-"""
-After installing the package, there is no config file, no environment vars.
-
-Certain operations require specific environment variables to be set.
-
-There are command-line dependencies and core dependencies.
-
-I don't know how well I'll be able to partition them for the stages.
-Preferred editor is clearly a CLI-only requirement.
-It is used for adding/editing items.
-Those commands have a --editor option.
-If it is provided, the operation will be attempted
-"""
 
 
-def get_editor() -> str:
-    """
-    Get the user's configured editor, or raise an exception
-    @return: editor as configured in environment
-    """
-    editor = environ.get('PHIBES_EDITOR', environ.get('EDITOR'))
-    if not editor:
-        raise PhibesConfigurationError(
-            "`PHIBES_EDITOR` or `EDITOR` must be set in environment"
-        )
-    return editor
+class StoreType(enum.Enum):
+    FileSystem = 'FileSystem'
 
 
-def get_home_dir() -> Path:
-    """
-    This allows changing the home dir without changing the command
-    interface. It simplifies configuring testing to not use user's home.
-    """
-    global HOME_DIR
-    if not HOME_DIR:
-        HOME_DIR = Path.home()
-    return HOME_DIR
-
-
-def set_home_dir(path: Path) -> None:
-    """Set global home_dir"""
-    global HOME_DIR
-    if not path.exists():
-        raise FileNotFoundError(f"{path} does not exist")
-    HOME_DIR = path
-    return
-
-
-def get_store_path(config_path: Optional[Path] = None) -> Optional[Path]:
-    """
-    get the configured store_path
-    :param config_path: optional config path
-    :return: the configured store path
-    """
-    if config_path is None:
-        return None
-    conf = load_config_file(config_path)
-    return conf.store_path
+DEFAULT_STORE_TYPE = StoreType.FileSystem
 
 
 class ConfigModel(object):
@@ -93,7 +36,6 @@ class ConfigModel(object):
         Accessor for configuration store path
         :return: protected _store_path attribute
         """
-        # ret_val = a if True else b
         return self._store_path
 
     @store_path.setter
@@ -107,58 +49,33 @@ class ConfigModel(object):
             new_val = Path(new_val)
         self._validate_store_path(new_val)
         self._store_path = new_val
+        environ['PHIBES_STORE_PATH'] = f"{self._store_path}"
         return
 
-    @property
-    def editor(self) -> str:
+    def __init__(self, store_path: Union[Path, str] = None):
         """
-        Accessor for configuration editor
-        :return: protected _editor attribute
+        Create a config object
+        @param store_path: overriding store_path
         """
-        return self._editor
-
-    @editor.setter
-    def editor(self, new_val: str):
-        """
-        Mutator for configuration editor
-        :param new_val: new editor to assign
-        :return: None
-        """
-        self._validate_editor(new_val)
-        self._editor = new_val
-        return
-
-    def __init__(
-            self,
-            store_path: Union[Path, str] = None,
-            editor: str = None
-    ):
-        # Any of the args not passed in, get them from the environment
-        if store_path:
-            # if it was passed in, use the property mutator (it validates)
-            self.store_path = store_path
-        else:
-            self.store_path = environ.get("PHIBES_STORE_PATH", None)
-        if editor:
-            self.editor = editor
-        else:
-            self._editor = environ.get("PHIBES_EDITOR", None)
+        self.store_path = (
+            store_path, environ.get("PHIBES_STORE_PATH", None)
+        )[store_path is None]
         self.apply()
-        return
 
     def __str__(self):
+        """
+        Override the string representation of config
+        """
         # Some things are not json serializable, e.g. Path
         ret_val = {
-            "store_path": str(self.store_path.resolve()),
-            "editor": self.editor
+            "store_path": str(self.store_path.resolve())
         }
         return json.dumps(ret_val, indent=4)
 
     def __repr__(self):
         # Some things are not json serializable, e.g. Path
         ret_val = {
-            "store_path": str(self.store_path.resolve()),
-            "editor": self.editor
+            "store_path": str(self.store_path.resolve())
         }
         return json.dumps(ret_val, indent=4)
 
@@ -179,23 +96,11 @@ class ConfigModel(object):
                 )
         return
 
-    @staticmethod
-    def _validate_editor(val):
-        if type(val) is not str:
-            raise PhibesConfigurationError(
-                f"editor must be str, {val} is {type(val)}"
-            )
-        return
-
     def validate(self):
         failures = []
         # Trigger the field validation in each property mutator
         try:
             self.store_path = self._store_path
-        except TypeError as err:
-            failures.append(f"{err}\n")
-        try:
-            self.editor = self._editor
         except TypeError as err:
             failures.append(f"{err}\n")
         if failures:
@@ -207,39 +112,32 @@ class ConfigModel(object):
         Make the values in this instance the "live" config
         """
         self.validate()
-        environ['PHIBES_STORE_PATH'] = f"{self._store_path}"
-        environ['PHIBES_EDITOR'] = f"{self._editor}"
 
 
-def set_editor(editor: str):
+def load_config_file(path: Path) -> ConfigModel:
     """
-    Set the editor in the current environment.
-    Does not write to a file.
-    """
-    model = ConfigModel()
-    model.editor = editor
-    model.apply()
-
-
-def load_config_file(path):
-    """
-    Read a config path and set the environment from it.
+    Read a config path, set the environment from it, return the ConfigModel.
+    @param path: the config file, or directory containing it
+    @return: The newly-loaded ConfigModel
     """
     if not path.exists():
         raise FileNotFoundError(f"{path.absolute()} not found")
     if path.is_dir():
+        parent_dir = path
         conf_file = path.joinpath(CONFIG_FILE_NAME)
     elif path.is_file():
+        parent_dir = path.parent
         conf_file = path
     else:
-        raise ValueError(
+        raise PhibesConfigurationError(
             f"{path} must be an existing directory or a file"
         )
     with conf_file.open('r') as cf:
         conf_dict = json.loads(cf.read())
     conf_mod = ConfigModel(
-        conf_dict.get('store_path', Path.joinpath(get_home_dir(), ".phibes")),
-        conf_dict['editor']
+        conf_dict.get(
+            'store_path', Path.joinpath(parent_dir, DEFAULT_STORE_PATH)
+        )
     )
     conf_mod.apply()
     return conf_mod
@@ -262,7 +160,7 @@ def write_config_file(
         elif path.is_file():
             conf_file = path
         else:
-            raise TypeError(
+            raise PhibesConfigurationError(
                 f"{path} must be a directory or a file"
             )
     elif path.name == CONFIG_FILE_NAME and path.parent.exists():

@@ -9,8 +9,9 @@ import random
 
 # Local application/library specific imports
 from phibes import crypto
+from phibes.cli.cli_config import set_home_dir
 from phibes.lib.config import CONFIG_FILE_NAME
-from phibes.lib.config import ConfigModel, set_home_dir
+from phibes.lib.config import ConfigModel
 from phibes.lib.config import load_config_file, write_config_file
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Item, Locker
@@ -59,10 +60,7 @@ class ConfigLoadingTestClass(BaseTestClass):
     def custom_setup(self, tmp_path):
         super(ConfigLoadingTestClass, self).custom_setup(tmp_path)
         set_home_dir(tmp_path)
-        conf = ConfigModel(
-            store_path=tmp_path,
-            editor=self.editor
-        )
+        conf = ConfigModel(store_path=tmp_path)
         write_config_file(tmp_path, conf)
         self.test_path = tmp_path
         load_config_file(tmp_path)
