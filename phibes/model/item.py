@@ -79,6 +79,17 @@ class Item(object):
         ret_val += f"\n----------\n"
         return ret_val
 
+    def as_dict(self):
+        ret_val = {
+            'salt': self.salt,
+            'crypt_id': self.crypt_impl.crypt_id,
+            'timestamp': self.timestamp,
+            'body': self.content,
+            'name': self.name,
+            '_ciphertext': self._ciphertext
+        }
+        return ret_val
+
     @property
     def content(self):
         """
