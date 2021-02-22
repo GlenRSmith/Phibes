@@ -22,6 +22,10 @@ class PhibesCliError(errors.PhibesError):
         return f"{self.__class__}: {msg}"
 
 
+class PhibesCliConfigurationError(PhibesCliError):
+    pass
+
+
 class PhibesCliNotFoundError(PhibesCliError):
     pass
 
