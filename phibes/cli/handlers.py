@@ -51,7 +51,7 @@ def make_common_kwargs(**kwargs):
     ret_val['store_type'] = StoreType.FileSystem
     ret_val['store_path'] = store_path
     try:
-        set_work_path(str(store_path.absolute()))
+        CliConfig().work_path = str(store_path.absolute())
     except TypeError as err:
         raise PhibesCliError(
             f"{err=}"

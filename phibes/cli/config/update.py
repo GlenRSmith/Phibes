@@ -9,11 +9,12 @@ import pathlib
 import click
 
 # in-project modules
+from phibes.cli.cli_config import get_home_dir, CliConfig
 from phibes.cli.command_base import PhibesCommand
 from phibes.cli.errors import PhibesCliExistsError, PhibesCliError
 from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
-from phibes.lib.config import get_home_dir, load_config_file
+from phibes.lib.config import load_config_file
 from phibes.lib.config import write_config_file
 
 
@@ -33,8 +34,9 @@ def populate_defaults():
         pass
     try:
         current_conf = ConfigModel()
+        current_cli_conf = CliConfig()
         default_store_path = current_conf.store_path
-        default_editor = current_conf.editor
+        default_editor = current_cli_conf.editor
     except PhibesConfigurationError:
         pass
 
@@ -55,7 +57,6 @@ class UpdateConfigCmd(PhibesCommand):
     def handle(
             path: pathlib.Path,
             store_path: pathlib.Path,
-            editor: str,
             *args, **kwargs
     ):
         """
@@ -65,9 +66,7 @@ class UpdateConfigCmd(PhibesCommand):
             *args, **kwargs
         )
         try:
-            new_config = ConfigModel(
-                store_path=store_path, editor=editor
-            )
+            new_config = ConfigModel(store_path=store_path)
             write_config_file(path, new_config, update=True)
         except ValueError as err:
             raise PhibesCliError(err)

@@ -9,11 +9,13 @@ import pathlib
 import click
 
 # in-project modules
+from phibes.cli.cli_config import DEFAULT_EDITOR
+from phibes.cli.cli_config import get_home_dir
 from phibes.cli.command_base import PhibesCommand
 from phibes.cli.errors import PhibesCliExistsError, PhibesCliError
 from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
-from phibes.lib.config import DEFAULT_EDITOR, DEFAULT_STORE_PATH
-from phibes.lib.config import get_home_dir, write_config_file
+from phibes.lib.config import DEFAULT_STORE_PATH
+from phibes.lib.config import write_config_file
 
 
 class CreateConfigCmd(PhibesCommand):
@@ -40,7 +42,7 @@ class CreateConfigCmd(PhibesCommand):
         )
         try:
             new_config = ConfigModel(
-                store_path=store_path, editor=editor
+                store_path=store_path
             )
             new_config.validate()
             write_config_file(path, new_config)
