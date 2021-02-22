@@ -13,7 +13,7 @@ import click
 # in-project modules
 from phibes.cli.options import env_options, env_vars
 from phibes.lib.config import CONFIG_FILE_NAME
-from phibes.lib.config import get_home_dir
+from phibes.cli.cli_config import get_home_dir
 
 
 config_option = click.option(
