@@ -55,7 +55,10 @@ class TestDeleteItem(PopulatedLocker):
         assert inst
         assert inst.name == self.delete_item_name
         result = self.invoke(self.delete_item_name)
-        assert result.exit_code == 0, result
+        assert result.exit_code == 0, (
+            f"      {self.locker_name=}      "
+            f"      {result=}      "
+        )
         with pytest.raises(PhibesNotFoundError):
             self.my_locker.get_item(self.delete_item_name)
         return
