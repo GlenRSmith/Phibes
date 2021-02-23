@@ -21,10 +21,9 @@ class TestCreate(EmptyLocker):
     def test_create_empty_items(self, setup_and_teardown):
         all_lockers = list(self.lockers.values()) + [self.my_locker]
         for lck in all_lockers:
-            pth = lck.get_item_path("secret_name")
-            new_item = Item(lck.crypt_impl, "secret_name")
+            new_item = lck.create_item("secret_name")
             with pytest.raises(AttributeError):
-                new_item.save(pth)
+                lck.add_item(new_item)
 
 
 class TestCreateAndSave(EmptyLocker):
@@ -40,13 +39,10 @@ class TestCreateAndSave(EmptyLocker):
                 f"password: HardHat"
                 f"secret_name"
             )
-            pth = lck.get_item_path("secret_name")
-            new_item = Item(lck.crypt_impl, "secret_name")
+            new_item = lck.create_item(item_name="secret_name")
             new_item.content = content
-            new_item.save(pth)
-            pth = lck.get_item_path("secret_name")
-            found = Item(lck.crypt_impl, "secret_name")
-            found.read(pth)
+            lck.add_item(new_item)
+            found = lck.get_item(item_name="secret_name")
             assert found
 
     @pytest.mark.positive
@@ -60,12 +56,10 @@ class TestCreateAndSave(EmptyLocker):
                 f"password: HardHat"
                 f"template:my_template"
             )
-            pth = lck.get_item_path("secret_name")
-            new_item = Item(lck.crypt_impl, "sekrit_name")
+            new_item = lck.create_item(item_name="sekrit_name")
             new_item.content = content
-            new_item.save(pth)
-            found = Item(lck.crypt_impl, "sekrit_name")
-            found.read(pth)
+            lck.add_item(item=new_item)
+            found = lck.get_item(item_name="sekrit_name")
             assert found
 
     @pytest.mark.positive
@@ -92,9 +86,7 @@ class TestCreateAndSave(EmptyLocker):
             new_item.content = content
             lck.add_item(new_item)
             found = lck.get_item('any name')
-            test_fields = [
-                'salt', 'timestamp', 'content', 'name', '_ciphertext'
-            ]
+            test_fields = ['salt', 'timestamp', 'content', '_ciphertext']
             for fld in test_fields:
                 set_val = getattr(new_item, fld)
                 found_val = getattr(found, fld)
@@ -116,9 +108,7 @@ class TestCreateAndSave(EmptyLocker):
             new_item.content = content
             lck.add_item(new_item)
             found = lck.get_item('any name')
-            test_fields = [
-                'salt', 'timestamp', 'content', 'name', '_ciphertext'
-            ]
+            test_fields = ['salt', 'timestamp', 'content', '_ciphertext']
             for fld in test_fields:
                 assert getattr(new_item, fld) is not None, (
                     f"   {fld=} is None      "
