@@ -4,10 +4,13 @@ Like HTTP views, but just text for CLI
 """
 
 # core library modules
+import json
+
 # third party packages
 # in-project modules
 # from phibes.model import Item
 from phibes.model import Locker
+from phibes.lib.utils import ReprType, todict
 
 
 def _get_locker_helper(locker_args, update_args=False):
@@ -17,24 +20,35 @@ def _get_locker_helper(locker_args, update_args=False):
         arg_op = locker_args.get
     # unused for now
     # store_type = arg_op('store_type')
-    return Locker.get(
-        password=arg_op('password'),
-        name=arg_op('locker', None),
-        path=arg_op('store_path')
+    inst = Locker.get(
+        password=arg_op('password'), name=arg_op('locker', None)
     )
+    return inst
+
+
+def render_response(object, repr: ReprType = ReprType.Object):
+    if repr == ReprType.Object:
+        return object
+    elif repr == ReprType.JSON:
+        return todict(object)
+    elif repr == ReprType.Text:
+        return json.dumps(todict(object))
+    elif repr == ReprType.HTML:
+        raise ValueError(f'{repr} not implemented')
 
 
 def create_locker(crypt_id: str, **kwargs):
     pw = kwargs.get('password')
     name = kwargs.get('locker', None)
-    pth = kwargs.get('store_path')
-    return Locker.create(
-        password=pw, crypt_id=crypt_id, name=name, path=pth
-    )
+    return Locker.create(password=pw, crypt_id=crypt_id, name=name)
 
 
 def get_locker(**kwargs):
-    return _get_locker_helper(locker_args=kwargs)
+    ret_resp = render_response(
+        object=_get_locker_helper(locker_args=kwargs),
+        repr=ReprType.Object
+    )
+    return ret_resp
 
 
 def delete_locker(**kwargs):

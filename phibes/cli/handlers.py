@@ -2,30 +2,23 @@
 Click command handler functions
 """
 # core library modules
-import enum
 from pathlib import Path
-# import subprocess
 
 # third party packages
 import click
 
 # in-project modules
-# from phibes.cli.cli_config import CliConfig
+from phibes.cli.cli_config import CliConfig
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.errors import PhibesCliExistsError
 from phibes.cli.errors import PhibesCliNotFoundError
-from phibes.cli.lib import present_list_items2, set_work_path
+from phibes.cli.lib import present_list_items2
 from phibes.cli.lib import user_edit_local_item
 from phibes.cli.options import crypt_choices
-from phibes.lib.config import ConfigModel, load_config_file
+from phibes.lib.config import ConfigModel, load_config_file, StoreType
 from phibes.lib.errors import PhibesExistsError
 from phibes.lib.errors import PhibesNotFoundError
 from phibes import text_views
-
-
-# this will go in Phibes
-class StoreType(enum.Enum):
-    FileSystem = 'FileSystem'
 
 
 def make_common_kwargs(**kwargs):
@@ -35,7 +28,7 @@ def make_common_kwargs(**kwargs):
     try:
         ret_val = {'password': kwargs.get('password')}
     except KeyError:
-        raise PhibesCliError(f'missing required password')
+        raise PhibesCliError('missing password')
     if 'path' in kwargs:
         store_path = kwargs.get('path')
     elif 'config' in kwargs:
@@ -44,12 +37,10 @@ def make_common_kwargs(**kwargs):
         load_config_file(config_file)
         store_path = ConfigModel().store_path
     else:
-        raise PhibesCliError(
-            f'path param must be provided by param or in config file'
-        )
+        raise PhibesCliError('path must be provided as param or in config file')
     ret_val['locker'] = kwargs.get('locker', None)
     ret_val['store_type'] = StoreType.FileSystem
-    ret_val['store_path'] = store_path
+    ret_val['store_path'] = store_path  # this should get posted to Config.
     try:
         CliConfig().work_path = str(store_path.absolute())
     except TypeError as err:
@@ -91,13 +82,20 @@ def get_locker(*args, **kwargs):
     """Get a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
-        # inst = services.get_locker(**kwargs)
         inst = text_views.get_locker(**req_args)
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
+
+    # click.echo(f"Locker stored as {inst['path']}")
+    # click.echo(f"Created {inst['timestamp']}")
+    # click.echo(f"Crypt ID {inst['crypt_impl']['crypt_id']}")
+    # raise PhibesCliError(f"Locker {inst}")
+
     click.echo(f"Locker stored as {inst.path.name}")
+    click.echo(f"Locker stored as {inst.path}")
     click.echo(f"Created {inst.timestamp}")
     click.echo(f"Crypt ID {inst.crypt_impl.crypt_id}")
+
     # Don't present server details
     # if inst.path.exists():
     #     click.echo(f"confirmed locker dir {inst.path} exists")
@@ -130,9 +128,9 @@ def delete_locker(*args, **kwargs):
     except PhibesNotFoundError:
         inst = None
     if not inst:
-        click.echo(f"confirmed locker removed")
+        click.echo("confirmed locker removed")
     else:
-        click.echo(f"locker not removed")
+        click.echo("locker not removed")
 
 
 def create_item(*args, **kwargs):
