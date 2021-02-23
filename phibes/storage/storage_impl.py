@@ -3,7 +3,7 @@ Storage Implementation Interface
 """
 # Built-in library packages
 import abc
-from typing import Optional
+# from typing import Optional
 
 # Third party packages
 # In-project modules

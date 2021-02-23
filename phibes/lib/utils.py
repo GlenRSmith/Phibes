@@ -3,11 +3,65 @@ Various helpful bits
 """
 
 # Built-in library packages
+import collections
+import enum
 from typing import Optional
 
 # Third party packages
-
 # In-project modules
+
+
+class ReprType(enum.Enum):
+    Text = 'Text'
+    JSON = 'JSON'
+    HTML = 'HTML'
+    Object = 'Object'
+
+
+# def todict(obj, classkey=None):
+#     if isinstance(obj, dict):
+#         data = {}
+#         for (k, v) in obj.items():
+#             data[k] = todict(v, classkey)
+#         return data
+#     elif hasattr(obj, "_ast"):
+#         return todict(obj._ast())
+#     elif hasattr(obj, "__iter__") and not isinstance(obj, str):
+#         return [todict(v, classkey) for v in obj]
+#     elif hasattr(obj, "__dict__"):
+#         data = dict([(key, todict(value, classkey))
+#             for key, value in obj.__dict__.items()
+#             if not callable(value) and not key.startswith('_')])
+#         if classkey is not None and hasattr(obj, "__class__"):
+#             data[classkey] = obj.__class__.__name__
+#         return data
+#     else:
+#         return str(obj)
+
+
+def todict(obj):
+    """
+    Recursively convert a Python object graph to sequences (lists)
+    and mappings (dicts) of primitives (bool, int, float, string, ...)
+    """
+    if isinstance(obj, str):
+        return obj
+    elif isinstance(obj, dict):
+        return dict((key, todict(val)) for key, val in obj.items())
+    elif isinstance(obj, collections.Iterable):
+        return [todict(val) for val in obj]
+    elif hasattr(obj, '__dict__'):
+        return todict(vars(obj))
+    elif hasattr(obj, '__slots__'):
+        return todict(
+            dict(
+                (
+                    name,
+                    getattr(obj, name)
+                ) for name in getattr(obj, '__slots__')
+            )
+        )
+    return str(obj)
 
 
 def class_has_callable(
@@ -23,7 +77,7 @@ def class_has_callable(
     abstract.
     @param cls: The class to test
     @type cls: type
-    @param method: the name of the method to test
+    @param method: the locker_id of the method to test
     @param abstract: whether to require/forbid/ignore the method to be abstract
     @return: Whether `cls` has a callable `method` matching `abstract`
     """

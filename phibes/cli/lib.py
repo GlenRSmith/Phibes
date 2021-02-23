@@ -102,14 +102,14 @@ def get_locker_args(*args, **kwargs) -> Locker:
         pth = ConfigModel().store_path
     else:
         raise PhibesCliError(
-            f'path param must be provided by param or in config file'
+            'path must be provided as param or in config file'
         )
     # locker name is optional, only settable from command-line
     locker = kwargs.get('locker', None)
     try:
-        return Locker.get(password=password, name=locker, path=pth)
+        return Locker.get(password=password, name=locker)
     except PhibesNotFoundError:
-        err_name = (f" with {locker=}!", f"!")[locker is None]
+        err_name = (f" with {locker=}!", "!")[locker is None]
         err = f"No locker found at {pth}{err_name}\n"
         raise PhibesCliNotFoundError(err)
 
@@ -182,7 +182,7 @@ def edit_item(locker: Locker, item_name: str):
 
 def present_list_items2(items, verbose: bool):
     """Function to list items in a locker"""
-    ret_val = f""
+    ret_val = ""
     if verbose:
         for sec in items:
             ret_val += f"{sec}"

@@ -79,10 +79,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
         assert Locker.get(password=self.pw, name=self.name)
         result = CliRunner().invoke(
             cli=command_instance,
-            args=[
-                "--locker", self.name,
-                "--password", self.pw
-            ],
+            args=["--locker", self.name, "--password", self.pw],
             input="y\n"
         )
         assert result.exit_code == 0, (

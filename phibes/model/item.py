@@ -89,10 +89,10 @@ class Item(object):
         ret_val = "Item\n"
         ret_val += f"name: {self.name}\n"
         ret_val += f"timestamp: {self.timestamp}\n"
-        ret_val += f"content follows (between lines)\n"
-        ret_val += f"----------\n"
+        ret_val += "content follows (between lines)\n"
+        ret_val += "----------\n"
         ret_val += f"{self.content}"
-        ret_val += f"\n----------\n"
+        ret_val += "\n----------\n"
         return ret_val
 
     def as_dict(self):
