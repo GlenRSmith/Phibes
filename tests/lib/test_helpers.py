@@ -14,7 +14,7 @@ from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import ConfigModel
 from phibes.lib.config import load_config_file, write_config_file
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.model import Item, Locker
+from phibes.model import Locker
 
 
 plain_texts = [
@@ -131,10 +131,9 @@ class PopulatedLocker(EmptyLocker):
             f"some name\n"
         )
         for lck in all_lockers:
-            pth = lck.get_item_path("secret_name")
-            new_item = Item(lck.crypt_impl, "secret_name")
+            new_item = lck.create_item(item_name="secret_name")
             new_item.content = content
-            new_item.save(pth)
+            lck.add_item(item=new_item)
         return
 
     def custom_teardown(self, tmp_path):
