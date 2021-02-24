@@ -11,7 +11,6 @@ from click.testing import CliRunner
 # Local application/library specific imports
 from phibes import phibes_cli
 from phibes.cli.cli_config import CliConfig
-# from phibes.cli.cli_config import set_editor
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.cli.lib import PhibesCliError
 from phibes.lib.config import write_config_file

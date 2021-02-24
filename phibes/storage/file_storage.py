@@ -20,6 +20,7 @@ from phibes.crypto import create_crypt
 # from phibes.crypto import get_crypt
 from phibes.lib import phibes_file
 from phibes.lib.config import ConfigModel
+from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.errors import PhibesExistsError
 from phibes.lib.errors import PhibesNotFoundError
 # from phibes.lib.errors import PhibesUnknownError
@@ -37,6 +38,8 @@ LOCKER_FILE = "locker.config"
 def get_locker_path(locker_id: str = None) -> Path:
     """Convenience function for getting path to a locker"""
     storage_path = Path(ConfigModel().store_path)
+    if storage_path is None:
+        raise PhibesConfigurationError('missing store_path')
     if locker_id is None:
         locker_path = storage_path
     else:
