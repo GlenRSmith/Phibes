@@ -41,7 +41,7 @@ def populate_defaults():
         pass
 
 
-populate_defaults()
+# populate_defaults()
 
 
 class UpdateConfigCmd(PhibesCommand):

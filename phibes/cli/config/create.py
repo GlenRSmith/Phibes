@@ -9,13 +9,12 @@ import pathlib
 import click
 
 # in-project modules
-from phibes.cli.cli_config import DEFAULT_EDITOR
-from phibes.cli.cli_config import get_home_dir
+from phibes.cli.cli_config import CliConfig, CLI_CONFIG_FILE_NAME
+from phibes.cli.cli_config import DEFAULT_EDITOR, get_home_dir
+from phibes.cli.cli_config import write_config_file
 from phibes.cli.command_base import PhibesCommand
 from phibes.cli.errors import PhibesCliExistsError, PhibesCliError
-from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.config import DEFAULT_STORE_PATH
-from phibes.lib.config import write_config_file
 
 
 class CreateConfigCmd(PhibesCommand):
@@ -30,20 +29,16 @@ class CreateConfigCmd(PhibesCommand):
     @staticmethod
     def handle(
             path: pathlib.Path,
-            store_path: pathlib.Path,
-            editor: str,
             *args, **kwargs
     ):
         """
         Create a new Configuration file
         """
-        super(CreateConfigCmd, CreateConfigCmd).handle(
-            *args, **kwargs
-        )
+        super(CreateConfigCmd, CreateConfigCmd).handle(*args, **kwargs)
         try:
-            new_config = ConfigModel(
-                store_path=store_path
-            )
+            new_config = CliConfig(**kwargs)
+            if not 'store_path' in kwargs:
+                raise ConnectionError(kwargs)
             new_config.validate()
             write_config_file(path, new_config)
         except ValueError as err:
@@ -59,7 +54,7 @@ options = {
         prompt='Path to config file',
         help='Path on filesystem where config file will be written',
         type=pathlib.Path,
-        default=get_home_dir().joinpath(CONFIG_FILE_NAME)
+        default=get_home_dir().joinpath(CLI_CONFIG_FILE_NAME)
     ),
     'store_path': click.option(
         '--store_path',

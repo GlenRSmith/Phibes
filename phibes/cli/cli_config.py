@@ -10,6 +10,8 @@ from pathlib import Path
 # Third party packages
 # In-project modules
 from phibes.cli.errors import PhibesCliConfigurationError
+from phibes.lib.config import ConfigModel
+from phibes.lib.utils import todict
 
 
 HOME_DIR = None
@@ -40,7 +42,7 @@ def set_home_dir(path: Path) -> None:
     return
 
 
-class CliConfig(object):
+class CliConfig(ConfigModel):
     """
     Configuration model class for command-line utility
     """
@@ -50,7 +52,11 @@ class CliConfig(object):
         Accessor for configuration editor
         :return: protected _editor attribute
         """
-        return environ.get('PHIBES_CLI_EDITOR', None)
+        if self._editor is None:
+            self._editor = environ.get(
+                'PHIBES_CLI_EDITOR', environ.get('EDITOR', None)
+            )
+        return self._editor
 
     @editor.setter
     def editor(self, new_val: str):
@@ -69,8 +75,9 @@ class CliConfig(object):
         Accessor for configuration work_path
         :return: protected _work_path attribute
         """
-        ret_val = environ['PHIBES_CLI_WORK_PATH']
-        return ret_val
+        if self._work_path is None:
+            self._work_path = environ.get('PHIBES_CLI_WORK_PATH', None)
+        return self._work_path
 
     @work_path.setter
     def work_path(self, new_val: str):
@@ -83,16 +90,32 @@ class CliConfig(object):
         self._work_path = new_val
         environ['PHIBES_CLI_WORK_PATH'] = new_val
 
-    def __init__(self, editor: str = None, work_path: str = None):
-        # Any of the args not passed in, get them from the environment
-        if editor:
-            self.editor = editor
-        else:
-            self._editor = environ.get("PHIBES_CLI_EDITOR", None)
-        if work_path:
-            self.work_path = work_path
-        else:
-            self._work_path = environ.get("PHIBES_CLI_WORK_PATH", None)
+    def __init__(self, **kwargs):
+        """
+        Create a config object
+        @param editor:
+        @param work_path:
+        @param kwargs:
+        """
+        # IDE complains about instance attributes not explicitly set in __init__
+        self._editor = None
+        self._work_path = None
+        required = []
+        optional = ['editor', 'work_path']
+        err_list = []
+        for name in optional + required:
+            arg_val = kwargs.get(name, None)
+            try:
+                self._set_private_property(
+                    name=name, value=arg_val, optional=(name not in required)
+                )
+            except Exception as err:
+                err_list.append(err)
+        if err_list:
+            raise PhibesCliConfigurationError(
+                f'missing required arg(s): {err_list}'
+            )
+        super(CliConfig, self).__init__(**kwargs)
         self.apply()
 
     def __str__(self):
@@ -100,10 +123,20 @@ class CliConfig(object):
         Override the string representation
         """
         # Some things are not json serializable, e.g. Path
-        ret_val = {
-            "editor": self.editor,
-            "work_path": self.work_path
-        }
+        ret_val = todict(self)
+        # try:
+        #     ret_val = todict(self)
+        # except Exception as err:
+        #     if not self.work_path:
+        #         wp = '-'
+        #     else:
+        #         wp = self.work_path
+        #     ret_val = {
+        #         "todict result": err,
+        #         "editor": self.editor,
+        #         "work_path": wp,
+        #         "store_path": str(self.store_path.resolve())
+        #     }
         return json.dumps(ret_val, indent=4)
 
     @staticmethod
