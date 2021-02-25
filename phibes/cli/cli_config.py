@@ -97,7 +97,7 @@ class CliConfig(ConfigModel):
         @param work_path:
         @param kwargs:
         """
-        # IDE complains about instance attributes not explicitly set in __init__
+        # IDE complains about instance attrs not explicitly set in __init__
         self._editor = None
         self._work_path = None
         required = []

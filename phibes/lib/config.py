@@ -99,9 +99,9 @@ class ConfigModel(object):
             else:
                 tmp_pth = ' no env var `PHIBES_STORE_PATH` '
             trace, trace_depth = get_debug_info(
-                    message='ConfigModel.__init__',
-                    start_frame=1, num_frames=12, stop_val='tests/conftest.py'
-                )
+                message='ConfigModel.__init__',
+                start_frame=1, num_frames=12, stop_val='tests/conftest.py'
+            )
             all_recs[count] = {
                 'kwarg_keys': ','.join(list(kwargs.keys())),
                 'store_path_arg': spa, 'env_store_path': tmp_pth,

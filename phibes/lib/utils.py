@@ -188,7 +188,7 @@ def find_path_dupes(
     node_list = path_str.split(sep)  # list of path pieces split by OS char
     for i in range(len(node_list) - 1):
         n0 = node_list[i]
-        n1 = node_list[i+1]
+        n1 = node_list[i + 1]
         if n0 == n1:
             msg = f"{n0} is repeated in {full_path}"
             di = get_debug_info(msg)

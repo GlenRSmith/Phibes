@@ -38,7 +38,7 @@ def make_common_kwargs(**kwargs):
         load_config_file(config_file)
         store_path = ConfigModel().store_path
     else:
-        raise PhibesCliError('path must be provided as param or in config file')
+        raise PhibesCliError('path required, from param or config file')
     ret_val['locker'] = kwargs.get('locker', None)
     ret_val['store_type'] = StoreType.FileSystem
     ret_val['store_path'] = store_path  # this should get posted to Config.
