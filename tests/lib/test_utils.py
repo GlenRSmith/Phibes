@@ -15,7 +15,6 @@ import pytest
 from phibes.lib.utils import DebugTraceReport
 from phibes.lib.utils import decode_name, encode_name
 from phibes.lib.utils import find_path_dupes, get_path_tail
-from phibes.model import Locker
 
 # Local test imports
 
