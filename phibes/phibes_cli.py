@@ -7,8 +7,6 @@ Click-based command-line interface to phibes
 # in-project modules
 from phibes.cli.commands import build_cli_app
 from phibes.cli.commands import Action, Target
-from phibes.cli.config.create import create_config_cmd
-from phibes.cli.config.update import update_config_cmd
 from phibes.cli import handlers
 from phibes.cli.lib import main, main_func
 
@@ -24,11 +22,17 @@ command_dict = {
         Action.Update: {'name': 'edit', 'func': handlers.edit_item},
         Action.List: {'name': 'list', 'func': handlers.get_items},
         Action.Delete: {'name': 'delete-item', 'func': handlers.delete_item}
+    },
+    Target.Config: {
+        Action.Create: {
+            'name': 'create-config', 'func': handlers.create_cli_config
+        },
+        Action.Update: {
+            'name': 'update-config', 'func': handlers.update_cli_config
+        }
     }
 }
 build_cli_app(command_dict=command_dict, click_group=main, named_locker=True)
-main.add_command(create_config_cmd)
-main.add_command(update_config_cmd)
 
 
 if __name__ == '__main__':

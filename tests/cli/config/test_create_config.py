@@ -11,7 +11,6 @@ from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
-from phibes.cli.config.create import create_config_cmd
 from phibes.cli.cli_config import CLI_CONFIG_FILE_NAME
 from phibes.lib.errors import PhibesConfigurationError
 from phibes.phibes_cli import main
@@ -51,8 +50,7 @@ class TestCreateConfig(BaseTestClass):
         return
 
     @pytest.mark.parametrize(
-        "command_instance",
-        [create_config_cmd, main.commands['create-config']]
+        "command_instance", [main.commands['create-config']]
     )
     @pytest.mark.positive
     def test_create_config(
@@ -83,7 +81,7 @@ class TestCreateConfig(BaseTestClass):
         return
 
     @pytest.mark.parametrize(
-        "command_instance", [create_config_cmd, main.commands['create-config']]
+        "command_instance", [main.commands['create-config']]
     )
     @pytest.mark.negative
     def test_create_bad_config(self, setup_and_teardown, command_instance):

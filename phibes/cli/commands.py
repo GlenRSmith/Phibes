@@ -8,6 +8,8 @@ import enum
 
 # in-project modules
 from phibes.cli.command_base import config_option
+from phibes.cli.options import cli_config_file_option
+from phibes.cli.options import editor_option
 from phibes.cli.options import env_options
 from phibes.cli.options import crypt_option
 from phibes.cli.options import item_name_option
@@ -15,6 +17,7 @@ from phibes.cli.options import locker_name_option
 from phibes.cli.options import locker_path_option
 from phibes.cli.options import new_password_option
 from phibes.cli.options import password_option
+from phibes.cli.options import store_path_option
 from phibes.cli.options import template_name_option
 from phibes.cli.options import verbose_item_option
 
@@ -22,6 +25,7 @@ from phibes.cli.options import verbose_item_option
 class Target(enum.Enum):
     Locker = 'Locker'
     Item = 'Item'
+    Config = 'Config'
 
 
 class Action(enum.Enum):
@@ -59,24 +63,32 @@ class PhibesClickCmd(object):
             if self.init_options:
                 self._options = self.init_options
             else:
-                cmd_opts = {
-                    'config': config_option, 'password': password_option
-                }
-                if self.named_locker:
-                    cmd_opts['locker'] = locker_name_option
+                if self.target == Target.Config:
+                    cmd_opts = {
+                        'path': cli_config_file_option,
+                        'store_path': store_path_option,
+                        'editor': editor_option
+                    }
                 else:
-                    cmd_opts['path'] = locker_path_option
-                if self.target == Target.Item:
-                    if self.action == Action.List:
-                        cmd_opts['verbose'] = verbose_item_option
+                    cmd_opts = {
+                        'config': config_option,
+                        'password': password_option
+                    }
+                    if self.named_locker:
+                        cmd_opts['locker'] = locker_name_option
                     else:
-                        cmd_opts['item'] = item_name_option
-                if self.action == Action.Create:
-                    if self.target == Target.Locker:
-                        cmd_opts['password'] = new_password_option
-                        cmd_opts['crypt_id'] = crypt_option
-                    elif self.target == Target.Item:
-                        cmd_opts['template'] = template_name_option
+                        cmd_opts['path'] = locker_path_option
+                    if self.target == Target.Item:
+                        if self.action == Action.List:
+                            cmd_opts['verbose'] = verbose_item_option
+                        else:
+                            cmd_opts['item'] = item_name_option
+                    if self.action == Action.Create:
+                        if self.target == Target.Locker:
+                            cmd_opts['password'] = new_password_option
+                            cmd_opts['crypt_id'] = crypt_option
+                        elif self.target == Target.Item:
+                            cmd_opts['template'] = template_name_option
                 # env_options exposes the ability to specify any option
                 # on command line, but none of them are prompted
                 # Right now it is just "editor"

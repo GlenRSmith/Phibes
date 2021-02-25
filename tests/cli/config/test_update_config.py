@@ -11,7 +11,6 @@ from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
-from phibes.cli.config.update import update_config_cmd
 from phibes.cli.cli_config import CLI_CONFIG_FILE_NAME
 from phibes.lib.errors import PhibesConfigurationError
 from phibes.phibes_cli import main
@@ -54,8 +53,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         return
 
     @pytest.mark.parametrize(
-        "command_instance",
-        [update_config_cmd, main.commands['update-config']]
+        "command_instance", [main.commands['update-config']]
     )
     @pytest.mark.positive
     def test_update_config(
@@ -86,7 +84,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         return
 
     @pytest.mark.parametrize(
-        "command_instance", [update_config_cmd, main.commands['update-config']]
+        "command_instance", [main.commands['update-config']]
     )
     @pytest.mark.negative
     def test_update_bad_config(self, setup_and_teardown, command_instance):

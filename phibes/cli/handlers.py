@@ -9,6 +9,7 @@ import click
 
 # in-project modules
 from phibes.cli.cli_config import CliConfig
+from phibes.cli.cli_config import write_config_file
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.errors import PhibesCliExistsError
 from phibes.cli.errors import PhibesCliNotFoundError
@@ -247,3 +248,43 @@ def delete_item(*args, **kwargs):
         raise PhibesCliNotFoundError(err)
     click.echo(f"{resp}")
     return resp
+
+
+def edit_cli_config(create=True, **kwargs):
+    """
+    Provide values for a Phibes CLI config file
+    """
+    # There are options required for this command,
+    # and there are options required to populate the config file
+    # Maybe let the CliConfig class raise the errors for the latter
+    # because e.g. if we are changing just our editor, we
+    # shouldn't have to provide the store_path
+    try:
+        path = kwargs.get('path')
+    except KeyError as err:
+        raise PhibesCliError(f'missing required param {err}')
+    try:
+        new_config = CliConfig(**kwargs)
+        new_config.validate()
+        write_config_file(path, new_config, update=not create)
+    except ValueError as err:
+        raise PhibesCliError(err)
+    except FileExistsError as err:
+        raise PhibesCliExistsError(err)
+    except FileNotFoundError as err:
+        raise PhibesCliExistsError(err)
+    return
+
+
+def create_cli_config(**kwargs):
+    """
+    Provide values for a new Phibes CLI config file
+    """
+    edit_cli_config(create=True, **kwargs)
+
+
+def update_cli_config(**kwargs):
+    """
+    Provide values to update an existing Phibes CLI config file
+    """
+    edit_cli_config(create=False, **kwargs)
