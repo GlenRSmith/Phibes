@@ -13,6 +13,7 @@ import click
 from phibes.cli.cli_config import CLI_CONFIG_FILE_NAME, get_home_dir
 from phibes.cli.cli_config import DEFAULT_EDITOR
 from phibes.crypto import default_id, list_crypts
+from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import DEFAULT_STORE_PATH
 
 
@@ -195,6 +196,17 @@ editor_option = click.option(
     help='shell-invocable editor to use with the `edit` command',
     type=str,
     default=DEFAULT_EDITOR
+)
+config_option = click.option(
+    '--config',
+    default=get_home_dir().joinpath(CONFIG_FILE_NAME),
+    type=pathlib.Path,
+    help=(
+        f"Path to config file `{CONFIG_FILE_NAME}`, "
+        f"defaults to user home"
+    ),
+    show_envvar=True,
+    envvar="PHIBES_CONFIG",
 )
 
 env_vars = {

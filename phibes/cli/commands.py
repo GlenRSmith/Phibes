@@ -7,8 +7,8 @@ import click
 import enum
 
 # in-project modules
-from phibes.cli.command_base import config_option
 from phibes.cli.options import cli_config_file_option
+from phibes.cli.options import config_option
 from phibes.cli.options import editor_option
 from phibes.cli.options import env_options
 from phibes.cli.options import crypt_option
