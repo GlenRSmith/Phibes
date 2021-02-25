@@ -75,45 +75,6 @@ def main_func():
     main()
 
 
-def get_locker_args(*args, **kwargs) -> Locker:
-    """
-    Get a Locker using only named arguments
-    Supports getting named and unnamed Lockers
-    kwargs:
-        password: str - Password for existing locker
-        locker: str - The name of the locker
-        path: str - The fs path to the locker, aka `storage_path`
-        config: str - The fs path to the config file with `storage_path`
-    Valid combinations
-    - password, path
-    - password, config
-    - password, path, locker
-    - password, config, locker
-    """
-    try:
-        password = kwargs.get('password')
-    except KeyError as err:
-        raise PhibesCliError(f'missing required param {err}')
-    if 'path' in kwargs:
-        pth = kwargs.get('path')
-    elif 'config' in kwargs:
-        config = kwargs.get('config')
-        load_config_file(config)
-        pth = ConfigModel().store_path
-    else:
-        raise PhibesCliError(
-            'path must be provided as param or in config file'
-        )
-    # locker name is optional, only settable from command-line
-    locker = kwargs.get('locker', None)
-    try:
-        return Locker.get(password=password, name=locker)
-    except PhibesNotFoundError:
-        err_name = (f" with {locker=}!", "!")[locker is None]
-        err = f"No locker found at {pth}{err_name}\n"
-        raise PhibesCliNotFoundError(err)
-
-
 def get_editor() -> str:
     """
     Get the user's configured editor, or raise an exception
