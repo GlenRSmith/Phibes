@@ -211,10 +211,21 @@ def get_envpath_tail(env_key: str, depth: int = 3) -> str:
     )
 
 
-def hash_string(name: str) -> str:
+def encode_name(name: str) -> str:
     """
+    Returns a base64-encoded string with padding stripped off.
     """
     return base64.urlsafe_b64encode(name.encode()).rstrip(b"=").decode()
+
+
+def decode_name(encoded_name: str) -> str:
+    """
+    Returns a base64-decoded string from the encoded name
+    """
+    padding = 4 - (len(encoded_name.encode()) % 4)
+    return base64.urlsafe_b64decode(
+        encoded_name.encode() + (b"=" * padding)
+    ).decode()
 
 
 class DebugTraceReport(PhibesError):
