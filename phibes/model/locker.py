@@ -7,20 +7,16 @@ A Locker has other data on the file system, but that file
 
 # Built-in library packages
 from __future__ import annotations
-import base64
 from pathlib import Path
 from typing import List
 
 # Third party packages
-
 # In-project modules
-# from phibes.crypto import create_crypt
 from phibes.crypto import get_crypt
 from phibes.lib.config import ConfigModel
-# from phibes.lib.errors import PhibesExistsError
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.lib.errors import PhibesUnknownError
-# from phibes.lib.utils import ReprType, todict
+from phibes.lib.utils import encode_name, decode_name
 from phibes.model import FILE_EXT, Item
 from phibes.storage.file_storage import LockerFileStorage
 
@@ -56,7 +52,7 @@ class Locker(object):
         :param name: User-provided locker name
         :return: Name encoded for use in storage (e.g. file system dir)
         """
-        return base64.urlsafe_b64encode(name.encode()).rstrip(b"=").decode()
+        return encode_name(name)
 
     @staticmethod
     def get_name(stored_name: str) -> str:
@@ -65,10 +61,7 @@ class Locker(object):
         :param stored_name: locker_id of locker on storage
         :return: user-provided locker name
         """
-        padding = 4 - (len(stored_name.encode()) % 4)
-        return base64.urlsafe_b64decode(
-            stored_name.encode() + (b"=" * padding)
-        ).decode()
+        return decode_name(stored_name)
 
     @classmethod
     def get(cls, password: str, name: str = None) -> Locker:
