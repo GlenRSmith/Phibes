@@ -7,26 +7,20 @@ A Locker has other data on the file system, but that file
 
 # Built-in library packages
 from __future__ import annotations
-# import base64
 from datetime import datetime
 from pathlib import Path
 import shutil
-# from typing import List
 
 # Third party packages
 
 # In-project modules
 from phibes.crypto import create_crypt
-# from phibes.crypto import get_crypt
 from phibes.lib import phibes_file
 from phibes.lib.config import ConfigModel
 from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.errors import PhibesExistsError
 from phibes.lib.errors import PhibesNotFoundError
-# from phibes.lib.errors import PhibesUnknownError
 from phibes.model import FILE_EXT
-# from phibes.model import Item
-# from phibes.lib.utils import ReprType, todict
 
 # In-package modules
 from .storage_impl import StorageImpl

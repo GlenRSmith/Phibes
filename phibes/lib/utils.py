@@ -5,7 +5,6 @@ Various helpful bits
 # Built-in library packages
 import base64
 from collections.abc import Iterable
-import enum
 from inspect import getframeinfo, stack
 from os import environ, path, sep
 from pathlib import Path
@@ -14,13 +13,6 @@ from typing import Optional
 # Third party packages
 # In-project modules
 from phibes.lib.errors import PhibesError
-
-
-class ReprType(enum.Enum):
-    Text = 'Text'
-    JSON = 'JSON'
-    HTML = 'HTML'
-    Object = 'Object'
 
 
 def todict(obj):

@@ -52,7 +52,7 @@ def make_common_kwargs(**kwargs):
     return ret_val
 
 
-def create_locker(*args, **kwargs):
+def create_locker(**kwargs):
     """Create a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
@@ -79,7 +79,7 @@ def create_locker(*args, **kwargs):
     click.echo(f"Locker created {resp}")
 
 
-def get_locker(*args, **kwargs):
+def get_locker(**kwargs):
     """Get a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
@@ -87,15 +87,15 @@ def get_locker(*args, **kwargs):
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
 
-    # click.echo(f"Locker stored as {inst['path']}")
-    # click.echo(f"Created {inst['timestamp']}")
-    # click.echo(f"Crypt ID {inst['crypt_impl']['crypt_id']}")
+    click.echo(f"Locker stored as {inst['path']}")
+    click.echo(f"Created {inst['timestamp']}")
+    click.echo(f"Crypt ID {inst['crypt_impl']['crypt_id']}")
     # raise PhibesCliError(f"Locker {inst}")
 
-    click.echo(f"Locker stored as {inst.path.name}")
-    click.echo(f"Locker stored as {inst.path}")
-    click.echo(f"Created {inst.timestamp}")
-    click.echo(f"Crypt ID {inst.crypt_impl.crypt_id}")
+    # click.echo(f"Locker stored as {inst.path.name}")
+    # click.echo(f"Locker stored as {inst.path}")
+    # click.echo(f"Created {inst.timestamp}")
+    # click.echo(f"Crypt ID {inst.crypt_impl.crypt_id}")
 
     # Don't present server details
     # if inst.path.exists():
@@ -105,7 +105,7 @@ def get_locker(*args, **kwargs):
     return inst
 
 
-def delete_locker(*args, **kwargs):
+def delete_locker(**kwargs):
     """Delete a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
@@ -115,7 +115,7 @@ def delete_locker(*args, **kwargs):
     click.confirm(
         (
             f"Will attempt to delete locker with\n"
-            f"{inst.path.resolve()}\n"
+            f"{inst['path']}\n"
             f"Enter `y` to accept, `N` to abort"
         ), abort=True
     )
@@ -134,7 +134,7 @@ def delete_locker(*args, **kwargs):
         click.echo("locker not removed")
 
 
-def create_item(*args, **kwargs):
+def create_item(**kwargs):
     """Create an Item in a Locker"""
     req_args = make_common_kwargs(**kwargs)
     template = kwargs.get('template', None)
@@ -181,7 +181,7 @@ def create_item(*args, **kwargs):
     )
 
 
-def edit_item(*args, **kwargs):
+def edit_item(**kwargs):
     """Edit the contents of an Item in a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
@@ -204,7 +204,7 @@ def edit_item(*args, **kwargs):
     )
 
 
-def get_item(*args, **kwargs):
+def get_item(**kwargs):
     """Get and display an Item from a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
@@ -219,7 +219,7 @@ def get_item(*args, **kwargs):
     return item_inst
 
 
-def get_items(*args, **kwargs):
+def get_items(**kwargs):
     """Get and display all Items in a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
@@ -235,7 +235,7 @@ def get_items(*args, **kwargs):
     return items
 
 
-def delete_item(*args, **kwargs):
+def delete_item(**kwargs):
     """Delete an Item from a Locker"""
     req_args = make_common_kwargs(**kwargs)
     try:
