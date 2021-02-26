@@ -14,14 +14,13 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Set up pip and poetry
+      - name: Set up pip and flake8
         run: |
           python -m pip install --upgrade pip
-          pip install poetry
-      - name: Test the package
+          pip install flake8
+      - name: Lint the package
         run: |
-          poetry install
-          poetry run make flake
+          make flake
   test_one:
     needs: flake
     runs-on: ubuntu-latest
