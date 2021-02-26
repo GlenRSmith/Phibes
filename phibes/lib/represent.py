@@ -63,10 +63,7 @@ def find_conversion(
                 sub_steps = find_conversion(avail_type, to_type, visited)
                 # Find and keep the one with the fewest steps
                 if sub_steps:
-                    if (
-                            not best_path or
-                            len(sub_steps) < len(best_path)
-                    ):
+                    if not best_path or len(sub_steps) < len(best_path):
                         best_path = sub_steps
                         best_target = avail_type
         if best_target:
