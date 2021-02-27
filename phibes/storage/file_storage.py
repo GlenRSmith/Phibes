@@ -85,7 +85,7 @@ class LockerFileStorage(StorageImpl):
         locker_path = get_locker_path(locker_id=locker_id)
         lf = get_locker_file(locker_id=locker_id)
         if not lf.exists():
-            raise PhibesNotFoundError
+            raise PhibesNotFoundError(f'file: {lf}')
         else:
             rec = phibes_file.read(lf)
             rec['lock_file'] = lf

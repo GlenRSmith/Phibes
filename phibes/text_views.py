@@ -9,7 +9,7 @@ import json
 # third party packages
 # in-project modules
 from phibes.model import Locker
-from phibes.lib.represent import ReprType
+from phibes.lib.represent import ReprType, rendered
 from phibes.lib.utils import todict
 
 
@@ -43,12 +43,9 @@ def create_locker(crypt_id: str, **kwargs):
     return Locker.create(password=pw, crypt_id=crypt_id, name=name)
 
 
+@rendered
 def get_locker(**kwargs):
-    ret_resp = render_response(
-        object=_get_locker_helper(locker_args=kwargs),
-        repr=ReprType.JSON
-    )
-    return ret_resp
+    return _get_locker_helper(locker_args=kwargs)
 
 
 def delete_locker(**kwargs):

@@ -6,6 +6,7 @@ pytest module for backward compatibility
 from pathlib import Path
 
 # Related third party imports
+import pytest
 
 # Local application/library specific imports
 from phibes.crypto import list_crypts
@@ -63,6 +64,7 @@ class TestBackCompat:
     test_name = "test_locker"
     test_pw = "test_password"
 
+    @pytest.mark.positive
     def test_validate_installs(self, datadir):
         # Get the list of install directories under `tests/data`
         data_root = datadir['.']
