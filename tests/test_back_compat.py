@@ -40,7 +40,7 @@ plain_texts = {
 
 
 def validate_locker(name, pw):
-    lock = Locker.get(name=name, password=pw)
+    lock = Locker.get(locker_name=name, password=pw)
     assert len(lock.list_items()) == len(plain_texts)
     for name, pt in plain_texts.items():
         it = lock.get_item(name)
