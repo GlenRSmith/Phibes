@@ -236,7 +236,7 @@ def register_default_crypt(crypt_class, fallback_id=None, **unique_kw_args):
     )
 
 
-def create_crypt(password: str, crypt_id: str = None):
+def create_crypt(password: str, crypt_id: str = None, **kwargs):
     """
     Returns an instance of the CryptIfc registered to the `crypt_id`
     by creating a new instance. If no `crypt_id` is provided, the default
@@ -248,7 +248,7 @@ def create_crypt(password: str, crypt_id: str = None):
     return CryptFactory().create(password, crypt_id)
 
 
-def get_crypt(crypt_id, password, pw_hash, salt):
+def get_crypt(crypt_id, password, pw_hash, salt, **kwargs):
     """
     Returns an instance of the CryptIfc registered to the `crypt_id`
     by getting an instance - password authentication is performed
