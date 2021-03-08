@@ -19,17 +19,14 @@ from phibes.cli.options import crypt_choices
 from phibes.lib.config import ConfigModel, load_config_file, StoreType
 from phibes.lib.errors import PhibesExistsError
 from phibes.lib.errors import PhibesNotFoundError
+from phibes.lib.represent import rendered, ReprType
 from phibes import text_views
 
 
-def make_common_kwargs(**kwargs):
+def set_store_config(**kwargs):
     """
-    Returns a dict with entries common to all Phibes requests
+    Sets up configuration of storage
     """
-    try:
-        ret_val = {'password': kwargs.get('password')}
-    except KeyError:
-        raise PhibesCliError('missing password')
     if 'path' in kwargs:
         store_path = kwargs.get('path')
     elif 'config' in kwargs:
@@ -39,63 +36,60 @@ def make_common_kwargs(**kwargs):
         store_path = ConfigModel().store_path
     else:
         raise PhibesCliError('path required, from param or config file')
-    ret_val['locker'] = kwargs.get('locker', None)
-    ret_val['store_type'] = StoreType.FileSystem
-    ret_val['store_path'] = store_path  # this should get posted to Config.
     try:
         CliConfig().work_path = str(store_path.absolute())
     except TypeError as err:
-        raise PhibesCliError(
-            f"{err=}"
-            f"{str(store_path.absolute())=}"
-        )
-    return ret_val
+        raise PhibesCliError(f"{err=}\n{str(store_path.absolute())=}")
+    return store_path
 
 
-def create_locker(**kwargs):
+def create_locker(password: str, locker: str, crypt_id: int, **kwargs):
     """Create a Locker"""
-    req_args = make_common_kwargs(**kwargs)
+    store_info = set_store_config(**kwargs)
     try:
-        path = req_args.get('store_path')
-        crypt_int = kwargs.get('crypt_id')
-    except KeyError as err:
-        raise PhibesCliError(f'missing required param {err}')
-    try:
-        crypt_id = crypt_choices.choice_dict[crypt_int]
+        crypt_id = crypt_choices.choice_dict[crypt_id]
     except KeyError:
-        raise PhibesCliError(f'invalid choice {crypt_int}')
+        raise PhibesCliError(f'invalid choice {crypt_id}')
     click.confirm(
         (
             f"Will attempt to create locker at\n"
-            f"{path=}\n{crypt_id=}\n"
+            f"{store_info=}\n{crypt_id=}\n"
             f"Enter `y` to accept, `N` to abort"
         ), abort=True
     )
     try:
-        resp = text_views.create_locker(crypt_id=crypt_id, **req_args)
+        resp = text_views.create_locker(
+            password=password, locker_name=locker, crypt_id=crypt_id, **kwargs
+        )
     except PhibesExistsError as err:
         raise PhibesCliExistsError(f"Locker already exists\n{err}")
     # TODO: use Locker.status!
     click.echo(f"Locker created {resp}")
 
 
-def get_locker(**kwargs):
+def get_locker(password: str, locker: str, **kwargs):
     """Get a Locker"""
-    req_args = make_common_kwargs(**kwargs)
+    store_info = set_store_config(**kwargs)
     try:
-        inst = text_views.get_locker(**req_args)
+        inst = text_views.get_locker(
+            repr=ReprType.Object,
+            password=password,
+            locker_name=locker,
+            **kwargs
+        )
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
-
-    click.echo(f"Locker stored as {inst['path']}")
-    click.echo(f"Created {inst['timestamp']}")
-    click.echo(f"Crypt ID {inst['crypt_impl']['crypt_id']}")
+    # click.echo(f"Locker stored as {inst['path']}")
+    # click.echo(f"Created {inst['timestamp']}")
+    # click.echo(f"Crypt ID {inst['crypt_impl']['crypt_id']}")
     # raise PhibesCliError(f"Locker {inst}")
 
-    # click.echo(f"Locker stored as {inst.path.name}")
-    # click.echo(f"Locker stored as {inst.path}")
-    # click.echo(f"Created {inst.timestamp}")
-    # click.echo(f"Crypt ID {inst.crypt_impl.crypt_id}")
+    if hasattr(inst, 'path'):
+        click.echo(f"Locker stored as {inst.path}")
+        if hasattr(inst.path, 'name'):
+            click.echo(f"Locker stored as {inst.path.name}")
+    click.echo(f"Was created {inst.timestamp}")
+    click.echo(f"Crypt ID {inst.crypt_impl.crypt_id}")
 
     # Don't present server details
     # if inst.path.exists():
@@ -105,27 +99,43 @@ def get_locker(**kwargs):
     return inst
 
 
-def delete_locker(**kwargs):
+def delete_locker(password: str, locker: str, **kwargs):
     """Delete a Locker"""
-    req_args = make_common_kwargs(**kwargs)
+    store_info = set_store_config(**kwargs)
     try:
-        inst = text_views.get_locker(**req_args)
+        inst = text_views.get_locker(
+            repr=ReprType.Object,
+            password=password,
+            locker_name=locker,
+            **kwargs
+        )
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
     click.confirm(
         (
-            f"Will attempt to delete locker with\n"
-            f"{inst['path']}\n"
+            f"Will attempt to delete locker \n"
+            f"{store_info=}\n"
+            f"{inst.__dict__=}\n"
             f"Enter `y` to accept, `N` to abort"
         ), abort=True
     )
     try:
-        resp = text_views.delete_locker(**req_args)
+        resp = text_views.delete_locker(
+            repr=ReprType.Object,
+            password=password,
+            locker_name=locker,
+            **kwargs
+        )
     except Exception as err:
         raise PhibesCliError(f"something went wrong {err=}")
     click.echo(resp)
     try:
-        inst = text_views.get_locker(**req_args)
+        inst = text_views.get_locker(
+            repr=ReprType.Object,
+            password=password,
+            locker_name=locker,
+            **kwargs
+        )
     except PhibesNotFoundError:
         inst = None
     if not inst:
@@ -134,21 +144,23 @@ def delete_locker(**kwargs):
         click.echo("locker not removed")
 
 
-def create_item(**kwargs):
+def create_item(
+        password: str, locker: str, item: str, template: str = None, **kwargs
+):
     """Create an Item in a Locker"""
-    req_args = make_common_kwargs(**kwargs)
-    template = kwargs.get('template', None)
+    store_info = set_store_config(**kwargs)
     if template == 'Empty':
         template = None
     try:
-        item_name = kwargs.get('item')
-    except KeyError as err:
-        raise PhibesCliError(f'missing required param {err}')
-    try:
-        item_inst = text_views.get_item(item_name=item_name, **req_args)
+        item_inst = text_views.get_item(
+            password=password,
+            locker_name=locker,
+            item_name=item,
+            **kwargs
+        )
         if item_inst:
             raise PhibesCliExistsError(
-                f"{item_name} already exists in locker\n"
+                f"{item} already exists in locker {store_info}\n"
                 f"please use the `edit` command to modify\n"
             )
     except PhibesNotFoundError:
@@ -156,10 +168,12 @@ def create_item(**kwargs):
     template_is_file = False
     if template:
         try:
-            # try to get an item stored by the template name
-            # TODO: Things like this will break when text_views
-            #       are fixed to not return objects!
-            found = text_views.get_item(item_name=template, **req_args)
+            found = text_views.get_item(
+                password=password,
+                locker_name=locker,
+                item_name=template,
+                **kwargs
+            )
             content = found.content
         except PhibesNotFoundError:
             try:
@@ -173,57 +187,66 @@ def create_item(**kwargs):
     else:
         content = ''
     if not template_is_file:
-        content = user_edit_local_item(
-            item_name=item_name, initial_content=content
-        )
+        content = user_edit_local_item(item_name=item, initial_content=content)
     return text_views.create_item(
-        item_name=item_name, content=content, **req_args
+        password=password,
+        locker_name=locker,
+        item_name=item,
+        content=content,
+        **kwargs
     )
 
 
-def edit_item(**kwargs):
+def edit_item(password: str, locker: str, item: str, **kwargs):
     """Edit the contents of an Item in a Locker"""
-    req_args = make_common_kwargs(**kwargs)
+    set_store_config(**kwargs)
     try:
-        item_name = kwargs.get('item')
-    except KeyError as err:
-        raise PhibesCliError(f'missing required param {err}')
-    try:
-        item = text_views.get_item(item_name=item_name, **req_args)
-        if not item:
+        item_inst = text_views.get_item(
+            password=password, locker_name=locker, item_name=item, **kwargs
+        )
+        if not item_inst:
             raise PhibesNotFoundError
     except PhibesNotFoundError:
         raise PhibesCliNotFoundError(
-            f"{item_name} does not exist in locker\n"
+            f"{item} does not exist in locker\n"
         )
     content = user_edit_local_item(
-        item_name=item_name, initial_content=item.content
+        item_name=item, initial_content=item_inst.content
     )
     return text_views.update_item(
-        item_name=item_name, content=content, **req_args
+        password=password,
+        locker_name=locker,
+        item_name=item,
+        content=content,
+        **kwargs
     )
 
 
-def get_item(**kwargs):
+def get_item(password: str, locker: str, item: str, **kwargs):
     """Get and display an Item from a Locker"""
-    req_args = make_common_kwargs(**kwargs)
+    store_info = set_store_config(**kwargs)
     try:
         item_inst = text_views.get_item(
-            item_name=kwargs['item'], **req_args
+            password=password, locker_name=locker, item_name=item, **kwargs
         )
     except KeyError as err:
         raise PhibesCliError(err)
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
+    click.echo(f"{store_info}")
     click.echo(f"{item_inst}")
     return item_inst
 
 
-def get_items(**kwargs):
+def get_items(password: str, locker: str, **kwargs):
     """Get and display all Items in a Locker"""
-    req_args = make_common_kwargs(**kwargs)
+    set_store_config(**kwargs)
     try:
-        items = text_views.get_items(**req_args)
+        items = text_views.get_items(
+            password=password,
+            locker_name=locker,
+            **kwargs
+        )
     except KeyError as err:
         raise PhibesCliError(err)
     except PhibesNotFoundError as err:
@@ -235,12 +258,12 @@ def get_items(**kwargs):
     return items
 
 
-def delete_item(**kwargs):
+def delete_item(password: str, locker: str, item: str, **kwargs):
     """Delete an Item from a Locker"""
-    req_args = make_common_kwargs(**kwargs)
+    set_store_config(**kwargs)
     try:
         resp = text_views.delete_item(
-            item_name=kwargs['item'], **req_args
+            password=password, locker_name=locker, item_name=item, **kwargs
         )
     except KeyError as err:
         raise PhibesCliError(err)
