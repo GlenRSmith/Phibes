@@ -64,17 +64,17 @@ class Locker(object):
         return decode_name(stored_name)
 
     @classmethod
-    def get(cls, password: str, name: str = None) -> Locker:
+    def get(cls, password: str, locker_name: str = None) -> Locker:
         """
         Get a Locker object
         @param password: Password for existing locker
-        @param name: The optional name of the locker
+        @param locker_name: The optional name of the locker
         @return: Locker instance
         """
-        if name is not None:
-            name = Locker.get_stored_name(name)
+        if locker_name is not None:
+            locker_id = Locker.get_stored_name(locker_name)
         inst = Locker()
-        rec = cls._store_impl.get(locker_id=name)
+        rec = cls._store_impl.get(locker_id=locker_id)
         pw_hash = rec['body']
         salt = rec['salt']
         crypt_id = rec['crypt_id']
@@ -88,17 +88,17 @@ class Locker(object):
 
     @classmethod
     def create(
-            cls, password: str, crypt_id: str, name: str = None
+            cls, password: str, crypt_id: str, locker_name: str = None
     ) -> Locker:
         """
         Create a Locker object
         :param password: Password for the new locker
         :param crypt_id: ID of the crypt_impl to create
-        :param name: The optional name of the locker.
+        :param locker_name: The optional name of the locker.
                      Must be unique in storage
         """
-        if name is not None:
-            stored_name = Locker.get_stored_name(name)
+        if locker_name is not None:
+            stored_name = Locker.get_stored_name(locker_name)
         else:
             stored_name = None
         cls._store_impl.create(
@@ -106,25 +106,29 @@ class Locker(object):
         )
         # Verify it is accessible
         try:
-            instance = cls.get(password=password, name=name)
+            instance = cls.get(
+                password=password, locker_name=locker_name
+            )
         except Exception as err:
             raise PhibesUnknownError(f' unknown {err=}')
         return instance
 
     @classmethod
-    def delete(cls, password: str, name: str = None):
+    def delete(cls, password: str, locker_name: str = None):
         """Delete a locker"""
         try:
-            inst = Locker.get(password=password, name=name)
+            inst = Locker.get(
+                password=password, locker_name=locker_name
+            )
         except (FileNotFoundError, PhibesNotFoundError):
             # TODO: replace with something like "storage info"
             err_path = ConfigModel().store_path
-            err_name = (f" with {name=}!", "!")[name is None]
+            err_name = (f" with {locker_name=}!", "!")[locker_name is None]
             err = f"No locker found to delete at {err_path}{err_name}\n"
             raise PhibesNotFoundError(err)
-        inst.delete_instance(name=name)
+        inst.delete_instance(locker_name=locker_name)
 
-    def delete_instance(self, name: str = None):
+    def delete_instance(self, locker_name: str = None):
         """Instance method to delete locker"""
         items = self.list_items()
         for it in items:

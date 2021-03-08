@@ -99,7 +99,7 @@ class EmptyLocker(ConfigLoadingTestClass):
             self.my_locker = Locker.create(
                 password=self.password,
                 crypt_id=crypto.default_id,
-                name=self.locker_name
+                locker_name=self.locker_name
             )
             # create a locker for each registered crypt instance
             for crypt_id in crypto.list_crypts():
@@ -108,9 +108,11 @@ class EmptyLocker(ConfigLoadingTestClass):
                 # but make sure there isn't a freak collision
                 while self.locker_name + str(wart) in self.lockers:
                     wart = str(random.randint(1000, 9999))
-                name = self.locker_name + wart
-                self.lockers[name] = Locker.create(
-                    password=self.password, crypt_id=crypt_id, name=name
+                locker_name = self.locker_name + wart
+                self.lockers[locker_name] = Locker.create(
+                    password=self.password,
+                    crypt_id=crypt_id,
+                    locker_name=locker_name
                 )
         return
 

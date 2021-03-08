@@ -41,7 +41,7 @@ class TestAllCryptTypes(PopulatedLocker):
     @pytest.mark.positive
     def test_good(self, tmp_path):
         for name in self.lockers.keys():
-            inst = Locker.get(password=self.password, name=name)
+            inst = Locker.get(password=self.password, locker_name=name)
             assert inst
 
 
@@ -96,7 +96,7 @@ class TestMatrixHashed(PopulatedLocker):
                 f"{result.exception=}\n"
                 f"{result.output=}\n"
             )
-            inst = Locker.get(password=self.password, name=lck)
+            inst = Locker.get(password=self.password, locker_name=lck)
             stored_name = Locker.get_stored_name(lck)
             targ = self.test_path/stored_name/LOCKER_FILE
             assert inst.lock_file == targ

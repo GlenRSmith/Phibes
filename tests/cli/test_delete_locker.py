@@ -27,16 +27,18 @@ class TestDeleteLocker(ConfigLoadingTestClass):
     def custom_setup(self, tmp_path):
         super(TestDeleteLocker, self).custom_setup(tmp_path)
         try:
-            Locker.delete(password=self.pw, name=self.name)
+            Locker.delete(password=self.pw, locker_name=self.name)
         except PhibesNotFoundError:
             pass
         crypt_id = crypto.list_crypts()[0]
-        Locker.create(password=self.pw, crypt_id=crypt_id, name=self.name)
+        Locker.create(
+            password=self.pw, crypt_id=crypt_id, locker_name=self.name
+        )
 
     def custom_teardown(self, tmp_path):
         super(TestDeleteLocker, self).custom_teardown(tmp_path)
         try:
-            Locker.delete(password=self.pw, name=self.name)
+            Locker.delete(password=self.pw, locker_name=self.name)
         except PhibesNotFoundError:
             pass
 
@@ -48,7 +50,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
     def test_delete_locker_main(
             self, setup_and_teardown, command_instance
     ):
-        inst = Locker.get(password=self.pw, name=self.name)
+        inst = Locker.get(password=self.pw, locker_name=self.name)
         assert inst
         result = CliRunner().invoke(
             cli=command_instance,
@@ -64,7 +66,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
             f'{result.output=}\n'
         )
         with pytest.raises(PhibesNotFoundError):
-            Locker.get(password=self.pw, name=self.name)
+            Locker.get(password=self.pw, locker_name=self.name)
         return
 
     @pytest.mark.parametrize(
@@ -76,7 +78,7 @@ class TestDeleteLocker(ConfigLoadingTestClass):
             self, setup_and_teardown, command_instance
     ):
         update_config_option_default(command_instance, self.test_path)
-        assert Locker.get(password=self.pw, name=self.name)
+        assert Locker.get(password=self.pw, locker_name=self.name)
         result = CliRunner().invoke(
             cli=command_instance,
             args=["--locker", self.name, "--password", self.pw],
@@ -87,5 +89,5 @@ class TestDeleteLocker(ConfigLoadingTestClass):
             f'{result.output=}\n'
         )
         with pytest.raises(PhibesNotFoundError):
-            Locker.get(password=self.pw, name=self.name)
+            Locker.get(password=self.pw, locker_name=self.name)
         return
