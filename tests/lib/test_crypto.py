@@ -114,12 +114,12 @@ class TestCrypto(EmptyLocker):
     def test_fail_auth(self, tmp_path, setup_and_teardown):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(PhibesAuthError):
-            Locker.get(password=wrong_pw, name=self.locker_name)
+            Locker.get(password=wrong_pw, locker_name=self.locker_name)
 
     @pytest.mark.positive
     def test_good_auth(self, setup_and_teardown):
         # auth is 'built in' to getting a crypt for existing locker
-        assert Locker.get(name=self.locker_name, password=self.password)
+        assert Locker.get(locker_name=self.locker_name, password=self.password)
 
 
 class BadCrypt(AesCtrPbkdf2Sha):
