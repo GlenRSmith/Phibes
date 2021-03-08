@@ -28,15 +28,21 @@ class TestLocker(EmptyLocker):
     def custom_setup(self, tmp_path):
         super(TestLocker, self).custom_setup(tmp_path)
         try:
-            if Locker.get(password=self.password, name=self.locker_name):
-                Locker.delete(password=self.password, name=self.locker_name)
+            if Locker.get(
+                    password=self.password, locker_name=self.locker_name
+            ):
+                Locker.delete(
+                    password=self.password, locker_name=self.locker_name
+                )
         except Exception:
             pass
 
     def custom_teardown(self, tmp_path):
         super(TestLocker, self).custom_teardown(tmp_path)
         try:
-            Locker.delete(password=self.password, name=self.locker_name)
+            Locker.delete(
+                password=self.password, locker_name=self.locker_name
+            )
         except PhibesNotFoundError:
             pass
 
@@ -45,9 +51,9 @@ class TestLocker(EmptyLocker):
         Locker.create(
             password=self.password,
             crypt_id=crypto.default_id,
-            name=self.locker_name
+            locker_name=self.locker_name
         )
-        found = Locker.get(password=self.password, name=self.locker_name)
+        found = Locker.get(password=self.password, locker_name=self.locker_name)
         assert found
 
     @pytest.mark.negative
@@ -55,13 +61,13 @@ class TestLocker(EmptyLocker):
         Locker.create(
             password=self.password,
             crypt_id=crypto.default_id,
-            name=self.locker_name
+            locker_name=self.locker_name
         )
         with pytest.raises(PhibesExistsError):
             Locker.create(
                 password=self.password,
                 crypt_id=crypto.default_id,
-                name=self.locker_name
+                locker_name=self.locker_name
             )
 
 
@@ -124,7 +130,7 @@ class TestAuth(EmptyLocker):
         wrong_pw = "ThisWillNotBeIt"
         with pytest.raises(PhibesAuthError):
             self.my_locker = Locker.get(
-                password=wrong_pw, name=self.locker_name
+                password=wrong_pw, locker_name=self.locker_name
             )
 
     def custom_setup(self, tmp_path):
