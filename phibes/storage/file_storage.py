@@ -16,17 +16,18 @@ import shutil
 # In-project modules
 from phibes.crypto import create_crypt
 from phibes.lib import phibes_file
-from phibes.lib.config import ConfigModel
+from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.errors import PhibesExistsError
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.model import FILE_EXT
+# from phibes.model import FILE_EXT
 
 # In-package modules
 from .storage_impl import StorageImpl
 
 
 LOCKER_FILE = "locker.config"
+ITEM_FILE_EXT = 'cry'
 
 
 def get_locker_path(locker_id: str = None) -> Path:
@@ -48,7 +49,7 @@ def get_locker_file(locker_id: str = None) -> Path:
 
 def get_item_file(item_id: str, locker_id: str = None) -> Path:
     """Convenience function for getting path to an item"""
-    return get_locker_path(locker_id=locker_id) / f"{item_id}.{FILE_EXT}"
+    return get_locker_path(locker_id=locker_id) / f"{item_id}.{ITEM_FILE_EXT}"
 
 
 def can_create(locker_path: Path, remove_if_empty=True) -> bool:
@@ -63,7 +64,11 @@ def can_create(locker_path: Path, remove_if_empty=True) -> bool:
             raise PhibesExistsError(
                 f"{locker_path} already exists and is not a directory"
             )
-        if bool(list(locker_path.glob('*'))):
+        found = [
+            # i for i in locker_path.glob('*') if i.name != CONFIG_FILE_NAME
+            i for i in locker_path.glob('*') if CONFIG_FILE_NAME not in i.name
+        ]
+        if bool(found):
             raise PhibesExistsError(
                 f"dir {locker_path} already exists and is not empty"
             )
@@ -114,6 +119,8 @@ class LockerFileStorage(StorageImpl):
             LockerFileStorage.get(locker_id=locker_id)
         except PhibesNotFoundError:
             pass
+        # This should not be happening. All the crypt fields
+        # need to be passed in all the way from the client.
         crypt_impl = create_crypt(password, crypt_id)
         phibes_file.write(
             storage_path / LOCKER_FILE,
@@ -170,8 +177,8 @@ class LockerFileStorage(StorageImpl):
         """
         items = []
         locker_path = get_locker_path(locker_id)
-        item_gen = locker_path.glob(f"*.{FILE_EXT}")
-        ext_len = len(FILE_EXT) + 1
+        item_gen = locker_path.glob(f"*.{ITEM_FILE_EXT}")
+        ext_len = len(ITEM_FILE_EXT) + 1
         for item_path in [it for it in item_gen]:
             stored_name = item_path.name[0:-ext_len]
             items.append(stored_name)
