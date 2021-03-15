@@ -152,12 +152,11 @@ class TestMatrixHashed(PopulatedLocker):
                 f"{result.output=}\n"
             )
             inst = Locker.get(password=self.password, locker_name=lck)
-            stored_name = Locker.get_stored_name(lck)
-            targ = self.test_path/stored_name/LOCKER_FILE
+            targ = self.test_path/inst.locker_id/LOCKER_FILE
             assert inst.lock_file == targ
             # alert if tests are messing up actual user home dir
             assert not Path.home().joinpath(self.locker_name).exists()
-            assert not Path.home().joinpath(stored_name).exists()
+            assert not Path.home().joinpath(inst.locker_id).exists()
             return
 
     @pytest.mark.parametrize(params, matrix_params)
