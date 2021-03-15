@@ -16,7 +16,7 @@ from phibes.crypto import get_crypt
 from phibes.lib.config import ConfigModel
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.lib.errors import PhibesUnknownError
-from phibes.lib.utils import encode_name, decode_name
+from phibes.lib.utils import encode_name
 from phibes.model import FILE_EXT, Item
 from phibes.storage.file_storage import LockerFileStorage
 
