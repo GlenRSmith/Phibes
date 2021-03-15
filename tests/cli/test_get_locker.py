@@ -11,7 +11,11 @@ from click.testing import CliRunner
 import pytest
 
 # Target application/library specific imports
+from phibes.cli.commands import Action, Target
+from phibes.cli.lib import main as main_anon
 from phibes.cli.lib import PhibesCliNotFoundError
+from phibes.cli import handlers
+from phibes.crypto import list_crypts
 from phibes.lib.config import ConfigModel
 from phibes.lib.errors import PhibesAuthError
 from phibes.model import Locker, LOCKER_FILE
@@ -19,6 +23,7 @@ from phibes.phibes_cli import main
 
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
+from tests.lib.test_helpers import BaseAnonLockerTest
 from tests.lib.test_helpers import PopulatedLocker
 
 
@@ -28,6 +33,56 @@ include_config_arg = [False, True]
 matrix_params = []
 for element in itertools.product(command_instances, include_config_arg):
     matrix_params.append(element)
+
+
+class TestNoName(BaseAnonLockerTest):
+
+    password = "78CollECtion!CampCoolio"
+    command_name = 'test_status'
+    target = Target.Locker
+    action = Action.Get
+    func = handlers.get_locker
+    click_group = main_anon
+
+    def custom_setup(self, tmp_path):
+        super(TestNoName, self).custom_setup(tmp_path)
+
+    def custom_teardown(self, tmp_path):
+        super(TestNoName, self).custom_teardown(tmp_path)
+
+    def prep_and_run(self, arg_dict):
+        self.my_locker = Locker.create(
+            password=self.password,
+            crypt_id=arg_dict['crypt_id'],
+            locker_name=None
+        )
+        # change the configured working path to the test directory
+        update_config_option_default(
+            self.click_group.commands[self.command_name],
+            self.test_path
+        )
+        arg_list = [
+            "--path", arg_dict.get('path', self.test_path),
+            "--password", arg_dict.get('password', self.password)
+        ]
+        return CliRunner().invoke(
+            cli=self.click_group.commands[self.command_name],
+            args=arg_list
+        )
+
+    @pytest.mark.parametrize("crypt_id", list_crypts())
+    @pytest.mark.positive
+    def test_found(self, crypt_id, setup_and_teardown):
+        result = self.prep_and_run({'crypt_id': crypt_id})
+        assert result
+        assert result.exit_code == 0, (
+            f"{crypt_id=}\n"
+            f"{result.exception=}\n"
+            f"{result.output=}\n"
+        )
+        assert f'Crypt ID {crypt_id}' in result.output
+        inst = Locker.get(password=self.password, locker_name=None)
+        assert inst.lock_file == self.test_path/LOCKER_FILE
 
 
 class TestAllCryptTypes(PopulatedLocker):
@@ -151,3 +206,4 @@ class TestMatrixHashed(PopulatedLocker):
             # alert if tests are messing up actual user home dir
             assert not Path.home().joinpath(self.locker_name).exists()
         return
+
