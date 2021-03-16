@@ -16,6 +16,7 @@ from phibes.lib.utils import todict
 
 HOME_DIR = None
 CLI_CONFIG_FILE_NAME = '.phibes_cli.cfg'
+# CLI_CONFIG_FILE_NAME = 'cli.phibes.cfg'
 DEFAULT_EDITOR = environ.get('EDITOR', 'unknown')
 
 
@@ -195,7 +196,7 @@ def load_config_file(path):
         )
     with conf_file.open('r') as cf:
         conf_dict = json.loads(cf.read())
-    conf_mod = CliConfig(conf_dict['editor'])
+    conf_mod = CliConfig(editor=conf_dict['editor'])
     conf_mod.apply()
     return conf_mod
 
