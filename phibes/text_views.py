@@ -10,11 +10,17 @@ from phibes.model import Locker
 from phibes.lib.represent import rendered
 
 
-def create_locker(crypt_id: str, **kwargs):
-    pw = kwargs.get('password')
-    locker_name = kwargs.get('locker_name', None)
+@rendered
+def create_locker(
+        password: str,
+        crypt_id: str,
+        locker_name: str = None,
+        **kwargs
+):
     return Locker.create(
-        password=pw, crypt_id=crypt_id, locker_name=locker_name
+        password=password,
+        crypt_id=crypt_id,
+        locker_name=locker_name
     )
 
 
@@ -23,12 +29,14 @@ def get_locker(password: str, locker_name: str, **kwargs):
     return Locker.get(password=password, locker_name=locker_name)
 
 
+@rendered
 def delete_locker(password: str, locker_name: str, **kwargs):
     return Locker.get(
         password=password, locker_name=locker_name
     ).delete_instance()
 
 
+@rendered
 def create_item(
         password: str,
         locker_name: str,
@@ -42,6 +50,7 @@ def create_item(
     return locker.add_item(item)
 
 
+@rendered
 def update_item(
         password: str,
         locker_name: str,
@@ -55,18 +64,21 @@ def update_item(
     return locker.update_item(item)
 
 
+@rendered
 def get_item(password: str, locker_name: str, item_name: str, **kwargs):
     locker = Locker.get(password=password, locker_name=locker_name)
     return locker.get_item(item_name=item_name)
 
 
+@rendered
 def get_items(password: str, locker_name: str, **kwargs):
     locker = Locker.get(password=password, locker_name=locker_name)
     return locker.list_items()
 
 
+@rendered
 def delete_item(
         password: str, locker_name: str, item_name: str, **kwargs
 ):
     locker = Locker.get(password=password, locker_name=locker_name)
-    locker.delete_item(item_name=item_name)
+    return locker.delete_item(item_name=item_name)
