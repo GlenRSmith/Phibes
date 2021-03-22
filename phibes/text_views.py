@@ -18,9 +18,7 @@ def create_locker(
         **kwargs
 ):
     return Locker.create(
-        password=password,
-        crypt_id=crypt_id,
-        locker_name=locker_name
+        password=password, crypt_id=crypt_id, locker_name=locker_name
     )
 
 
@@ -31,18 +29,12 @@ def get_locker(password: str, locker_name: str, **kwargs):
 
 @rendered
 def delete_locker(password: str, locker_name: str, **kwargs):
-    return Locker.get(
-        password=password, locker_name=locker_name
-    ).delete_instance()
+    return Locker.delete(password=password, locker_name=locker_name)
 
 
 @rendered
 def create_item(
-        password: str,
-        locker_name: str,
-        item_name: str,
-        content: str,
-        **kwargs
+        password: str, locker_name: str, item_name: str, content: str, **kwargs
 ):
     locker = Locker.get(password=password, locker_name=locker_name)
     item = locker.create_item(item_name=item_name)
@@ -52,11 +44,7 @@ def create_item(
 
 @rendered
 def update_item(
-        password: str,
-        locker_name: str,
-        item_name: str,
-        content: str,
-        **kwargs
+        password: str, locker_name: str, item_name: str, content: str, **kwargs
 ):
     locker = Locker.get(password=password, locker_name=locker_name)
     item = locker.get_item(item_name)
