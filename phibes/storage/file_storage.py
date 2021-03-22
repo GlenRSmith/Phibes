@@ -7,6 +7,8 @@ A Locker has other data on the file system, but that file
 
 # Built-in library packages
 from __future__ import annotations
+
+from abc import ABC
 from datetime import datetime
 from pathlib import Path
 import shutil
@@ -14,13 +16,10 @@ import shutil
 # Third party packages
 
 # In-project modules
-from phibes.crypto import create_crypt
 from phibes.lib import phibes_file
-from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.errors import PhibesExistsError
 from phibes.lib.errors import PhibesNotFoundError
-# from phibes.model import FILE_EXT
 
 # In-package modules
 from .storage_impl import StorageImpl
@@ -28,28 +27,7 @@ from .storage_impl import StorageImpl
 
 LOCKER_FILE = "locker.config"
 ITEM_FILE_EXT = 'cry'
-
-
-def get_locker_path(locker_id: str = None) -> Path:
-    """Convenience function for getting path to a locker"""
-    storage_path = Path(ConfigModel().store_path)
-    if storage_path is None:
-        raise PhibesConfigurationError('missing store_path')
-    if locker_id is None:
-        locker_path = storage_path
-    else:
-        locker_path = storage_path / locker_id
-    return locker_path
-
-
-def get_locker_file(locker_id: str = None) -> Path:
-    """Convenience function for getting path to an item"""
-    return get_locker_path(locker_id=locker_id) / LOCKER_FILE
-
-
-def get_item_file(item_id: str, locker_id: str = None) -> Path:
-    """Convenience function for getting path to an item"""
-    return get_locker_path(locker_id=locker_id) / f"{item_id}.{ITEM_FILE_EXT}"
+EXEMPT_FILES = ['.phibes.cfg']
 
 
 def can_create(locker_path: Path, remove_if_empty=True) -> bool:
@@ -65,12 +43,12 @@ def can_create(locker_path: Path, remove_if_empty=True) -> bool:
                 f"{locker_path} already exists and is not a directory"
             )
         found = [
-            # i for i in locker_path.glob('*') if i.name != CONFIG_FILE_NAME
-            i for i in locker_path.glob('*') if CONFIG_FILE_NAME not in i.name
+            i for i in locker_path.glob('*') if i.name not in EXEMPT_FILES
         ]
         if bool(found):
             raise PhibesExistsError(
-                f"dir {locker_path} already exists and is not empty"
+                f"dir {locker_path} already exists and is not empty\n"
+                f"contains {found}"
             )
         else:
             if remove_if_empty:
@@ -78,82 +56,91 @@ def can_create(locker_path: Path, remove_if_empty=True) -> bool:
     return True
 
 
-class LockerFileStorage(StorageImpl):
+class LockerFileStorage(StorageImpl, ABC):
 
-    @staticmethod
-    def get(locker_id: str = None) -> dict:
+    def __init__(self, locker_id: str = None, **kwargs):
+        super(LockerFileStorage, self).__init__(**kwargs)
+        self.store_path = Path(kwargs['store_path'])
+        self.locker_id = locker_id
+
+    @property
+    def locker_path(self):
+        if self.store_path is None:
+            raise PhibesConfigurationError('missing store_path')
+        if self.locker_id is None:
+            locker_path = self.store_path
+        else:
+            locker_path = self.store_path / self.locker_id
+        return locker_path
+
+    @property
+    def locker_file(self):
+        return self.locker_path / LOCKER_FILE
+
+    def get(self) -> dict:
         """
         Get a stored Locker from file
-        @param locker_id: The optional locker_id of the locker
         @return: LockerFileStorage instance
         """
-        locker_path = get_locker_path(locker_id=locker_id)
-        lf = get_locker_file(locker_id=locker_id)
-        if not lf.exists():
-            raise PhibesNotFoundError(f'file: {lf}')
+        if not self.locker_file.exists():
+            raise PhibesNotFoundError(f'file: {self.locker_file}')
         else:
-            rec = phibes_file.read(lf)
-            rec['lock_file'] = lf
-            rec['path'] = locker_path
+            rec = phibes_file.read(self.locker_file)
+            rec['lock_file'] = self.locker_file
+            rec['path'] = self.locker_path
         return rec
 
-    @staticmethod
-    def create(password: str, crypt_id: str, locker_id: str = None):
+    def create(self, pw_hash: str, salt: str, crypt_id: str) -> dict:
         """
-        Create a Locker object
-        :param password: Password for the new locker
-        :param crypt_id: ID of the crypt_impl to create
-        :param locker_id: The optional name of the locker.
-                          Must be unique in storage
+        Create a Locker record in storage
+
+        @param pw_hash: Hashed password, for auth, of new locker
+        @param salt: Encryption salt for locker
+        @param crypt_id: ID of the crypt_impl used by locker
+        @return: record for newly persisted locker
         """
-        storage_path = Path(ConfigModel().store_path)
-        if locker_id:
-            storage_path = storage_path / locker_id
+        self.store_path = Path(self.store_path)
+        if self.locker_id:
             try:
-                storage_path.mkdir(exist_ok=False)
+                self.locker_path.mkdir(exist_ok=False)
             except FileExistsError as err:
                 raise PhibesExistsError(err)
-        if not can_create(storage_path, remove_if_empty=False):
-            raise ValueError(f"could not create {storage_path}")
+        else:
+            if not can_create(self.locker_path, remove_if_empty=False):
+                raise ValueError(f"could not create {self.locker_path}")
         try:
-            LockerFileStorage.get(locker_id=locker_id)
+            self.get()
         except PhibesNotFoundError:
             pass
-        # This should not be happening. All the crypt fields
-        # need to be passed in all the way from the client.
-        crypt_impl = create_crypt(password, crypt_id)
         phibes_file.write(
-            storage_path / LOCKER_FILE,
-            crypt_impl.salt,
-            crypt_impl.crypt_id,
-            str(datetime.now()),
-            crypt_impl.pw_hash,
+            pth=self.locker_file,
+            salt=salt,
+            crypt_id=crypt_id,
+            timestamp=str(datetime.now()),
+            body=pw_hash,
             overwrite=False
         )
-        return LockerFileStorage.get(locker_id=locker_id)
+        return self.get()
 
-    @staticmethod
-    def delete(locker_id: str = None) -> None:
+    def delete(self) -> None:
         """
         Delete a locker
-        @param locker_id:
         """
-        item_ids = LockerFileStorage.list_items(locker_id=locker_id)
+        item_ids = self.list_items()
         if item_ids:
             raise PhibesExistsError(
-                f'locker {locker_id} is not empty: {item_ids}'
+                f'locker {self.locker_id} is not empty: {item_ids}'
             )
         # Delete the locker file
-        get_locker_file(locker_id=locker_id).unlink()
+        self.locker_file.unlink()
         # Delete the locker folder if it is a named one for the locker
-        if locker_id:
+        if self.locker_id:
             shutil.rmtree(
-                get_locker_path(locker_id=locker_id),
+                self.locker_path,
                 ignore_errors=False  # don't delete a non-empty dir
             )
 
-    @staticmethod
-    def get_item(item_id: str, locker_id: str = None) -> dict:
+    def get_item(self, item_id: str, locker_id: str = None) -> dict:
         """
         Attempts to find and return a named item in the locker.
         Raises an exception of item isn't found
@@ -161,52 +148,43 @@ class LockerFileStorage(StorageImpl):
         @param locker_id: ID of locker - hash of the locker locker_id
         @return: the item dict
         """
-        item_path = get_item_file(
-            item_id=item_id, locker_id=locker_id
-        )
+        item_path = self.locker_path / f"{item_id}.{ITEM_FILE_EXT}"
         if item_path.exists():
             return phibes_file.read(item_path)
         else:
             raise PhibesNotFoundError(f"{item_id} not found")
 
-    @staticmethod
-    def list_items(locker_id: str = None) -> list:
+    def list_items(self) -> list:
         """
         Return a list of Items of the specified type in this locker
         :return:
         """
         items = []
-        locker_path = get_locker_path(locker_id)
-        item_gen = locker_path.glob(f"*.{ITEM_FILE_EXT}")
+        item_gen = self.locker_path.glob(f"*.{ITEM_FILE_EXT}")
         ext_len = len(ITEM_FILE_EXT) + 1
         for item_path in [it for it in item_gen]:
             stored_name = item_path.name[0:-ext_len]
             items.append(stored_name)
         return items
 
-    @staticmethod
     def save_item(
-            item_id: str,
-            item_rec: dict,
-            locker_id: str = None,
-            replace: bool = False
+            self, item_id: str, item_rec: dict, replace: bool = False
     ) -> None:
         """
         Saves the item to the locker
         @param item_id: Encrypted item locker_id
         @param item_rec: contents of item
-        @param locker_id: Optional hashed locker locker_id
         @param replace: Whether this is replacing an existing item
         @return: None
         """
         try:
-            LockerFileStorage.get_item(item_id=item_id, locker_id=locker_id)
+            self.get_item(item_id=item_id)
             if not replace:
-                raise PhibesExistsError(f"{locker_id}:{item_id} exists")
+                raise PhibesExistsError(f"{self.locker_id}:{item_id} exists")
         except PhibesNotFoundError as err:
             if replace:
                 raise err
-        item_path = get_item_file(item_id=item_id, locker_id=locker_id)
+        item_path = self.locker_path / f"{item_id}.{ITEM_FILE_EXT}"
         phibes_file.write(
             pth=item_path,
             salt=item_rec['salt'],
@@ -216,12 +194,14 @@ class LockerFileStorage(StorageImpl):
             overwrite=replace
         )
 
-    @staticmethod
-    def delete_item(item_id: str, locker_id: str = None) -> None:
+    def add_item(self, item_id: str, item_rec: dict) -> None:
+        return self.save_item(item_id, item_rec)
+
+    def delete_item(self, item_id: str) -> None:
         """
         Saves the item to the locker
         @param item_id: Encrypted item locker_id
-        @param locker_id: Optional hashed locker locker_id
         @return: None
         """
-        get_item_file(item_id=item_id, locker_id=locker_id).unlink()
+        item_path = self.locker_path / f"{item_id}.{ITEM_FILE_EXT}"
+        item_path.unlink()

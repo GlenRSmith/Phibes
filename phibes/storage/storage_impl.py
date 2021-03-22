@@ -11,78 +11,68 @@ import abc
 
 class StorageImpl(abc.ABC):
 
-    @staticmethod
     @abc.abstractmethod
-    def get(cls, locker_id: str = None) -> dict:
+    def __init__(self, locker_id: str = None, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def get(self) -> dict:
         """
         Returns a Locker dictionary representation
         """
         pass
 
-    @staticmethod
     @abc.abstractmethod
-    def create(cls, password: str, crypt_id: str, name: str = None):
+    def create(self, pw_hash: str, salt: str, crypt_id: str):
         """
-        Creates a Locker object
-        :param password: Password for the new locker
-        :param crypt_id: ID of the crypt_impl to create
-        :param name: The optional name of the locker. Must be unique in storage
+        Stores a new Locker object
+        :param pw_hash: Hashed Password for the new locker
+        :param salt: Encryption salt
+        :param crypt_id: ID of the locker's crypt_impl
         """
         pass
 
-    @staticmethod
     @abc.abstractmethod
-    def delete(cls, password: str, name: str = None) -> None:
+    def delete(self) -> None:
         """
-        Deletes a locker
-        @param password:
-        @param name:
+        Deletes the locker
         @return:
         """
         pass
 
-    @staticmethod
     @abc.abstractmethod
-    def get_item(cls, item_id: str, locker_id: str = None) -> dict:
+    def get_item(self, item_id: str) -> dict:
         """
         Attempts to find and return a named item in the locker.
         Raises an exception of item isn't found
         @param item_id: ID of item - encryption of the item_name
-        @param locker_id: ID of locker - hash of the locker name
         @return: the item dict
         """
         pass
 
-    @staticmethod
     @abc.abstractmethod
-    def list_items(cls, locker_id: str = None) -> list:
+    def list_items(self) -> list:
         """
         Returns a list of Items in this locker
         :return:
         """
         pass
 
-    @staticmethod
     @abc.abstractmethod
-    def add_item(
-            cls, item_id: str, item_rec: dict, locker_id: str = None
-    ) -> None:
+    def add_item(self, item_id: str, item_rec: dict) -> None:
         """
         Saves the item to the locker
         @param item_id: Item name - encrypted by caller
         @param item_rec: dict representation of item
-        @param locker_id: Optional hashed locker name
         @return: None
         """
         pass
 
-    @staticmethod
     @abc.abstractmethod
-    def delete_item(item_id: str, locker_id: str = None) -> None:
+    def delete_item(self, item_id: str) -> None:
         """
         Deletes the item from the locker
         @param item_id: Item locker_id - encrypted by caller
-        @param locker_id: Optional hashed locker locker_id
         @return: None
         """
         pass
