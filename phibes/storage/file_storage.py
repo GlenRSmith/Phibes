@@ -140,12 +140,11 @@ class LockerFileStorage(StorageImpl, ABC):
                 ignore_errors=False  # don't delete a non-empty dir
             )
 
-    def get_item(self, item_id: str, locker_id: str = None) -> dict:
+    def get_item(self, item_id: str) -> dict:
         """
         Attempts to find and return a named item in the locker.
         Raises an exception of item isn't found
         @param item_id: ID of item - encryption of the item_name
-        @param locker_id: ID of locker - hash of the locker locker_id
         @return: the item dict
         """
         item_path = self.locker_path / f"{item_id}.{ITEM_FILE_EXT}"
