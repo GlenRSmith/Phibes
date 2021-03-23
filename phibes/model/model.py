@@ -100,7 +100,7 @@ class LockerModel(Model):
         return ItemModel(locker_id=self.locker_id, item_id=item_id).delete()
 
     def get_item(self, item_id: str):
-        return self.storage.get_item(locker_id=self.locker_id, item_id=item_id)
+        return self.storage.get_item(item_id=item_id)
 
     def get_items(self):
         return self.storage.list_items()
