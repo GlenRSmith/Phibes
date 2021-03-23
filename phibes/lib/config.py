@@ -4,7 +4,6 @@ Package configuration
 
 
 # Built-in library packages
-import enum
 import json
 from os import environ
 from pathlib import Path
@@ -14,6 +13,8 @@ from typing import Optional, Union
 # In-project modules
 from phibes.lib.errors import PhibesConfigurationError
 from phibes.lib.utils import get_debug_info, get_path_tail
+from phibes.lib.utils import todict
+from phibes.storage.types import StoreType
 
 
 CONFIG_FILE_NAME = '.phibes.cfg'
@@ -23,17 +24,33 @@ none_recs = {}
 all_recs = {}
 
 
-class StoreType(enum.Enum):
-    FileSystem = 'FileSystem'
-
-
-DEFAULT_STORE_TYPE = StoreType.FileSystem
-
-
 class ConfigModel(object):
     """
     Configuration model class
     """
+
+    @property
+    def store(self) -> dict:
+        """
+        Accessor for configured storage
+        :return: protected _store attribute
+        """
+        # if self._store is None:
+        #     self._store = StoreDescription()
+        ret_val = {
+            'store_type': environ['PHIBES_STORE_TYPE'],
+            'store_path': environ['PHIBES_FILE_STORE_PATH'],
+        }
+        return ret_val
+
+    @store.setter
+    def store(self, val):
+        # Have to flatten for environ
+        if val['store_type'] == StoreType.FileSystem.name:
+            environ['PHIBES_STORE_TYPE'] = StoreType.FileSystem.name
+            environ['PHIBES_FILE_STORE_PATH'] = f"{val['store_path']}"
+        self._store = val
+
     @property
     def store_path(self) -> Optional[Path]:
         """
@@ -71,11 +88,7 @@ class ConfigModel(object):
                 # let the property mutator complain
                 setattr(self, f'{name}', value)
 
-    def __init__(
-            self,
-            # store_path: Union[Path, str] = None,
-            **kwargs
-    ):
+    def __init__(self, **kwargs):
         """
         Create a config object
         @param store_path: overriding store_path
@@ -114,8 +127,9 @@ class ConfigModel(object):
 
         # Prevent IDE from complaining elsewhere about assignment
         self._store_path = None
+        self._store = None
         required = []
-        optional = ['store_path']
+        optional = ['store_path', 'store']
         err_list = []
         for name in optional + required:
             arg_val = kwargs.get(name, None)
@@ -143,13 +157,6 @@ class ConfigModel(object):
                 )
                 if count > 12 and limit_calls:
                     raise PhibesConfigurationError(msg)
-            # pytest-of-gsmith/pytest-1074/test_normal0
-            # try:
-            #     self._set_private_property(
-            #         name='store_path', value=None, optional=True
-            #     )
-            # except Exception as err:
-            #     all_recs[count]['err'] = f"{err}"
         else:
             self.store_path = arg_val
 
@@ -170,16 +177,18 @@ class ConfigModel(object):
         """
         # Some things are not json serializable, e.g. Path
         ret_val = {
+            "store": self.store,
             "store_path": str(self.store_path.resolve())
         }
-        return json.dumps(ret_val, indent=4)
+        return json.dumps(todict(ret_val), indent=4)
 
     def __repr__(self):
         # Some things are not json serializable, e.g. Path
         ret_val = {
+            "store": self.store,
             "store_path": str(self.store_path.resolve())
         }
-        return json.dumps(ret_val, indent=4)
+        return json.dumps(todict(ret_val), indent=4)
 
     @staticmethod
     def _validate_store_path(val: Optional[Path]):
@@ -239,7 +248,8 @@ def load_config_file(path: Path) -> ConfigModel:
     conf_mod = ConfigModel(
         store_path=conf_dict.get(
             'store_path', Path.joinpath(parent_dir, DEFAULT_STORE_PATH)
-        )
+        ),
+        store=conf_dict.get('store')
     )
     conf_mod.apply()
     return conf_mod
