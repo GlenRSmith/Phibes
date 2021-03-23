@@ -7,24 +7,18 @@ A Locker has other data on the file system, but that file
 
 # Built-in library packages
 from __future__ import annotations
-from pathlib import Path
 from typing import List
 
 # Third party packages
 # In-project modules
-from phibes.crypto import get_crypt
+from phibes.crypto import create_crypt, get_crypt
+from phibes.crypto.crypt_ifc import CryptIfc
 from phibes.lib.config import ConfigModel
-from phibes.lib.errors import PhibesNotFoundError
-from phibes.lib.errors import PhibesUnknownError
+from phibes.lib.errors import PhibesNotFoundError, PhibesUnknownError
 from phibes.lib.utils import encode_name
-from phibes.model import FILE_EXT, Item
-from phibes.storage.file_storage import LockerFileStorage
+from phibes.model import Item
+from phibes.model.model import LockerModel
 
-
-ItemList = List[Item]
-# HEX_REGEX = "^(0[xX])?[A-Fa-f0-9]+$"
-# HexStr = Match[HEX_REGEX]
-# str(type(self)).split("'")[1].split(".")[-1].lower()
 
 LOCKER_FILE = "locker.config"
 
@@ -34,23 +28,34 @@ class Locker(object):
     Locker model object
     """
 
-    _store_impl = LockerFileStorage
-
-    def __init__(self, **kwargs):
+    def __init__(
+            self, crypt_impl: CryptIfc, locker_name: str = None, **kwargs
+    ):
         """
         This should only be called by the class methods `get` and `create`
         """
-        self.path = kwargs.get('path')
-        self.lock_file = kwargs.get('lock_file')
-        self.crypt_impl = kwargs.get('crypt_impl')
+        self.crypt_impl = crypt_impl
+        self.locker_name = locker_name
         self.timestamp = kwargs.get('timestamp')
-        self.locker_name = kwargs.get('locker_name')
+        self._model = None
+
+    @property
+    def data_model(self):
+        if self._model is None:
+            self._model = LockerModel(locker_id=self.locker_id)
+        return self._model
 
     @property
     def locker_id(self):
         if self.locker_name is None:
             return None
-        return encode_name(self.locker_name)
+        return Locker.get_locker_id(self.locker_name)
+
+    @classmethod
+    def get_locker_id(cls, locker_name):
+        if locker_name is None:
+            return None
+        return encode_name(locker_name)
 
     @classmethod
     def get(cls, password: str, locker_name: str = None) -> Locker:
@@ -60,17 +65,12 @@ class Locker(object):
         @param locker_name: The optional name of the locker
         @return: Locker instance
         """
-        inst = Locker(locker_name=locker_name)
-        rec = cls._store_impl.get(locker_id=inst.locker_id)
-        pw_hash = rec['body']
-        salt = rec['salt']
-        crypt_id = rec['crypt_id']
-        inst.crypt_impl = get_crypt(crypt_id, password, pw_hash, salt)
-        inst.timestamp = rec['timestamp']
-        # for the time being, retaining the assignment of
-        # filesystem properties to avoid breaking a bunch of tests
-        inst.path = rec['path']
-        inst.lock_file = rec['lock_file']
+        lid = Locker.get_locker_id(locker_name=locker_name)
+        locker = LockerModel(locker_id=lid)
+        crypt_inst = get_crypt(password=password, **locker.__dict__)
+        inst = Locker(
+            crypt_impl=crypt_inst, locker_name=locker_name, **locker.__dict__
+        )
         return inst
 
     @classmethod
@@ -84,10 +84,12 @@ class Locker(object):
         :param locker_name: The optional name of the locker.
                      Must be unique in storage
         """
-        cls._store_impl.create(
-            password=password,
-            crypt_id=crypt_id,
-            locker_id=Locker(locker_name=locker_name).locker_id
+        crypt_inst = create_crypt(password=password, crypt_id=crypt_id)
+        LockerModel(
+            pw_hash=crypt_inst.pw_hash,
+            salt=crypt_inst.salt,
+            locker_id=Locker.get_locker_id(locker_name=locker_name),
+            crypt_id=crypt_inst.crypt_id
         )
         # Verify it is accessible
         try:
@@ -109,14 +111,7 @@ class Locker(object):
             err_name = (f" with {locker_name=}!", "!")[locker_name is None]
             err = f"No locker found to delete at {err_path}{err_name}\n"
             raise PhibesNotFoundError(err)
-        inst.delete_instance(locker_name=locker_name)
-
-    def delete_instance(self, locker_name: str = None):
-        """Instance method to delete locker"""
-        items = self.list_items()
-        for it in items:
-            self.delete_item(it.name)
-        self._store_impl.delete(locker_id=self.locker_id)
+        return inst.data_model.delete()
 
     def decrypt(self, ciphertext: str) -> str:
         """
@@ -134,38 +129,36 @@ class Locker(object):
         """
         return self.crypt_impl.encrypt(plaintext)
 
-    def get_item_path(self, item_name: str) -> Path:
-        file_name = f"{self.encrypt(item_name)}.{FILE_EXT}"
-        return self.path.joinpath(file_name)
-
     def create_item(self, item_name: str) -> Item:
         """
-        Creates an in-memory item, prepopulates `content` from named template
-        (if provided)
+        Creates an in-memory item
         Client must follow up with `add_item` call to save the new item.
-        @param item_name: locker_id of new item
+        @param item_name: name of new item
         @return: new in-memory item
         """
         return Item(self.crypt_impl, item_name)
 
-    def save_item(self, item: Item, replace: bool) -> None:
+    def save_item(self, item: Item, replace: bool) -> Item:
         """
         Saves the new item to the locker
         @param item: item to save
         @param replace: whether this is replacing a stored item
         @return: None
         """
-        item_rec = item.as_dict()
-        item_id = self.encrypt(item.name)
-        locker_id = self.locker_id
-        return self._store_impl.save_item(
-            item_id=item_id,
-            item_rec=item_rec,
-            locker_id=locker_id,
-            replace=replace
-        )
+        if replace:
+            return self.data_model.update_item(
+                item_id=self.crypt_impl.encrypt(item.name),
+                content=self.crypt_impl.encrypt(item.content),
+                timestamp=item.timestamp
+            )
+        else:
+            return self.data_model.create_item(
+                item_id=self.crypt_impl.encrypt(item.name),
+                content=self.crypt_impl.encrypt(item.content),
+                timestamp=item.timestamp
+            )
 
-    def add_item(self, item: Item) -> None:
+    def add_item(self, item: Item) -> Item:
         """
         Saves the new item to the locker
         @param item: item to save
@@ -180,12 +173,13 @@ class Locker(object):
         @param item_name: locker_id of item (plaintext)
         @return: the item
         """
-        rec = Locker._store_impl.get_item(
-            item_id=self.encrypt(item_name),
-            locker_id=self.locker_id
+        rec = self.data_model.get_item(
+            item_id=self.crypt_impl.encrypt(item_name)
         )
         item = Item.make_item_from_dict(
-            crypt_obj=self.crypt_impl, name=item_name, item_dict=rec
+            crypt_obj=self.crypt_impl,
+            name=item_name,
+            item_dict=rec
         )
         if not item:
             raise PhibesNotFoundError(f"{item_name} not found")
@@ -196,7 +190,7 @@ class Locker(object):
             )
         return item
 
-    def update_item(self, item: Item) -> None:
+    def update_item(self, item: Item) -> Item:
         """
         Save `item`, allowing overwrite
         :param item: Item instance to save
@@ -209,9 +203,8 @@ class Locker(object):
         :param item_name: name of item to delete
         """
         try:
-            return self._store_impl.delete_item(
-                item_id=self.encrypt(item_name),
-                locker_id=self.locker_id
+            return self.data_model.delete_item(
+                item_id=self.crypt_impl.encrypt(item_name)
             )
         except FileNotFoundError as err:
             raise PhibesNotFoundError(
@@ -219,15 +212,13 @@ class Locker(object):
                 f"extra info {err}"
             )
 
-    def list_items(self) -> ItemList:
+    def list_items(self) -> List[Item]:
         """
         Return a list of Items of the specified type in this locker
         :return:
         """
         items = []
-        item_ids = Locker._store_impl.list_items(
-            locker_id=self.locker_id
-        )
+        item_ids = self.data_model.get_items()
         for item_id in item_ids:
             item = self.get_item(item_name=self.decrypt(item_id))
             items.append(item)

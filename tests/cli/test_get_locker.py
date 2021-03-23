@@ -83,7 +83,7 @@ class TestNoName(BaseAnonLockerTest):
         assert f'Crypt ID {crypt_id}' in result.output
         inst = Locker.get(password=self.password, locker_name=None)
         assert (
-                inst.crud_locker.storage.locker_file ==
+                inst.data_model.storage.locker_file ==
                 self.test_path / LOCKER_FILE
         )
 
@@ -156,8 +156,8 @@ class TestMatrixHashed(PopulatedLocker):
             )
             inst = Locker.get(password=self.password, locker_name=lck)
             assert (
-                    inst.crud_locker.storage.locker_file ==
-                    self.test_path/inst.locker_id/LOCKER_FILE
+                    inst.data_model.storage.locker_file ==
+                    self.test_path / inst.locker_id / LOCKER_FILE
             )
             # alert if tests are messing up actual user home dir
             assert not Path.home().joinpath(self.locker_name).exists()

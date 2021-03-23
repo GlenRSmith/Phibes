@@ -78,8 +78,8 @@ class TestNoName(BaseAnonLockerTest):
         assert f'Crypt ID {crypt}' in result.output
         inst = Locker.get(password=self.password, locker_name=None)
         assert (
-                inst.crud_locker.storage.locker_file ==
-                self.test_path/LOCKER_FILE
+                inst.data_model.storage.locker_file ==
+                self.test_path / LOCKER_FILE
         )
 
 
