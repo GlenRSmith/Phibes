@@ -110,32 +110,6 @@ class BaseAnonLockerTest(ConfigLoadingTestClass):
         )
 
 
-class AnonLocker(ConfigLoadingTestClass):
-
-    my_locker = None
-    locker_name = None
-    password = "78CollECtion!CampCoolio"
-
-    def custom_setup(self, tmp_path):
-        super(AnonLocker, self).custom_setup(tmp_path)
-        try:
-            Locker.delete(
-                locker_name=self.locker_name,
-                password=self.password
-            )
-        except PhibesNotFoundError:
-            pass
-        finally:
-            self.my_locker = Locker.create(
-                password=self.password,
-                crypt_id=self.crypt_id,
-                locker_name=self.locker_name
-            )
-
-    def custom_teardown(self, tmp_path):
-        super(AnonLocker, self).custom_teardown(tmp_path)
-
-
 class EmptyLocker(ConfigLoadingTestClass):
 
     my_locker = None
