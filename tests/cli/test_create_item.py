@@ -101,7 +101,10 @@ class TestNoName(BaseAnonLockerTest):
             f"{result.output=}\n"
         )
         locker_inst = Locker.get(password=self.password, locker_name=None)
-        assert locker_inst.lock_file == self.test_path/LOCKER_FILE
+        assert (
+                locker_inst.crud_locker.storage.locker_file ==
+                self.test_path / LOCKER_FILE
+        )
         item_inst = self.my_locker.get_item(self.test_item_name)
         assert item_inst
         assert item_inst.content == 'happyclappy\n'

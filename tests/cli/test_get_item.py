@@ -130,7 +130,7 @@ class TestGetItem(test_helpers.PopulatedLocker):
             f"{self.test_path=}\n"
         )
         assert result.exit_code == 0, err_report
-        assert self.item_name in result.output
+        assert self.item_name in result.output, err_report
 
     @pytest.mark.positive
     def test_get_wrong_name(self, setup_and_teardown):

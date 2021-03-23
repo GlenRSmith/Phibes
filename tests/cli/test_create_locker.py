@@ -74,9 +74,13 @@ class TestNoName(BaseAnonLockerTest):
             f"{result.exception=}\n"
             f"{result.output=}\n"
         )
-        assert f'Crypt ID {crypt_choices.choice_dict[crypt_id]}' in result.output
+        crypt = crypt_choices.choice_dict[crypt_id]
+        assert f'Crypt ID {crypt}' in result.output
         inst = Locker.get(password=self.password, locker_name=None)
-        assert inst.lock_file == self.test_path/LOCKER_FILE
+        assert (
+                inst.crud_locker.storage.locker_file ==
+                self.test_path/LOCKER_FILE
+        )
 
 
 class TestCreateLocker(ConfigLoadingTestClass):

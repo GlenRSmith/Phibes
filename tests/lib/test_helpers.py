@@ -14,6 +14,7 @@ from phibes.cli.commands import build_cli_app
 from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import ConfigModel
 from phibes.lib.config import load_config_file, write_config_file
+from phibes.lib.config import StoreType
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
 
@@ -61,7 +62,14 @@ class ConfigLoadingTestClass(BaseTestClass):
     def custom_setup(self, tmp_path):
         super(ConfigLoadingTestClass, self).custom_setup(tmp_path)
         set_home_dir(tmp_path)
-        conf = ConfigModel(store_path=tmp_path)
+        conf = ConfigModel(
+            store={
+                'store_type': StoreType.FileSystem.name,
+                'store_path': tmp_path
+            },
+            store_path=tmp_path
+        )
+        conf.apply()
         write_config_file(tmp_path, conf)
         self.test_path = tmp_path
         load_config_file(tmp_path)
