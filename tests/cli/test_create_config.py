@@ -26,10 +26,15 @@ class TestCreateConfig(BaseTestClass):
 
     test_config = {
         "editor": "vim",
+        # "store": {"store_type": "FileSystem", "store_path": "."},
         "store_path": "."
     }
     bad_test_config = {
         "editor": "vim",
+        # "store": {
+        #     "store_type": "FileSystem",
+        #     "store_path": "/not/a/path/that/exists"
+        # },
         "store_path": "/not/a/path/that/exists"
     }
 
@@ -60,13 +65,18 @@ class TestCreateConfig(BaseTestClass):
         assert not target_loc.exists()
         invoke_args = [
             "--path", self.test_path,
+            # "--store_path", self.test_config['store']['store_path'],
             "--store_path", self.test_config['store_path'],
             "--editor", self.test_config['editor']
         ]
         result = CliRunner().invoke(
             cli=command_instance, args=invoke_args
         )
-        assert result.exit_code == 0
+        assert result.exit_code == 0, (
+            f"{result}"
+            f"{result.exception}"
+            f"{result.output}"
+        )
         assert target_loc.exists()
         contents = json.loads(target_loc.read_text())
         assert contents['editor'] == self.test_config['editor']
@@ -77,6 +87,8 @@ class TestCreateConfig(BaseTestClass):
         )
         mem = Path(contents['store_path']).resolve()
         disk = Path(self.test_config['store_path']).resolve()
+        # mem = Path(contents['store']['store_path']).resolve()
+        # disk = Path(self.test_config['store']['store_path']).resolve()
         assert (mem == disk)
         return
 
@@ -92,10 +104,15 @@ class TestCreateConfig(BaseTestClass):
             [
                 "--path", self.test_path,
                 "--store_path", self.bad_test_config['store_path'],
+                # "--store_path", self.bad_test_config['store']['store_path'],
                 "--editor", self.bad_test_config['editor']
             ]
         )
-        assert result.exit_code == 1
+        assert result.exit_code == 1, (
+            f'{result.output=}     \n'
+            f'{result.exception=}     \n'
+            f'{result.exit_code=}     \n'
+        )
         assert type(result.exception) == PhibesConfigurationError, (
             f"{result=}"
             f"{result.output=}"
