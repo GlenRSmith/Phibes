@@ -56,8 +56,13 @@ class TestNoName(BaseAnonLockerTest):
 
     def custom_setup(self, tmp_path):
         super(TestNoName, self).custom_setup(tmp_path)
-        CliConfig().store_path = tmp_path
-        CliConfig().editor = 'echo happyclappy>> '
+        conf = CliConfig()
+        conf.store = {
+            'store_type': conf.store['store_type'],
+            'store_path': tmp_path
+        }
+        # conf.store_path = tmp_path
+        conf.editor = 'echo happyclappy>> '
         write_config_file(tmp_path, update=True)
 
     def custom_teardown(self, tmp_path):

@@ -83,7 +83,10 @@ class TestNoName(ConfigLoadingTestClass):
         new_item.content = self.start_content
         self.my_locker.add_item(item=new_item)
         conf = CliConfig()
-        conf.store_path = tmp_path
+        conf.store = {
+            'store_type': conf.store['store_type'],
+            'store_path': tmp_path
+        }
         conf.editor = f'echo {self.edit_content}> '
         write_config_file(tmp_path, update=False)
         load_config_file(tmp_path)
