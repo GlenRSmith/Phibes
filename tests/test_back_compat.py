@@ -11,7 +11,7 @@ import pytest
 # Local application/library specific imports
 from phibes.crypto import list_crypts
 from phibes.model import Locker
-from phibes.lib.config import ConfigModel
+from phibes.lib.config import ConfigModel, StoreType
 from phibes.lib.config import load_config_file, write_config_file
 
 
@@ -55,7 +55,6 @@ def validate_install(installed_path, locker_name, pw):
     load_config_file(installed_path)
     # override stored "dummy" store_path with the current installed path
     dummy = ConfigModel()
-    dummy.store_path = installed_path
     dummy.store = {
         'store_type': dummy.store['store_type'],
         'store_path': installed_path
@@ -112,6 +111,10 @@ class TestBackCompat:
                 new_lock.add_item(ni)
             # after lockers are stored, stub out the store_path
             conf._store_path = Path("/")
+            conf.store = {
+                'store_type': StoreType.FileSystem.name,
+                'store_path': "/"
+            }
             write_config_file(
                 new_loc, conf, update=True, bypass_validation=True
             )

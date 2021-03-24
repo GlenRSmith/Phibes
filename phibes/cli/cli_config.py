@@ -119,6 +119,11 @@ class CliConfig(ConfigModel):
             raise PhibesCliConfigurationError(
                 f'missing required arg(s): {err_list}'
             )
+        if 'store_path' in kwargs:
+            self.store = {
+                'store_type': 'FileSystem',
+                'store_path': kwargs['store_path']
+            }
         super(CliConfig, self).__init__(**kwargs)
         self.apply()
 

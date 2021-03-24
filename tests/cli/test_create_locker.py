@@ -89,7 +89,10 @@ class TestCreateLocker(ConfigLoadingTestClass):
     pw = "SmellyBeansVictor"
     test_config = {
         "editor": "vim",
-        "store_path": "."
+        "store": {
+            "store_type": "FileSystem",
+            "store_path": "."
+        }
     }
 
     def custom_setup(self, tmp_path):

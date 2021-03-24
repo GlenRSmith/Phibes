@@ -39,7 +39,7 @@ class ConfigModel(object):
         #     self._store = StoreDescription()
         ret_val = {
             'store_type': environ['PHIBES_STORE_TYPE'],
-            'store_path': environ['PHIBES_FILE_STORE_PATH'],
+            'store_path': environ['PHIBES_FILE_STORE_PATH']
         }
         return ret_val
 

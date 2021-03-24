@@ -61,7 +61,6 @@ class TestNoName(BaseAnonLockerTest):
             'store_type': conf.store['store_type'],
             'store_path': tmp_path
         }
-        # conf.store_path = tmp_path
         conf.editor = 'echo happyclappy>> '
         write_config_file(tmp_path, update=True)
 
