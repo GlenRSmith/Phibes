@@ -13,6 +13,7 @@ import click
 from phibes.cli.cli_config import CliConfig
 from phibes.cli.errors import PhibesCliError
 from phibes.cli.errors import PhibesCliNotFoundError
+# from phibes.lib.config import ConfigModel
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Item
 from phibes.model import Locker
@@ -106,7 +107,11 @@ def user_edit_file(
 
 
 def user_edit_local_item(item_name: str, initial_content: str = ''):
-    work_path = CliConfig().work_path
+    # work_path = CliConfig().work_path
+    # work_path = CliConfig().store['store_path']
+    # config = ConfigModel()
+    config = CliConfig()
+    work_path = config.store['store_path']
     return user_edit_file(
         work_path=work_path, name=item_name, content=initial_content
     )
