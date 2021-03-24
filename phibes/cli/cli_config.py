@@ -111,7 +111,10 @@ class CliConfig(ConfigModel):
                     name=name, value=arg_val, optional=(name not in required)
                 )
             except Exception as err:
-                err_list.append(err)
+                msg = f'exception setting private property {name=}'
+                msg += f'exception setting private property {arg_val=}'
+                msg += f'exception setting private property {err=}'
+                err_list.append(msg)
         if err_list:
             raise PhibesCliConfigurationError(
                 f'missing required arg(s): {err_list}'
@@ -124,20 +127,20 @@ class CliConfig(ConfigModel):
         Override the string representation
         """
         # Some things are not json serializable, e.g. Path
-        ret_val = todict(self)
-        # try:
-        #     ret_val = todict(self)
-        # except Exception as err:
-        #     if not self.work_path:
-        #         wp = '-'
-        #     else:
-        #         wp = self.work_path
-        #     ret_val = {
-        #         "todict result": err,
-        #         "editor": self.editor,
-        #         "work_path": wp,
-        #         "store_path": str(self.store_path.resolve())
-        #     }
+        # ret_val = todict(self)
+        try:
+            ret_val = todict(self)
+        except Exception as err:
+            if not self.work_path:
+                wp = '-'
+            else:
+                wp = self.work_path
+            ret_val = {
+                "todict result": f'{err}',
+                "editor": self.editor,
+                "work_path": wp,
+                "store_path": str(self.store_path.resolve())
+            }
         return json.dumps(ret_val, indent=4)
 
     @staticmethod
