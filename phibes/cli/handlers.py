@@ -8,20 +8,15 @@ from pathlib import Path
 import click
 
 # in-project modules
-from phibes.cli.cli_config import CliConfig
-from phibes.cli.cli_config import write_config_file
-from phibes.cli.errors import PhibesCliError
-from phibes.cli.errors import PhibesCliExistsError
+from phibes.cli.cli_config import CliConfig, write_config_file
+from phibes.cli.errors import PhibesCliError, PhibesCliExistsError
 from phibes.cli.errors import PhibesCliNotFoundError
-from phibes.cli.lib import present_list_items2
-from phibes.cli.lib import user_edit_local_item
+from phibes.cli.lib import present_list_items2, user_edit_local_item
 from phibes.cli.options import crypt_choices
 from phibes.lib.config import ConfigModel, load_config_file
-# from phibes.lib.config import StoreType
-from phibes.lib.errors import PhibesExistsError
-from phibes.lib.errors import PhibesNotFoundError
-# from phibes.lib.represent import rendered
+from phibes.lib.errors import PhibesExistsError, PhibesNotFoundError
 from phibes.lib.represent import ReprType
+from phibes.storage.types import StoreType
 from phibes import text_views
 
 
