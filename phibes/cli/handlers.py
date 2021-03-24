@@ -25,28 +25,33 @@ def set_store_config(**kwargs):
     Sets up configuration of storage
     """
     if 'path' in kwargs:
-        store_path = kwargs.get('path')
+        # inclusion of a `path` arg means FileSystem storage
+        config = ConfigModel()
+        config.store = {
+            'store_type': StoreType.FileSystem.name,
+            'store_path': kwargs['path']
+        }
+        store_path = kwargs['path']
+        config.apply()
+        store_info = config.store
     elif 'config' in kwargs:
         # this should be the cli_config file
         config_file = kwargs.get('config')
         load_config_file(config_file)
-        store_path = ConfigModel().store_path
+        config = ConfigModel()
+        store_info = config.store
+        store_path = config.store_path
     else:
         raise PhibesCliError('path required, from param or config file')
-    try:
-        CliConfig().work_path = str(store_path.absolute())
-        CliConfig().store_path = str(store_path.absolute())
-    except TypeError as err:
-        raise PhibesCliError(f"{err=}\n{str(store_path.absolute())=}")
-    return store_path
+    # try:
+    #     CliConfig().work_path = str(store_path.absolute())
+    #     CliConfig().store_path = str(store_path.absolute())
+    # except TypeError as err:
+    #     raise PhibesCliError(f"{err=}\n{str(store_path.absolute())=}")
+    return store_info
 
 
-def create_locker(
-        password: str,
-        crypt_id: int,
-        locker: str = None,
-        **kwargs
-):
+def create_locker(password: str, crypt_id: int, locker: str = None, **kwargs):
     """Create a Locker"""
     store_info = set_store_config(**kwargs)
     try:
