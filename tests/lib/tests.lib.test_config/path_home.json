@@ -1,4 +1,8 @@
 {
   "editor": "vim",
-  "store_path": "~"
+  "store_path": "~",
+  "store": {
+    "store_type": "FileSystem",
+    "store_path": "~"
+  }
 }
