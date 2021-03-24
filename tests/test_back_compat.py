@@ -54,9 +54,13 @@ def validate_locker(name, pw):
 def validate_install(installed_path, locker_name, pw):
     load_config_file(installed_path)
     # override stored "dummy" store_path with the current installed path
-    ConfigModel(store_path=installed_path)
-    validate_locker(locker_name, pw)
-    return
+    dummy = ConfigModel()
+    dummy.store_path = installed_path
+    dummy.store = {
+        'store_type': dummy.store['store_type'],
+        'store_path': installed_path
+    }
+    return validate_locker(locker_name, pw)
 
 
 class TestBackCompat:
