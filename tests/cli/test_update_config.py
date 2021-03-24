@@ -26,11 +26,16 @@ class TestUpdateConfig(ConfigLoadingTestClass):
 
     test_config = {
         "editor": "emacs",
-        "store_path": "/etc"
+        "store_path": "/etc",
+        "store": {"store_type": "FileSystem", "store_path": "/etc"}
     }
     bad_test_config = {
         "editor": "vim",
-        "store_path": "/not/a/path/that/exists"
+        "store_path": "/not/a/path/that/exists",
+        "store": {
+            "store_type": "FileSystem",
+            "store_path": "/not/a/path/that/exists"
+        }
     }
 
     def custom_setup(self, tmp_path):
@@ -42,7 +47,8 @@ class TestUpdateConfig(ConfigLoadingTestClass):
             "--store_path", self.test_config['store_path'],
             "--editor", self.test_config['editor']
         ]
-        result = CliRunner().invoke(
+        # easiest way to create a config
+        CliRunner().invoke(
             cli=main.commands['create-config'],
             args=invoke_args
         )
@@ -69,7 +75,11 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         result = CliRunner().invoke(
             cli=command_instance, args=invoke_args
         )
-        assert result.exit_code == 0
+        assert result.exit_code == 0, (
+            f"{result}"
+            f"{result.exception}"
+            f"{result.output}"
+        )
         assert target_loc.exists()
         contents = json.loads(target_loc.read_text())
         assert contents['editor'] == self.test_config['editor']
@@ -78,9 +88,14 @@ class TestUpdateConfig(ConfigLoadingTestClass):
             f"{result.exception}"
             f"{result.output}"
         )
-        mem = Path(contents['store_path']).resolve()
-        disk = Path(self.test_config['store_path']).resolve()
-        assert (mem == disk)
+        assert (
+                Path(contents['store_path']).resolve() ==
+                Path(self.test_config['store_path']).resolve()
+        )
+        assert (
+                Path(contents['store']['store_path']).resolve() ==
+                Path(self.test_config['store']['store_path']).resolve()
+        )
         return
 
     @pytest.mark.parametrize(
@@ -92,7 +107,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         assert target_loc.exists()
         invoke_args = [
             "--path", self.test_path,
-            "--store_path", self.bad_test_config['store_path'],
+            "--store_path", self.bad_test_config['store']['store_path'],
             "--editor", self.bad_test_config['editor']
         ]
         result = CliRunner().invoke(

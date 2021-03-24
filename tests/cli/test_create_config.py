@@ -26,16 +26,16 @@ class TestCreateConfig(BaseTestClass):
 
     test_config = {
         "editor": "vim",
-        # "store": {"store_type": "FileSystem", "store_path": "."},
-        "store_path": "."
+        "store_path": ".",
+        "store": {"store_type": "FileSystem", "store_path": "."}
     }
     bad_test_config = {
         "editor": "vim",
-        # "store": {
-        #     "store_type": "FileSystem",
-        #     "store_path": "/not/a/path/that/exists"
-        # },
-        "store_path": "/not/a/path/that/exists"
+        "store_path": "/not/a/path/that/exists",
+        "store": {
+            "store_type": "FileSystem",
+            "store_path": "/not/a/path/that/exists"
+        }
     }
 
     def custom_setup(self, tmp_path):
@@ -65,8 +65,7 @@ class TestCreateConfig(BaseTestClass):
         assert not target_loc.exists()
         invoke_args = [
             "--path", self.test_path,
-            # "--store_path", self.test_config['store']['store_path'],
-            "--store_path", self.test_config['store_path'],
+            "--store_path", self.test_config['store']['store_path'],
             "--editor", self.test_config['editor']
         ]
         result = CliRunner().invoke(
@@ -85,11 +84,14 @@ class TestCreateConfig(BaseTestClass):
             f"{result.exception}"
             f"{result.output}"
         )
-        mem = Path(contents['store_path']).resolve()
-        disk = Path(self.test_config['store_path']).resolve()
-        # mem = Path(contents['store']['store_path']).resolve()
-        # disk = Path(self.test_config['store']['store_path']).resolve()
-        assert (mem == disk)
+        assert (
+                Path(contents['store_path']).resolve() ==
+                Path(self.test_config['store_path']).resolve()
+        )
+        assert (
+                Path(contents['store']['store_path']).resolve() ==
+                Path(self.test_config['store']['store_path']).resolve()
+        )
         return
 
     @pytest.mark.parametrize(
@@ -103,8 +105,7 @@ class TestCreateConfig(BaseTestClass):
             command_instance,
             [
                 "--path", self.test_path,
-                "--store_path", self.bad_test_config['store_path'],
-                # "--store_path", self.bad_test_config['store']['store_path'],
+                "--store_path", self.bad_test_config['store']['store_path'],
                 "--editor", self.bad_test_config['editor']
             ]
         )
