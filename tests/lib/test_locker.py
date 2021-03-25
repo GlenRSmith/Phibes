@@ -16,7 +16,11 @@ from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker
 
 # Local test imports
+from tests.lib.test_helpers import ConfigLoadingTestClass
 from tests.lib.test_helpers import EmptyLocker, plain_texts, PopulatedLocker
+
+
+crypt_list = crypto.list_crypts()
 
 
 class TestLocker(EmptyLocker):
@@ -69,6 +73,27 @@ class TestLocker(EmptyLocker):
                 crypt_id=crypto.default_id,
                 locker_name=self.locker_name
             )
+
+
+class TestNoName(ConfigLoadingTestClass):
+
+    password = "78CollECtion!CampCoolio"
+
+    @pytest.mark.parametrize("crypt_id", crypt_list)
+    @pytest.mark.positive
+    def test_create_with_arg(self, crypt_id, setup_and_teardown):
+        Locker.create(
+            password=self.password, crypt_id=crypt_id, locker_name=None
+        )
+        found = Locker.get(password=self.password, locker_name=None)
+        assert found
+
+    @pytest.mark.parametrize("crypt_id", crypt_list)
+    @pytest.mark.positive
+    def test_create_without_arg(self, crypt_id, setup_and_teardown):
+        Locker.create(password=self.password, crypt_id=crypt_id)
+        found = Locker.get(password=self.password, locker_name=None)
+        assert found
 
 
 class TestItemStuff(PopulatedLocker):
