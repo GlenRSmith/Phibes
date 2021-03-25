@@ -35,8 +35,6 @@ class ConfigModel(object):
         Accessor for configured storage
         :return: protected _store attribute
         """
-        # if self._store is None:
-        #     self._store = StoreDescription()
         ret_val = {
             'store_type': environ['PHIBES_STORE_TYPE'],
             'store_path': environ['PHIBES_FILE_STORE_PATH']
@@ -46,35 +44,14 @@ class ConfigModel(object):
     @store.setter
     def store(self, val):
         # Have to flatten for environ
+        if val is None:
+            return
         if val['store_type'] == StoreType.FileSystem.name:
+            self._validate_store_path(val['store_path'])
             environ['PHIBES_STORE_TYPE'] = StoreType.FileSystem.name
             environ['PHIBES_FILE_STORE_PATH'] = f"{val['store_path']}"
         self._store = val
 
-    @property
-    def store_path(self) -> Optional[Path]:
-        """
-        Accessor for configuration store path
-        :return: protected _store_path attribute
-        """
-        if self._store_path is None:
-            self._store_path = Path(environ.get('PHIBES_STORE_PATH', None))
-            # raise PhibesConfigurationError(f'{self._store_path=}')
-            # raise PhibesConfigurationError('store_path not set')
-        return self._store_path
-
-    @store_path.setter
-    def store_path(self, new_val: Optional[Union[Path, str]]):
-        """
-        Mutator for configuration store path
-        :param new_val: new path to assign
-        :return: None
-        """
-        if type(new_val) is str:
-            new_val = Path(new_val)
-        self._validate_store_path(new_val)
-        self._store_path = new_val
-        environ['PHIBES_STORE_PATH'] = f"{self._store_path}"
 
     def _set_private_property(
             self, name: str, value=None, optional: bool = False
@@ -126,10 +103,9 @@ class ConfigModel(object):
             )[not key_list]
 
         # Prevent IDE from complaining elsewhere about assignment
-        self._store_path = None
         self._store = None
         required = []
-        optional = ['store_path', 'store']
+        optional = ['store']
         err_list = []
         for name in optional + required:
             arg_val = kwargs.get(name, None)
@@ -143,32 +119,6 @@ class ConfigModel(object):
                 err_list.append(err)
         if err_list:
             raise PhibesConfigurationError(f'missing arg(s): {err_list}')
-
-        limit_calls = False
-        arg_val = kwargs.get('store_path', None)
-        if arg_val is None:
-            self.store_path = environ.get("PHIBES_STORE_PATH", None)
-            if debugging:
-                none_recs[count] = all_recs[count]
-                buffer = ' ' * 5
-                msg = (
-                    f'{buffer}{count=}{buffer}'
-                    f'{buffer}{json.dumps(all_recs, indent=4)}{buffer}'
-                )
-                if count > 12 and limit_calls:
-                    raise PhibesConfigurationError(msg)
-        else:
-            self.store_path = arg_val
-
-        # These two 'work' when store_path is a function param
-        # if store_path is None:
-        #     self.store_path = environ.get("PHIBES_STORE_PATH", None)
-        # else:
-        #     self.store_path = store_path
-        # self.store_path = (
-        #     store_path, environ.get("PHIBES_STORE_PATH", None)
-        # )[store_path is None]
-
         self.apply()
 
     def __str__(self):
@@ -176,24 +126,20 @@ class ConfigModel(object):
         Override the string representation of config
         """
         # Some things are not json serializable, e.g. Path
-        ret_val = {
-            "store": self.store,
-            "store_path": str(self.store_path.resolve())
-        }
+        ret_val = {"store": self.store}
         return json.dumps(todict(ret_val), indent=4)
 
     def __repr__(self):
         # Some things are not json serializable, e.g. Path
-        ret_val = {
-            "store": self.store,
-            "store_path": str(self.store_path.resolve())
-        }
+        ret_val = {"store": self.store}
         return json.dumps(todict(ret_val), indent=4)
 
     @staticmethod
     def _validate_store_path(val: Optional[Path]):
         if val is None:
             return
+        if type(val) is str:
+            val = Path(val)
         if not isinstance(val, Path):
             raise PhibesConfigurationError(
                 f"store_path must be a Path, {val} is {type(val)}"
@@ -211,7 +157,7 @@ class ConfigModel(object):
         failures = []
         # Trigger the field validation in each property mutator
         try:
-            self.store_path = self._store_path
+            self.store = self._store
         except TypeError as err:
             failures.append(f"{err}\n")
         if failures:
