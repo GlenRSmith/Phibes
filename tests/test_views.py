@@ -84,7 +84,11 @@ class TestGetLocker(EmptyLocker):
 
 class TestDemoTextViews(ConfigLoadingTestClass):
     """
-    Test a whole lifecycle of lockers
+    Test a whole lifecycle of lockers,
+    including all view functions, relying on "server-side" handling
+    of encryption operations.
+    In this context, , it is acceptable for the views to return objects
+    (rather than JSON and primitives, as in the browser demo).
     """
 
     mock_users = {
@@ -104,94 +108,102 @@ class TestDemoTextViews(ConfigLoadingTestClass):
     def test_json_repr(self, tmp_path, datadir, setup_and_teardown):
         # print('create a locker for each test user:')
         for user, rec in self.mock_users.items():
-            text_views.create_locker(
+            locker = text_views.create_locker(
                 password=rec['pw'],
                 locker_name=user,
-                crypt_id=crypto.default_id
+                crypt_id=crypto.default_id,
+                repr=ReprType.JSON
             )
+            assert type(locker) is dict
 
         # print('get each locker:')
         for user, rec in self.mock_users.items():
-            text_views.get_locker(password=rec['pw'], locker_name=user)
+            locker = text_views.get_locker(
+                password=rec['pw'], locker_name=user, repr=ReprType.JSON
+            )
+            assert type(locker) is dict
 
         # print('add an item to the locker for each user')
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
             item_content = f'Hello! My name is {user}'
-            text_views.create_item(
-                repr=ReprType.Object,
+            item = text_views.create_item(
                 password=self.mock_users[user]['pw'],
                 locker_name=user, item_name=item_name,
-                content=item_content
+                content=item_content,
+                repr=ReprType.JSON
             )
+            assert type(item) is dict
 
         # print('retrieve the lockers and items:')
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
             locker = text_views.get_locker(
-                repr=ReprType.Object, password=rec['pw'], locker_name=user
+                password=rec['pw'], locker_name=user, repr=ReprType.JSON
             )
-            # print(f'{locker.__dict__=}')
+            assert type(locker) is dict
             item = text_views.get_item(
-                repr=ReprType.Object,
                 password=self.mock_users[user]['pw'],
-                locker_name=user, item_name=item_name
+                locker_name=user, item_name=item_name,
+                repr=ReprType.JSON
             )
-            # print(f'{item=}')
+            assert type(item) is dict
 
         # print('update the items:')
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
             locker = text_views.get_locker(
-                repr=ReprType.Object,
-                password=rec['pw'], locker_name=user
+                password=rec['pw'], locker_name=user,
+                repr=ReprType.JSON
             )
-            # print(f'{locker.__dict__=}')
+            assert type(locker) is dict
             item = text_views.update_item(
-                repr=ReprType.Object,
                 password=self.mock_users[user]['pw'],
                 locker_name=user, item_name=item_name,
-                content=f'Goodbye! My name is {user}'
+                content=f'Goodbye! My name is {user}',
+                repr=ReprType.JSON,
             )
-            # print(f'{item=}')
+            assert type(item) is dict
 
         # print('retrieve the lockers and items:')
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
             locker = text_views.get_locker(
-                repr=ReprType.Object,
-                password=rec['pw'], locker_name=user
+                password=rec['pw'], locker_name=user, repr=ReprType.JSON
             )
-            # print(f'{locker.__dict__=}')
+            assert type(locker) is dict
             item = text_views.get_item(
-                repr=ReprType.Object,
                 password=self.mock_users[user]['pw'],
-                locker_name=user, item_name=item_name
+                locker_name=user, item_name=item_name,
+                repr=ReprType.JSON
             )
-            # print(f'{item=}')
+            assert type(item) is dict
 
         # print('retrieve the lockers and item lists:')
         for user, rec in self.mock_users.items():
             locker = text_views.get_locker(
-                repr=ReprType.Object, password=rec['pw'], locker_name=user
+                repr=ReprType.JSON, password=rec['pw'], locker_name=user
             )
-            # print(f'{locker.__dict__=}')
-            item = text_views.get_items(
-                repr=ReprType.Object,
+            assert type(locker) is dict
+            items = text_views.get_items(
+                repr=ReprType.JSON,
                 password=self.mock_users[user]['pw'],
                 locker_name=user
             )
-            # print(f'{item=}')
+            assert type(items) is list
+            for item in items:
+                assert type(item) is dict
 
         # print('delete items:')
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
             locker = text_views.get_locker(
-                repr=ReprType.Object, password=rec['pw'], locker_name=user
+                repr=ReprType.JSON, password=rec['pw'], locker_name=user
             )
+            assert type(locker) is dict
             # print(f'{locker.__dict__=}')
             text_views.delete_item(
-                repr=ReprType.Object,
+                repr=ReprType.JSON,
                 password=self.mock_users[user]['pw'],
                 locker_name=user, item_name=item_name
             )
@@ -199,5 +211,5 @@ class TestDemoTextViews(ConfigLoadingTestClass):
         # print('delete lockers:')
         for user, rec in self.mock_users.items():
             text_views.delete_locker(
-                repr=ReprType.Object, password=rec['pw'], locker_name=user
+                repr=ReprType.JSON, password=rec['pw'], locker_name=user
             )
