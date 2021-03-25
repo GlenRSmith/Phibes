@@ -12,12 +12,12 @@ import pytest
 
 # Local application/library specific imports
 from phibes import phibes_cli
+from phibes.cli import handlers
+from phibes.cli import PhibesCliError
 from phibes.cli.cli_config import CliConfig
 from phibes.cli.commands import Action, Target
 from phibes.cli.commands import build_cli_app
-from phibes.cli import handlers
 from phibes.cli.lib import main as main_anon
-from phibes.cli.lib import PhibesCliError
 from phibes.crypto import list_crypts
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.lib.config import write_config_file

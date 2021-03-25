@@ -11,10 +11,10 @@ from click.testing import CliRunner
 import pytest
 
 # Target application/library specific imports
+from phibes.cli import handlers
+from phibes.cli import PhibesCliNotFoundError
 from phibes.cli.commands import Action, Target
 from phibes.cli.lib import main as main_anon
-from phibes.cli.lib import PhibesCliNotFoundError
-from phibes.cli import handlers
 from phibes.crypto import list_crypts
 from phibes.lib.config import ConfigModel
 from phibes.lib.errors import PhibesAuthError

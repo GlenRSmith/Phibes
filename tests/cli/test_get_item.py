@@ -10,11 +10,11 @@ from click.testing import CliRunner
 
 # Local application/library specific imports
 from phibes import phibes_cli
+from phibes.cli import PhibesCliNotFoundError
 from phibes.cli.commands import Action, Target
 from phibes.cli import handlers
 from phibes.cli.lib import main as main_anon
 from phibes.crypto import list_crypts
-from phibes.cli.lib import PhibesCliNotFoundError
 from phibes.lib.config import ConfigModel
 from phibes.model import Locker
 
