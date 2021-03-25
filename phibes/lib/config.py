@@ -35,10 +35,9 @@ class ConfigModel(object):
         Accessor for configured storage
         :return: protected _store attribute
         """
-        ret_val = {
-            'store_type': environ['PHIBES_STORE_TYPE'],
-            'store_path': environ['PHIBES_FILE_STORE_PATH']
-        }
+        ret_val = {'store_type': environ['PHIBES_STORE_TYPE']}
+        if ret_val['store_type'] == StoreType.FileSystem.name:
+            ret_val['store_path'] = environ['PHIBES_FILE_STORE_PATH']
         return ret_val
 
     @store.setter
@@ -50,6 +49,8 @@ class ConfigModel(object):
             self._validate_store_path(val['store_path'])
             environ['PHIBES_STORE_TYPE'] = StoreType.FileSystem.name
             environ['PHIBES_FILE_STORE_PATH'] = f"{val['store_path']}"
+        else:
+            environ['PHIBES_STORE_TYPE'] = val['store_type']
         self._store = val
 
     def _set_private_property(
