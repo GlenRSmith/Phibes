@@ -12,10 +12,6 @@ import click
 # in-project modules
 from phibes.cli.cli_config import CliConfig
 from phibes.cli.errors import PhibesCliError
-from phibes.cli.errors import PhibesCliNotFoundError
-# from phibes.lib.config import ConfigModel
-from phibes.lib.errors import PhibesNotFoundError
-from phibes.model import Item
 from phibes.model import Locker
 
 CONTEXT_SETTINGS = dict(
@@ -107,42 +103,11 @@ def user_edit_file(
 
 
 def user_edit_local_item(item_name: str, initial_content: str = ''):
-    # work_path = CliConfig().work_path
-    # work_path = CliConfig().store['store_path']
-    # config = ConfigModel()
     config = CliConfig()
     work_path = config.store['store_path']
     return user_edit_file(
         work_path=work_path, name=item_name, content=initial_content
     )
-
-
-def user_edit_item(locker: Locker, item: Item):
-    item.content = user_edit_file(
-        work_path=pathlib.Path(locker.path),
-        name=item.name,
-        content=item.content
-    )
-    return item
-
-
-def edit_item(locker: Locker, item_name: str):
-    """
-    Open a text editor to edit an existing item in a locker
-    :param locker: Instance of locker
-    :param item_name: Name of item to edit
-    :return:
-    """
-    try:
-        item = locker.get_item(item_name)
-    except PhibesNotFoundError:
-        raise PhibesCliNotFoundError(f"Item `{item_name}` not found")
-    item.content = user_edit_file(
-        work_path=pathlib.Path(locker.path),
-        name=item.name,
-        content=item.content
-    )
-    return locker.update_item(item)
 
 
 def present_list_items2(items, verbose: bool):
