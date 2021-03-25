@@ -133,6 +133,9 @@ class MemoryStorage(StorageImpl):
         }
         return self.save_item(item_id=item_id, item_rec=rec, replace=True)
 
+    def add_item(self, item_id: str, item_rec: dict) -> None:
+        return self.save_item(item_id, item_rec)
+
     def delete_item(self, item_id: str):
         exists = item_id in mock_lockers[self.locker_id]['items']
         if not exists:
