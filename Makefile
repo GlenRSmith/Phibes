@@ -36,16 +36,16 @@ flake:
 	flake8 phibes
 
 test_all_p:
+	flake8 phibes
 	pytest --workers auto --cov=phibes -m positive --cov-fail-under=75
 	pytest --workers auto --cov=phibes -m negative --cov-fail-under=65
 	pytest -m 'not positive and not negative'
-	flake8 phibes
 
 test_all:
+	flake8 phibes
 	pytest --cov=phibes -m positive --cov-fail-under=75
 	pytest --cov=phibes -m negative --cov-fail-under=65
 	pytest -m 'not positive and not negative'
-	flake8 phibes
 
 find_unmarked_tests:
 	pytest --co -m "not negative and not positive"

@@ -7,7 +7,7 @@ Package configuration
 import json
 from os import environ
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 # Third party packages
 # In-project modules
@@ -51,7 +51,6 @@ class ConfigModel(object):
             environ['PHIBES_STORE_TYPE'] = StoreType.FileSystem.name
             environ['PHIBES_FILE_STORE_PATH'] = f"{val['store_path']}"
         self._store = val
-
 
     def _set_private_property(
             self, name: str, value=None, optional: bool = False
