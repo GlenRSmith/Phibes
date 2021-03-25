@@ -106,8 +106,7 @@ class Locker(object):
                 password=password, locker_name=locker_name
             )
         except (FileNotFoundError, PhibesNotFoundError):
-            # TODO: replace with something like "storage info"
-            err_path = ConfigModel().store_path
+            err_path = ConfigModel().store
             err_name = (f" with {locker_name=}!", "!")[locker_name is None]
             err = f"No locker found to delete at {err_path}{err_name}\n"
             raise PhibesNotFoundError(err)

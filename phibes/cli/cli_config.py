@@ -142,9 +142,11 @@ class CliConfig(ConfigModel):
                 wp = self.work_path
             ret_val = {
                 "todict result": f'{err}',
+                "exception type": f'{type(err)}',
+                "self.__dict__": f'{self.__dict__}',
                 "editor": self.editor,
                 "work_path": wp,
-                "store_path": str(self.store_path.resolve())
+                "store": str(self.store)
             }
         return json.dumps(ret_val, indent=4)
 

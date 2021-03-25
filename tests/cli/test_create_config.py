@@ -26,12 +26,10 @@ class TestCreateConfig(BaseTestClass):
 
     test_config = {
         "editor": "vim",
-        "store_path": ".",
         "store": {"store_type": "FileSystem", "store_path": "."}
     }
     bad_test_config = {
         "editor": "vim",
-        "store_path": "/not/a/path/that/exists",
         "store": {
             "store_type": "FileSystem",
             "store_path": "/not/a/path/that/exists"
@@ -79,18 +77,18 @@ class TestCreateConfig(BaseTestClass):
         assert target_loc.exists()
         contents = json.loads(target_loc.read_text())
         assert contents['editor'] == self.test_config['editor']
-        assert contents.get('store_path', None), (
+        assert contents.get('store', None), (
             f"{result}"
             f"{result.exception}"
             f"{result.output}"
         )
         assert (
-                Path(contents['store_path']).resolve() ==
-                Path(self.test_config['store_path']).resolve()
-        )
-        assert (
                 Path(contents['store']['store_path']).resolve() ==
                 Path(self.test_config['store']['store_path']).resolve()
+        ), (
+            f"{result}"
+            f"{result.exception}"
+            f"{result.output}"
         )
         return
 

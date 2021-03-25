@@ -31,7 +31,6 @@ def set_store_config(**kwargs):
             'store_type': StoreType.FileSystem.name,
             'store_path': kwargs['path']
         }
-        # store_path = kwargs['path']
         config.apply()
         store_info = config.store
     elif 'config' in kwargs:
@@ -40,7 +39,6 @@ def set_store_config(**kwargs):
         load_config_file(config_file)
         config = ConfigModel()
         store_info = config.store
-        # store_path = config.store_path
     else:
         raise PhibesCliError('path required, from param or config file')
     # try:

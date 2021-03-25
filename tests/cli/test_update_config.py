@@ -26,12 +26,10 @@ class TestUpdateConfig(ConfigLoadingTestClass):
 
     test_config = {
         "editor": "emacs",
-        "store_path": "/etc",
         "store": {"store_type": "FileSystem", "store_path": "/etc"}
     }
     bad_test_config = {
         "editor": "vim",
-        "store_path": "/not/a/path/that/exists",
         "store": {
             "store_type": "FileSystem",
             "store_path": "/not/a/path/that/exists"
@@ -44,7 +42,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         assert not target_loc.exists()
         invoke_args = [
             "--path", self.test_path,
-            "--store_path", self.test_config['store_path'],
+            "--store_path", self.test_config['store']['store_path'],
             "--editor", self.test_config['editor']
         ]
         # easiest way to create a config
@@ -69,7 +67,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         assert target_loc.exists()
         invoke_args = [
             "--path", self.test_path,
-            "--store_path", self.test_config['store_path'],
+            "--store_path", self.test_config['store']['store_path'],
             "--editor", self.test_config['editor']
         ]
         result = CliRunner().invoke(
@@ -83,20 +81,15 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         assert target_loc.exists()
         contents = json.loads(target_loc.read_text())
         assert contents['editor'] == self.test_config['editor']
-        assert contents.get('store_path', None), (
+        assert contents.get('store', None), (
             f"{result}"
             f"{result.exception}"
             f"{result.output}"
         )
         assert (
-                Path(contents['store_path']).resolve() ==
-                Path(self.test_config['store_path']).resolve()
-        )
-        assert (
                 Path(contents['store']['store_path']).resolve() ==
                 Path(self.test_config['store']['store_path']).resolve()
         )
-        return
 
     @pytest.mark.parametrize(
         "command_instance", [main.commands['update-config']]
@@ -117,7 +110,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
         assert result.exit_code == 1
         assert type(result.exception) == PhibesConfigurationError
         # on windows, "foo/bar" ends up as "foo\\\bar" in the exception
-        for word in self.bad_test_config['store_path'].split('/'):
+        for word in self.bad_test_config['store']['store_path'].split('/'):
             assert str(result.exception.message).count(word)
         assert target_loc.exists()
         return
