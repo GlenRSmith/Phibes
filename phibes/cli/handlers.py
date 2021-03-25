@@ -41,11 +41,6 @@ def set_store_config(**kwargs):
         store_info = config.store
     else:
         raise PhibesCliError('path required, from param or config file')
-    # try:
-    #     CliConfig().work_path = str(store_path.absolute())
-    #     CliConfig().store_path = str(store_path.absolute())
-    # except TypeError as err:
-    #     raise PhibesCliError(f"{err=}\n{str(store_path.absolute())=}")
     return store_info
 
 

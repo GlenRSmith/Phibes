@@ -145,17 +145,18 @@ class Locker(object):
         @return: None
         """
         if replace:
-            return self.data_model.update_item(
+            self.data_model.update_item(
                 item_id=self.crypt_impl.encrypt(item.name),
                 content=self.crypt_impl.encrypt(item.content),
                 timestamp=item.timestamp
             )
         else:
-            return self.data_model.create_item(
+            self.data_model.create_item(
                 item_id=self.crypt_impl.encrypt(item.name),
                 content=self.crypt_impl.encrypt(item.content),
                 timestamp=item.timestamp
             )
+        return item
 
     def add_item(self, item: Item) -> Item:
         """
