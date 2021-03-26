@@ -3,26 +3,120 @@ pytest module for phibes_cli create-item command
 """
 
 # Standard library imports
+from typing import Callable
 
 # Related third party imports
-import pytest
+import click
 from click.testing import CliRunner
+import pytest
 
 # Local application/library specific imports
 from phibes import phibes_cli
+from phibes.cli import handlers
+from phibes.cli import PhibesCliError
+from phibes.cli.cli_config import CliConfig
+from phibes.cli.commands import Action, Target
+from phibes.cli.commands import build_cli_app
+from phibes.cli.lib import main as main_anon
+from phibes.crypto import list_crypts
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.cli.lib import PhibesCliError
-from phibes.lib.config import set_editor, write_config_file
+from phibes.lib.config import write_config_file
+from phibes.model import Locker, LOCKER_FILE
 
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
+from tests.lib.test_helpers import BaseAnonLockerTest
 from tests.lib.test_helpers import PopulatedLocker
+
+
+def make_single_command_cli_app(
+        group: click.group,
+        target: Target,
+        action: Action,
+        sub_cmd: str,
+        func: Callable,
+        named_locker: bool
+):
+    return build_cli_app(
+        command_dict={target: {action: {'name': sub_cmd, 'func': func}}},
+        click_group=group,
+        named_locker=named_locker
+    )
+
+
+class TestNoName(BaseAnonLockerTest):
+
+    password = "78CollECtion!CampCoolio"
+    command_name = 'test_create_item'
+    target = Target.Item
+    action = Action.Create
+    func = handlers.create_item
+    click_group = main_anon
+    test_item_name = 'gonna_addit'
+
+    def custom_setup(self, tmp_path):
+        super(TestNoName, self).custom_setup(tmp_path)
+        conf = CliConfig()
+        conf.store = {
+            'store_type': conf.store['store_type'],
+            'store_path': tmp_path
+        }
+        conf.editor = 'echo happyclappy>> '
+        write_config_file(tmp_path, update=True)
+
+    def custom_teardown(self, tmp_path):
+        super(TestNoName, self).custom_teardown(tmp_path)
+
+    def invoke(self, arg_dict: dict):
+        """
+        Helper method for often repeated code in test methods
+        :return: click test-runner result
+        """
+        args = [
+            "--password", arg_dict.get('password', self.password),
+            "--path", arg_dict.get('path', self.test_path),
+            "--item", arg_dict.get('item', self.test_item_name)
+        ]
+        if 'template' in arg_dict:
+            args += ["--template", arg_dict['template']]
+        return CliRunner().invoke(
+            self.click_group.commands[self.command_name], args
+        )
+
+    def prep_and_run(self, arg_dict):
+        self.my_locker = Locker.create(
+            password=self.password, crypt_id=arg_dict['crypt_id']
+        )
+        # change the configured working path to the test directory
+        update_config_option_default(
+            self.click_group.commands[self.command_name],
+            self.test_path
+        )
+        return self.invoke(arg_dict=arg_dict)
+
+    @pytest.mark.parametrize("crypt_id", list_crypts())
+    @pytest.mark.positive
+    def test_found(self, crypt_id, setup_and_teardown):
+        result = self.prep_and_run({'crypt_id': crypt_id})
+        assert result
+        assert result.exit_code == 0, (
+            f"{crypt_id=}\n"
+            f"{result.exception=}\n"
+            f"{result.output=}\n"
+        )
+        locker_inst = Locker.get(password=self.password, locker_name=None)
+        assert (
+                locker_inst.data_model.storage.locker_file ==
+                self.test_path / LOCKER_FILE
+        )
+        item_inst = self.my_locker.get_item(self.test_item_name)
+        assert item_inst
+        assert item_inst.content == 'happyclappy\n'
 
 
 class TestCreateBase(PopulatedLocker):
 
     test_item_name = 'gonna_edit'
-    test_item_type = 'secret'
     good_template_name = 'good_template'
     bad_template_name = 'bad_template'
     target_cmd_name = 'create-item'
@@ -37,7 +131,7 @@ class TestCreateBase(PopulatedLocker):
         my_item = self.my_locker.create_item(self.good_template_name)
         my_item.content = f"{self.good_template_name}:secret"
         self.my_locker.add_item(my_item)
-        set_editor('echo happyclappy>> ')
+        CliConfig().editor = 'echo happyclappy>> '
         write_config_file(tmp_path, update=True)
         try:
             self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
@@ -88,7 +182,10 @@ class TestCreateBase(PopulatedLocker):
         return
 
     def common_pos_asserts(self, result, expected_content, locker_inst=None):
-        assert result.exit_code == 0, result.exception
+        assert result.exit_code == 0, (
+            f"{result.exception=}\n"
+            f"{result.output=}\n"
+        )
         if locker_inst is None:
             locker_inst = self.my_locker
         inst = locker_inst.get_item(self.test_item_name)

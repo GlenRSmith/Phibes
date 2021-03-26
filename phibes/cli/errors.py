@@ -14,12 +14,16 @@ class PhibesCliError(errors.PhibesError):
         if args:
             self.message = f"Phibes error: {args[0]}"
         else:
-            self.message = f"Phibes error: no more info"
+            self.message = "Phibes error: no more info"
         super().__init__(self.message)
 
     def __str__(self):
         msg = getattr(self, "message", "was raised")
         return f"{self.__class__}: {msg}"
+
+
+class PhibesCliConfigurationError(PhibesCliError):
+    pass
 
 
 class PhibesCliNotFoundError(PhibesCliError):

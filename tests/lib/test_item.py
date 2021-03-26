@@ -21,10 +21,9 @@ class TestCreate(EmptyLocker):
     def test_create_empty_items(self, setup_and_teardown):
         all_lockers = list(self.lockers.values()) + [self.my_locker]
         for lck in all_lockers:
-            pth = lck.get_item_path("secret_name")
-            new_item = Item(lck.crypt_impl, "secret_name")
+            new_item = lck.create_item("secret_name")
             with pytest.raises(AttributeError):
-                new_item.save(pth)
+                lck.add_item(new_item)
 
 
 class TestCreateAndSave(EmptyLocker):
@@ -40,13 +39,10 @@ class TestCreateAndSave(EmptyLocker):
                 f"password: HardHat"
                 f"secret_name"
             )
-            pth = lck.get_item_path("secret_name")
-            new_item = Item(lck.crypt_impl, "secret_name")
+            new_item = lck.create_item(item_name="secret_name")
             new_item.content = content
-            new_item.save(pth)
-            pth = lck.get_item_path("secret_name")
-            found = Item(lck.crypt_impl, "secret_name")
-            found.read(pth)
+            lck.add_item(new_item)
+            found = lck.get_item(item_name="secret_name")
             assert found
 
     @pytest.mark.positive
@@ -60,12 +56,10 @@ class TestCreateAndSave(EmptyLocker):
                 f"password: HardHat"
                 f"template:my_template"
             )
-            pth = lck.get_item_path("secret_name")
-            new_item = Item(lck.crypt_impl, "sekrit_name")
+            new_item = lck.create_item(item_name="sekrit_name")
             new_item.content = content
-            new_item.save(pth)
-            found = Item(lck.crypt_impl, "sekrit_name")
-            found.read(pth)
+            lck.add_item(item=new_item)
+            found = lck.get_item(item_name="sekrit_name")
             assert found
 
     @pytest.mark.positive
@@ -84,6 +78,47 @@ class TestCreateAndSave(EmptyLocker):
 
     @pytest.mark.positive
     @pytest.mark.parametrize("plaintext", plain_texts)
+    def test_fields(self, plaintext, setup_and_teardown):
+        all_lockers = list(self.lockers.values()) + [self.my_locker]
+        for lck in all_lockers:
+            content = f"{plaintext}\ndo all fields work?"
+            new_item = lck.create_item('any name')
+            new_item.content = content
+            lck.add_item(new_item)
+            found = lck.get_item('any name')
+            test_fields = ['salt', 'timestamp', 'content', '_ciphertext']
+            for fld in test_fields:
+                set_val = getattr(new_item, fld)
+                found_val = getattr(found, fld)
+                assert set_val == found_val, (
+                    f"         mismatching saved/retrieved {fld=}       "
+                    f"     {set_val=}/{found_val}                       "
+                )
+            assert content == found.content, (
+                f"{lck.crypt_impl=}" f"{str(found)=}"
+            )
+
+    @pytest.mark.positive
+    @pytest.mark.parametrize("plaintext", plain_texts)
+    def test_modified_on_save(self, plaintext, setup_and_teardown):
+        all_lockers = list(self.lockers.values()) + [self.my_locker]
+        for lck in all_lockers:
+            content = f"{plaintext}\ndoes saving update instance?"
+            new_item = lck.create_item('any name')
+            new_item.content = content
+            lck.add_item(new_item)
+            found = lck.get_item('any name')
+            test_fields = ['salt', 'timestamp', 'content', '_ciphertext']
+            for fld in test_fields:
+                assert getattr(new_item, fld) is not None, (
+                    f"   {fld=} is None      "
+                )
+            assert content == found.content, (
+                f"{lck.crypt_impl=}" f"{str(found)=}"
+            )
+
+    @pytest.mark.positive
+    @pytest.mark.parametrize("plaintext", plain_texts)
     def test_timestamp(self, plaintext, setup_and_teardown):
         all_lockers = list(self.lockers.values()) + [self.my_locker]
         for lck in all_lockers:
@@ -91,10 +126,14 @@ class TestCreateAndSave(EmptyLocker):
             new_item = lck.create_item('any name')
             new_item.content = content
             lck.add_item(new_item)
-            new_ts = new_item.timestamp
-            assert datetime.strptime(new_ts, '%Y-%m-%d %H:%M:%S.%f'), (
-                f"invalid datetime str: {new_ts}"
+            err_msg = (
+                f"       {new_item.timestamp}   "
+                f"       {dir(new_item)=}   "
+                f"       {new_item.as_dict()=}    "
             )
+            new_ts = new_item.timestamp
+            assert new_ts is not None, err_msg
+            assert datetime.strptime(new_ts, '%Y-%m-%d %H:%M:%S.%f'), err_msg
             found = lck.get_item('any name')
             assert new_ts == found.timestamp, f"{lck.crypt_impl=}"
             try:

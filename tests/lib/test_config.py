@@ -19,19 +19,25 @@ class TestConfig(object):
     def test_default_good(self, datadir):
         load_config_file(Path(datadir["default.json"]))
         test_config = ConfigModel()
-        assert test_config.editor == 'vim'
-        assert test_config.store_path == Path('.')
+        assert test_config.store == {
+            'store_path': '.',
+            'store_type': 'FileSystem'
+        }
 
     @pytest.mark.positive
     def test_hash_false(self, datadir):
         load_config_file(Path(datadir["hash_false.json"]))
         test_config = ConfigModel()
-        assert test_config.editor == 'vim'
-        assert test_config.store_path == Path('.')
+        assert test_config.store == {
+            'store_path': '.',
+            'store_type': 'FileSystem'
+        }
 
     @pytest.mark.positive
     def test_path_home(self, datadir):
         load_config_file(Path(datadir["path_home.json"]))
         test_config = ConfigModel()
-        assert test_config.editor == 'vim'
-        assert test_config.store_path == Path('~')
+        assert test_config.store == {
+            'store_path': '~',
+            'store_type': 'FileSystem'
+        }

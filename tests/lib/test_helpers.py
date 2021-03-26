@@ -9,11 +9,14 @@ import random
 
 # Local application/library specific imports
 from phibes import crypto
+from phibes.cli.cli_config import set_home_dir
+from phibes.cli.commands import build_cli_app
 from phibes.lib.config import CONFIG_FILE_NAME
-from phibes.lib.config import ConfigModel, set_home_dir
+from phibes.lib.config import ConfigModel
 from phibes.lib.config import load_config_file, write_config_file
+from phibes.lib.config import StoreType
 from phibes.lib.errors import PhibesNotFoundError
-from phibes.model import Item, Locker
+from phibes.model import Locker
 
 
 plain_texts = [
@@ -60,9 +63,13 @@ class ConfigLoadingTestClass(BaseTestClass):
         super(ConfigLoadingTestClass, self).custom_setup(tmp_path)
         set_home_dir(tmp_path)
         conf = ConfigModel(
-            store_path=tmp_path,
-            editor=self.editor
+            store={
+                'store_type': StoreType.FileSystem.name,
+                'store_path': tmp_path
+            },
+            store_path=tmp_path
         )
+        conf.apply()
         write_config_file(tmp_path, conf)
         self.test_path = tmp_path
         load_config_file(tmp_path)
@@ -70,12 +77,37 @@ class ConfigLoadingTestClass(BaseTestClass):
 
     def custom_teardown(self, tmp_path):
         conf = tmp_path / CONFIG_FILE_NAME
-        conf.unlink()
+        # conf.unlink()
         return
 
     def update_config(self, config: ConfigModel) -> ConfigModel:
         write_config_file(self.test_path, config, update=True)
         return load_config_file(self.test_path)
+
+
+class BaseAnonLockerTest(ConfigLoadingTestClass):
+
+    password = None
+    command_name = None
+    target = None
+    action = None
+    func = None
+    click_group = None
+
+    def custom_setup(self, tmp_path):
+        super(BaseAnonLockerTest, self).custom_setup(tmp_path)
+        build_cli_app(
+            command_dict={
+                self.target: {
+                    self.action: {
+                        'name': self.command_name,
+                        'func': self.__class__.func
+                    }
+                }
+            },
+            click_group=self.click_group,
+            named_locker=False
+        )
 
 
 class EmptyLocker(ConfigLoadingTestClass):
@@ -101,7 +133,7 @@ class EmptyLocker(ConfigLoadingTestClass):
             self.my_locker = Locker.create(
                 password=self.password,
                 crypt_id=crypto.default_id,
-                name=self.locker_name
+                locker_name=self.locker_name
             )
             # create a locker for each registered crypt instance
             for crypt_id in crypto.list_crypts():
@@ -110,9 +142,11 @@ class EmptyLocker(ConfigLoadingTestClass):
                 # but make sure there isn't a freak collision
                 while self.locker_name + str(wart) in self.lockers:
                     wart = str(random.randint(1000, 9999))
-                name = self.locker_name + wart
-                self.lockers[name] = Locker.create(
-                    password=self.password, crypt_id=crypt_id, name=name
+                locker_name = self.locker_name + wart
+                self.lockers[locker_name] = Locker.create(
+                    password=self.password,
+                    crypt_id=crypt_id,
+                    locker_name=locker_name
                 )
         return
 
@@ -133,10 +167,9 @@ class PopulatedLocker(EmptyLocker):
             f"some name\n"
         )
         for lck in all_lockers:
-            pth = lck.get_item_path("secret_name")
-            new_item = Item(lck.crypt_impl, "secret_name")
+            new_item = lck.create_item(item_name="secret_name")
             new_item.content = content
-            new_item.save(pth)
+            lck.add_item(item=new_item)
         return
 
     def custom_teardown(self, tmp_path):

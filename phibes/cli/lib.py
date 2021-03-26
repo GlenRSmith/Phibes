@@ -10,12 +10,9 @@ import subprocess
 import click
 
 # in-project modules
+from phibes.cli.cli_config import CliConfig
 from phibes.cli.errors import PhibesCliError
-from phibes.cli.errors import PhibesCliExistsError
-from phibes.cli.errors import PhibesCliNotFoundError
-from phibes.lib.config import ConfigModel, get_editor, load_config_file
-from phibes.lib.errors import PhibesNotFoundError
-from phibes.model import Item, Locker
+from phibes.model import Locker
 
 CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
@@ -74,121 +71,50 @@ def main_func():
     main()
 
 
-def get_locker_args(*args, **kwargs) -> Locker:
+def get_editor() -> str:
     """
-    Get a Locker using only named arguments
-    Supports getting named and unnamed Lockers
-    kwargs:
-        password: str - Password for existing locker
-        locker: str - The name of the locker
-        path: str - The fs path to the locker, aka `storage_path`
-        config: str - The fs path to the config file with `storage_path`
-    Valid combinations
-    - password, path
-    - password, config
-    - password, path, locker
-    - password, config, locker
+    Get the user's configured editor, or raise an exception
+    @return: editor as configured in environment
     """
-    try:
-        password = kwargs.get('password')
-    except KeyError as err:
-        raise PhibesCliError(f'missing required param {err}')
-    if 'path' in kwargs:
-        pth = kwargs.get('path')
-    elif 'config' in kwargs:
-        config = kwargs.get('config')
-        load_config_file(config)
-        pth = ConfigModel().store_path
-    else:
+    editor = CliConfig().editor
+    if not editor:
         raise PhibesCliError(
-            f'path param must be provided by param or in config file'
+            "`PHIBES_EDITOR` or `EDITOR` must be set in environment"
         )
-    # locker name is optional, only settable from command-line
-    locker = kwargs.get('locker', None)
-    try:
-        return Locker.get(password=password, name=locker, path=pth)
-    except PhibesNotFoundError:
-        err_name = (f" with {locker=}!", f"!")[locker is None]
-        err = f"No locker found at {pth}{err_name}\n"
-        raise PhibesCliNotFoundError(err)
+    return editor
 
 
-def _user_edit_item(locker_inst: Locker, item):
-    work_file = None
+def user_edit_file(
+        work_path: str, name: str, content: str
+):
+    editor = CliConfig().editor
+    work_file = pathlib.Path(work_path) / f"{name}.tmp"
     try:
-        work_file = locker_inst.path.joinpath(f"{item.name}.tmp")
-        work_file.write_text(item.content)
-        edit_cmd = f"{get_editor()} {work_file}"
+        work_file.write_text(content)
+        edit_cmd = f"{editor} {work_file}"
         subprocess.call(edit_cmd, shell=True)
-        # os.system(edit_cmd)
-        item.content = work_file.read_text()
+        return work_file.read_text()
     except Exception as err:
         work_file = None
         raise PhibesCliError(err)
     finally:
         if work_file:
             work_file.unlink()
-    return item
 
 
-def create_item(
-        locker: Locker,
-        item_name: str,
-        template_name: str = None,
-):
-    try:
-        if locker.get_item(item_name):
-            raise PhibesCliExistsError(
-                f"{item_name} already exists in locker\n"
-                f"please use the `edit` command to modify\n"
-            )
-    except PhibesNotFoundError:
-        pass
-    item = locker.create_item(item_name=item_name)
-    template_is_file = False
-    if template_name:
-        try:
-            # try to get a template stored by that name
-            item.content = locker.get_item(template_name).content
-        except PhibesNotFoundError:
-            try:
-                # try to find a file by that name
-                item.content = pathlib.Path(template_name).read_text()
-                template_is_file = True
-            except PhibesNotFoundError:
-                raise PhibesCliNotFoundError(f"{template_name} not found")
-            except FileNotFoundError:
-                raise PhibesCliNotFoundError(f"{template_name} not found")
-    else:
-        item.content = ''
-    if not template_is_file:
-        _user_edit_item(locker, item)
-    locker.add_item(item)
+def user_edit_local_item(item_name: str, initial_content: str = ''):
+    config = CliConfig()
+    work_path = config.store['store_path']
+    return user_edit_file(
+        work_path=work_path, name=item_name, content=initial_content
+    )
 
 
-def edit_item(locker_inst: Locker, item_name: str):
-    """
-    Open a text editor to edit an existing item in a locker
-    :param locker_inst: Instance of locker
-    :param item_name: Name of item to edit
-    :return:
-    """
-    try:
-        item = locker_inst.get_item(item_name)
-    except PhibesNotFoundError:
-        raise PhibesCliNotFoundError(
-            f"Item `{item_name}` not found"
-        )
-    _user_edit_item(locker_inst, item)
-    return locker_inst.update_item(item)
-
-
-def present_list_items(locker_inst: Locker, verbose: bool):
+def present_list_items2(items, verbose: bool):
     """Function to list items in a locker"""
-    ret_val = f""
-    items = locker_inst.list_items()
+    ret_val = ""
     if verbose:
-        for sec in locker_inst.list_items():
+        for sec in items:
             ret_val += f"{sec}"
     else:
         longest = 10
@@ -200,21 +126,7 @@ def present_list_items(locker_inst: Locker, verbose: bool):
     return ret_val
 
 
-def get_item(locker: Locker, item_name: str) -> Item:
-    """
-
-    @param locker:
-    @param item_name:
-    @return:
-    """
-    try:
-        return locker.get_item(item_name)
-    except PhibesNotFoundError as err:
-        raise PhibesCliNotFoundError(err)
-
-
-def delete_item_unity(locker: Locker, item_name: str):
-    try:
-        return locker.delete_item(item_name)
-    except PhibesNotFoundError as err:
-        raise PhibesCliNotFoundError(err)
+def present_list_items(locker_inst: Locker, verbose: bool):
+    """Function to list items in a locker"""
+    items = locker_inst.list_items()
+    return present_list_items2(items, verbose)

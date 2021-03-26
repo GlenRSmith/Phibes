@@ -6,11 +6,12 @@ pytest module for backward compatibility
 from pathlib import Path
 
 # Related third party imports
+import pytest
 
 # Local application/library specific imports
 from phibes.crypto import list_crypts
 from phibes.model import Locker
-from phibes.lib.config import ConfigModel
+from phibes.lib.config import ConfigModel, StoreType
 from phibes.lib.config import load_config_file, write_config_file
 
 
@@ -39,7 +40,7 @@ plain_texts = {
 
 
 def validate_locker(name, pw):
-    lock = Locker.get(name=name, password=pw)
+    lock = Locker.get(locker_name=name, password=pw)
     assert len(lock.list_items()) == len(plain_texts)
     for name, pt in plain_texts.items():
         it = lock.get_item(name)
@@ -53,9 +54,12 @@ def validate_locker(name, pw):
 def validate_install(installed_path, locker_name, pw):
     load_config_file(installed_path)
     # override stored "dummy" store_path with the current installed path
-    ConfigModel(store_path=installed_path)
-    validate_locker(locker_name, pw)
-    return
+    dummy = ConfigModel()
+    dummy.store = {
+        'store_type': dummy.store['store_type'],
+        'store_path': installed_path
+    }
+    return validate_locker(locker_name, pw)
 
 
 class TestBackCompat:
@@ -63,6 +67,7 @@ class TestBackCompat:
     test_name = "test_locker"
     test_pw = "test_password"
 
+    @pytest.mark.positive
     def test_validate_installs(self, datadir):
         # Get the list of install directories under `tests/data`
         data_root = datadir['.']
@@ -106,6 +111,10 @@ class TestBackCompat:
                 new_lock.add_item(ni)
             # after lockers are stored, stub out the store_path
             conf._store_path = Path("/")
+            conf.store = {
+                'store_type': StoreType.FileSystem.name,
+                'store_path': "/"
+            }
             write_config_file(
                 new_loc, conf, update=True, bypass_validation=True
             )

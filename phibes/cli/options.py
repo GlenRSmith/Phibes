@@ -10,7 +10,11 @@ import pathlib
 import click
 
 # in-project modules
+from phibes.cli.cli_config import CLI_CONFIG_FILE_NAME, get_home_dir
+from phibes.cli.cli_config import DEFAULT_EDITOR
 from phibes.crypto import default_id, list_crypts
+from phibes.lib.config import CONFIG_FILE_NAME
+from phibes.lib.config import DEFAULT_STORE_PATH
 
 
 class MappedChoices(object):
@@ -171,6 +175,38 @@ verbose_item_option = click.option(
     help='Present entire contents of each item',
     default=False,
     type=bool
+)
+cli_config_file_option = click.option(
+    '--path',
+    prompt='Path to config file',
+    help=f'Path on filesystem for config file {CLI_CONFIG_FILE_NAME}',
+    type=pathlib.Path,
+    default=get_home_dir().joinpath(CLI_CONFIG_FILE_NAME)
+)
+store_path_option = click.option(
+    '--store_path',
+    prompt='Path to locker(s)',
+    help='Path on filesystem where encrypted data will be written',
+    type=pathlib.Path,
+    default=get_home_dir().joinpath(DEFAULT_STORE_PATH)
+)
+editor_option = click.option(
+    '--editor',
+    prompt='editor (for adding/updating encrypted items)',
+    help='shell-invocable editor to use with the `edit` command',
+    type=str,
+    default=DEFAULT_EDITOR
+)
+config_option = click.option(
+    '--config',
+    default=get_home_dir().joinpath(CONFIG_FILE_NAME),
+    type=pathlib.Path,
+    help=(
+        f"Path to config file `{CONFIG_FILE_NAME}`, "
+        f"defaults to user home"
+    ),
+    show_envvar=True,
+    envvar="PHIBES_CONFIG",
 )
 
 env_vars = {

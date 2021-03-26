@@ -69,7 +69,7 @@ def write(
             f"file {pth} already exists, and overwrite is False"
         )
     if not body and not allow_empty:
-        raise AttributeError(f"Record has no content!")
+        raise AttributeError("Record has no content!")
     if (
             ("\n" in salt or "\n" in timestamp) or (body and "\n" in body)
     ):
@@ -103,7 +103,7 @@ class PhibesRecordHandler(object):
         :return: str
         """
         if not body:
-            raise AttributeError(f"Record has no content!")
+            raise AttributeError("Record has no content!")
         if (
                 "\n" in salt
                 or "\n" in crypt_id
