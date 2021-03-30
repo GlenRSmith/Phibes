@@ -42,7 +42,7 @@ test_all_p:
 	pytest -m 'not positive and not negative'
 
 test_all:
-	flake8 phibes
+	flake8 src/phibes
 	pytest --cov=phibes -m positive --cov-fail-under=75
 	pytest --cov=phibes -m negative --cov-fail-under=65
 	pytest -m 'not positive and not negative'
