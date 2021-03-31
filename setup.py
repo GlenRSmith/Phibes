@@ -7,11 +7,13 @@ To remove:
 pip uninstall phibes
 
 For development (will just create a link in site-packages):
-python setup.py develop
+python -m pip install -e .[develop]
+except on zsh:
+python -m pip install -e ".[develop]"
 To remove:
-python setup.py develop -u
+pip uninstall phibes
 """
 
 from setuptools import setup
 
-setup(name="phibes", packages=["."])
+setup()

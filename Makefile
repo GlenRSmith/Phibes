@@ -33,7 +33,7 @@ cover:
 	pytest --workers auto --cov-report term-missing --cov=phibes tests -m positive
 
 flake:
-	flake8 phibes
+	flake8 src/phibes
 
 test_all_p:
 	flake8 phibes
