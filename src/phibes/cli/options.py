@@ -199,10 +199,10 @@ editor_option = click.option(
 )
 config_option = click.option(
     '--config',
-    default=get_home_dir().joinpath(CONFIG_FILE_NAME),
+    default=get_home_dir().joinpath(CLI_CONFIG_FILE_NAME),
     type=pathlib.Path,
     help=(
-        f"Path to config file `{CONFIG_FILE_NAME}`, "
+        f"Path to config file `{CLI_CONFIG_FILE_NAME}`, "
         f"defaults to user home"
     ),
     show_envvar=True,
