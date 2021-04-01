@@ -8,7 +8,79 @@ As this is an early work-in-progress, I would discourage the use of it as an act
 
 At this time, the app isn't available through PyPi, so you'll have to install from github.
 
-Clone the repository and install it in a virtual environment (python 3.8) using pipenv.
+Clone the repository and install it in a virtual environment (python 3.8 or later) using pip.
+
+## Basic usage
+
+By default, these commands all prompt the user for all available options.
+
+They each prompt for the file system path to the locker, defaulting to the current working directory.
+
+They each prompt for password, with a repeat for confirmation prompt when initializing the locker.
+
+Available subcommands are: `init`, `status`, `delete`, `add`, `get`, `edit`, `list`, and `remove`.
+
+1. In a command shell, change your working directory to an empty folder where you want your locker to exist.
+
+1. Initialize the locker:
+
+    `phibes init`
+
+    You will be prompted for the `crypt_id`. This defaults to the current best available, which you should accept.
+
+1. Add an item to the locker:
+
+    `phibes add`
+
+    This step requires that you have a valid editor set in one of the environment variables `PHIBES_EDITOR` or `EDITOR`.
+    
+    You will be prompted for the item name, and an optional template name.
+
+    The template name can be any named item already in your locker. If you provide a valid name, the contents of that item will be used for the initial contents of your new item. If you accept the default, "Empty", you will start with an empty document.
+
+    You will _not_ be prompted for `editor`, but you can pass it with the command, e.g.:
+
+    `phibes add --editor vim`
+   
+    You must otherwise have a valid editor set in one of the environment variables `PHIBES_EDITOR` or `EDITOR`.
+   
+    After you reply to all the prompts, your configured editor will be launched, and when you save and exit, the contents of the temporary file will be encrypted and stored in a new item in your locker, and the temporary file deleted.
+
+1. Edit an item in the locker:
+
+   `phibes edit`
+
+    You will be prompted for an item name. If the item exists in the locker, your editor will be launched with the current content of the item. When you save and exit, the contents of the temporary file will be encrypted and the item in your locker updated, and the temporary file deleted.
+
+1. Report an item in the locker:
+
+   `phibes get`
+
+    You will be prompted for an item name. If the item exists in the locker, the contents will be decrypted and reported to the console.
+
+1. Report all items in the locker:
+
+   `phibes list`
+
+    You will be prompted for `Verbose`. If you select `verbose`, the full details (including decrypted content) of all items in the locker will be reported. Otherwise, only the names of all items in the locker will be reported.
+   
+1. Remove an item from the locker:
+
+   `phibes remove`
+
+    You will be prompted for an item name. If the item exists in the locker, it will be removed.
+
+1. Report on the locker:
+
+   `phibes status`
+
+    The storage location, creation time, and crypt ID will be reported to the console.
+
+1. Delete the locker:
+
+   `phibes delete`
+
+    The locker will be deleted.
 
 ## Setup/Config
 
