@@ -12,13 +12,11 @@ Clone the repository and install it in a virtual environment (python 3.8 or late
 
 ## Basic usage
 
-By default, these commands all prompt the user for all available options.
+The basic usage command is `phibes`. Available subcommands are: `init`, `status`, `delete`, `add`, `get`, `edit`, `list`, and `remove`.
 
 They each prompt for the file system path to the locker, defaulting to the current working directory.
 
 They each prompt for password, with a repeat for confirmation prompt when initializing the locker.
-
-Available subcommands are: `init`, `status`, `delete`, `add`, `get`, `edit`, `list`, and `remove`.
 
 1. In a command shell, change your working directory to an empty folder where you want your locker to exist.
 
@@ -32,8 +30,6 @@ Available subcommands are: `init`, `status`, `delete`, `add`, `get`, `edit`, `li
 
     `phibes add`
 
-    This step requires that you have a valid editor set in one of the environment variables `PHIBES_EDITOR` or `EDITOR`.
-    
     You will be prompted for the item name, and an optional template name.
 
     The template name can be any named item already in your locker. If you provide a valid name, the contents of that item will be used for the initial contents of your new item. If you accept the default, "Empty", you will start with an empty document.
@@ -81,6 +77,56 @@ Available subcommands are: `init`, `status`, `delete`, `add`, `get`, `edit`, `li
    `phibes delete`
 
     The locker will be deleted.
+
+## Advanced usage
+
+The advanced usage command is `phibesplus`. Available subcommands are: `create`, `info`, `delete`, `create-item`, `get-item`, `edit`, `list`, `delete-item`, `create-config`, and `update-config`.
+
+Advanced usage differs from basic usage in several important ways:
+ - Lockers have user-assigned names.
+ - Operations depend on a stored configuration.
+ - Multiple lockers can be stored in the same configured storage location.
+
+1. Create a configuration
+
+   `phibesplus create-config`
+
+1. Update a configuration
+
+   `phibesplus update-config`
+
+1. Create a locker
+
+   `phibesplus create`
+
+1. Create an item in the locker
+
+   `phibesplus create-item`
+
+1. Edit an item in the locker
+
+   `phibesplus edit`
+
+1. Report an item in the locker
+
+   `phibesplus get-item`
+
+1. Report all items in the locker
+
+   `phibesplus list`
+
+1. Remove an item from the locker
+
+   `phibesplus delete-item`
+
+1. Report on the locker:
+
+   `phibesplus info`
+
+1. Delete the locker:
+
+   `phibesplus delete`
+
 
 ## Setup/Config
 
