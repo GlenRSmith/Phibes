@@ -13,7 +13,6 @@ import click
 from phibes.cli.cli_config import CLI_CONFIG_FILE_NAME, get_home_dir
 from phibes.cli.cli_config import DEFAULT_EDITOR
 from phibes.crypto import default_id, list_crypts
-from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import DEFAULT_STORE_PATH
 
 
