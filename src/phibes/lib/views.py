@@ -1,6 +1,7 @@
 """
-Phibes operation functions with only primitive-type params
-Like HTTP views, but just text for CLI
+Phibes operation functions that are decorated to allow return type
+to be specified by caller (e.g. JSON, Object, Text, HTML)
+Hence, provides a common entry point for various client types.
 """
 
 # core library modules

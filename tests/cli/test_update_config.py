@@ -39,17 +39,17 @@ class TestUpdateConfig(ConfigLoadingTestClass):
     def custom_setup(self, tmp_path):
         super(TestUpdateConfig, self).custom_setup(tmp_path)
         target_loc = self.test_path.joinpath(CLI_CONFIG_FILE_NAME)
-        assert not target_loc.exists()
-        invoke_args = [
-            "--path", self.test_path,
-            "--store_path", self.test_config['store']['store_path'],
-            "--editor", self.test_config['editor']
-        ]
-        # easiest way to create a config
-        CliRunner().invoke(
-            cli=main.commands['create-config'],
-            args=invoke_args
-        )
+        if not target_loc.exists():
+            invoke_args = [
+                "--path", self.test_path,
+                "--store_path", self.test_config['store']['store_path'],
+                "--editor", self.test_config['editor']
+            ]
+            # easiest way to create a config
+            CliRunner().invoke(
+                cli=main.commands['create-config'],
+                args=invoke_args
+            )
         return
 
     def custom_teardown(self, tmp_path):

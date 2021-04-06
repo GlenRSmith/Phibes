@@ -9,9 +9,8 @@ import random
 
 # Local application/library specific imports
 from phibes import crypto
-from phibes.cli.cli_config import set_home_dir
+from phibes.cli.cli_config import CLI_CONFIG_FILE_NAME, set_home_dir
 from phibes.cli.commands import build_cli_app
-from phibes.lib.config import CONFIG_FILE_NAME
 from phibes.lib.config import ConfigModel
 from phibes.lib.config import load_config_file, write_config_file
 from phibes.lib.config import StoreType
@@ -76,7 +75,7 @@ class ConfigLoadingTestClass(BaseTestClass):
         return
 
     def custom_teardown(self, tmp_path):
-        conf = tmp_path / CONFIG_FILE_NAME
+        conf = tmp_path / CLI_CONFIG_FILE_NAME
         # conf.unlink()
         return
 

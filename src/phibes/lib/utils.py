@@ -34,15 +34,21 @@ def todict(obj):
             if callable(val):
                 continue
             elif key.startswith('_'):
-                if hasattr(obj, key[1:]):
-                    tk = key[1:]
-                    tv = getattr(obj, tk)
-                else:
-                    continue
+                try:
+                    if hasattr(obj, key[1:]):
+                        tk = key[1:]
+                        tv = getattr(obj, tk)
+                    else:
+                        continue
+                except TypeError as err:
+                    raise TypeError(f'<   {err=}   ><   {key=}   >')
             else:
                 tk = key
                 tv = val
-            resdict[tk] = todict(tv)
+            try:
+                resdict[tk] = todict(tv)
+            except TypeError as err:
+                raise TypeError(err)
         return resdict
     elif hasattr(obj, '__slots__'):
         return todict(

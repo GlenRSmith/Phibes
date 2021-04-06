@@ -88,7 +88,7 @@ class TestNoName(ConfigLoadingTestClass):
             'store_path': tmp_path
         }
         conf.editor = f'echo {self.edit_content}> '
-        write_config_file(tmp_path, update=False)
+        write_config_file(tmp_path, update=True)
         load_config_file(tmp_path)
         cmd_inst = main_anon.commands[self.command_name]
         # change the configured working path to the test directory
@@ -119,7 +119,7 @@ class TestEditBase(PopulatedLocker):
         my_item.content = f"{self.good_template_name}:secret"
         self.my_locker.add_item(my_item)
         CliConfig().editor = "echo 'happyclappy' >> "
-        write_config_file(tmp_path, update=False)
+        write_config_file(tmp_path, update=True)
         try:
             self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
         except KeyError:

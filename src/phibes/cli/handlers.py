@@ -17,7 +17,7 @@ from phibes.lib.config import ConfigModel, load_config_file
 from phibes.lib.errors import PhibesExistsError, PhibesNotFoundError
 from phibes.lib.represent import ReprType
 from phibes.storage.types import StoreType
-from phibes import text_views
+from phibes.lib import views
 
 
 def set_store_config(**kwargs):
@@ -59,7 +59,7 @@ def create_locker(password: str, crypt_id: int, locker: str = None, **kwargs):
         ), abort=True
     )
     try:
-        resp = text_views.create_locker(
+        resp = views.create_locker(
             password=password, locker_name=locker, crypt_id=crypt_id, **kwargs
         )
     except PhibesExistsError as err:
@@ -75,7 +75,7 @@ def get_locker(password: str, locker: str = None, **kwargs):
     """Get a Locker"""
     store_info = set_store_config(**kwargs)
     try:
-        inst = text_views.get_locker(
+        inst = views.get_locker(
             repr=ReprType.Object,
             password=password,
             locker_name=locker,
@@ -97,7 +97,7 @@ def delete_locker(password: str, locker: str = None, **kwargs):
     """Delete a Locker"""
     store_info = set_store_config(**kwargs)
     try:
-        inst = text_views.get_locker(
+        inst = views.get_locker(
             repr=ReprType.Object,
             password=password,
             locker_name=locker,
@@ -114,7 +114,7 @@ def delete_locker(password: str, locker: str = None, **kwargs):
         ), abort=True
     )
     try:
-        resp = text_views.delete_locker(
+        resp = views.delete_locker(
             repr=ReprType.Object,
             password=password,
             locker_name=locker,
@@ -124,7 +124,7 @@ def delete_locker(password: str, locker: str = None, **kwargs):
         raise PhibesCliError(f"something went wrong {err=}")
     click.echo(resp)
     try:
-        inst = text_views.get_locker(
+        inst = views.get_locker(
             repr=ReprType.Object,
             password=password,
             locker_name=locker,
@@ -150,7 +150,7 @@ def create_item(
     if template == 'Empty':
         template = None
     try:
-        item_inst = text_views.get_item(
+        item_inst = views.get_item(
             password=password,
             locker_name=locker,
             item_name=item,
@@ -166,7 +166,7 @@ def create_item(
     template_is_file = False
     if template:
         try:
-            found = text_views.get_item(
+            found = views.get_item(
                 password=password,
                 locker_name=locker,
                 item_name=template,
@@ -186,7 +186,7 @@ def create_item(
         content = ''
     if not template_is_file:
         content = user_edit_local_item(item_name=item, initial_content=content)
-    return text_views.create_item(
+    return views.create_item(
         password=password,
         locker_name=locker,
         item_name=item,
@@ -199,7 +199,7 @@ def edit_item(password: str, item: str, locker: str = None, **kwargs):
     """Edit the contents of an Item in a Locker"""
     set_store_config(**kwargs)
     try:
-        item_inst = text_views.get_item(
+        item_inst = views.get_item(
             password=password, locker_name=locker, item_name=item, **kwargs
         )
         if not item_inst:
@@ -211,7 +211,7 @@ def edit_item(password: str, item: str, locker: str = None, **kwargs):
     content = user_edit_local_item(
         item_name=item, initial_content=item_inst.content
     )
-    return text_views.update_item(
+    return views.update_item(
         password=password,
         locker_name=locker,
         item_name=item,
@@ -224,7 +224,7 @@ def get_item(password: str, item: str, locker: str = None, **kwargs):
     """Get and display an Item from a Locker"""
     store_info = set_store_config(**kwargs)
     try:
-        item_inst = text_views.get_item(
+        item_inst = views.get_item(
             password=password, locker_name=locker, item_name=item, **kwargs
         )
     except KeyError as err:
@@ -240,7 +240,7 @@ def get_items(password: str, locker: str = None, **kwargs):
     """Get and display all Items in a Locker"""
     set_store_config(**kwargs)
     try:
-        items = text_views.get_items(
+        items = views.get_items(
             password=password,
             locker_name=locker,
             **kwargs
@@ -260,7 +260,7 @@ def delete_item(password: str, item: str, locker: str = None, **kwargs):
     """Delete an Item from a Locker"""
     set_store_config(**kwargs)
     try:
-        resp = text_views.delete_item(
+        resp = views.delete_item(
             password=password, locker_name=locker, item_name=item, **kwargs
         )
     except KeyError as err:

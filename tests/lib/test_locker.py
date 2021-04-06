@@ -75,6 +75,30 @@ class TestLocker(EmptyLocker):
             )
 
 
+class TestDeleteLocker(PopulatedLocker):
+
+    my_locker = None
+    locker_name = "my_locker"
+    password = "StaplerRadioPersonWomanMan"
+
+    def custom_setup(self, tmp_path):
+        super(TestDeleteLocker, self).custom_setup(tmp_path)
+
+    def custom_teardown(self, tmp_path):
+        super(TestDeleteLocker, self).custom_teardown(tmp_path)
+
+    @pytest.mark.positive
+    def test_good(self, tmp_path, datadir, setup_and_teardown):
+        result = Locker.delete(
+            password=self.password, locker_name=self.locker_name
+        )
+        assert result is None
+        with pytest.raises(PhibesNotFoundError):
+            Locker.get(
+                password=self.password, locker_name=self.locker_name
+            )
+
+
 class TestNoName(ConfigLoadingTestClass):
 
     password = "78CollECtion!CampCoolio"

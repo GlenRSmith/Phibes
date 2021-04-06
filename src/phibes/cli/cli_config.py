@@ -10,13 +10,12 @@ from pathlib import Path
 # Third party packages
 # In-project modules
 from phibes.cli.errors import PhibesCliConfigurationError
-from phibes.lib.config import ConfigModel
+from phibes.lib.config import ConfigModel, CONFIG_FILE_NAME
 from phibes.lib.utils import todict
 
 
 HOME_DIR = None
-CLI_CONFIG_FILE_NAME = '.phibes_cli.cfg'
-# CLI_CONFIG_FILE_NAME = 'cli.phibes.cfg'
+CLI_CONFIG_FILE_NAME = CONFIG_FILE_NAME
 DEFAULT_EDITOR = environ.get('EDITOR', 'unknown')
 
 

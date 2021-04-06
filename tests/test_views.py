@@ -13,9 +13,9 @@ from phibes.lib.config import ConfigModel
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.lib.represent import ReprType
 from phibes.model import Locker
-from phibes import text_views
+from phibes.lib import views
 from phibes.storage.types import StoreType
-from phibes.text_views import get_locker
+from phibes.lib.views import get_locker
 
 # Local test imports
 from tests.lib.test_helpers import ConfigLoadingTestClass
@@ -109,7 +109,7 @@ class TestJson(ConfigLoadingTestClass):
     def test_repr(self, tmp_path, datadir, setup_and_teardown):
         # print('create a locker for each test user:')
         for user, rec in self.mock_users.items():
-            locker = text_views.create_locker(
+            locker = views.create_locker(
                 password=rec['pw'],
                 locker_name=user,
                 crypt_id=crypto.default_id,
@@ -119,7 +119,7 @@ class TestJson(ConfigLoadingTestClass):
 
         # print('get each locker:')
         for user, rec in self.mock_users.items():
-            locker = text_views.get_locker(
+            locker = views.get_locker(
                 password=rec['pw'], locker_name=user, repr=self.repr
             )
             assert type(locker) is dict
@@ -128,7 +128,7 @@ class TestJson(ConfigLoadingTestClass):
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
             item_content = f'Hello! My name is {user}'
-            item = text_views.create_item(
+            item = views.create_item(
                 password=self.mock_users[user]['pw'],
                 locker_name=user, item_name=item_name,
                 content=item_content,
@@ -139,11 +139,11 @@ class TestJson(ConfigLoadingTestClass):
         # print('retrieve the lockers and items:')
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
-            locker = text_views.get_locker(
+            locker = views.get_locker(
                 password=rec['pw'], locker_name=user, repr=self.repr
             )
             assert type(locker) is dict
-            item = text_views.get_item(
+            item = views.get_item(
                 password=self.mock_users[user]['pw'],
                 locker_name=user, item_name=item_name,
                 repr=self.repr
@@ -153,12 +153,12 @@ class TestJson(ConfigLoadingTestClass):
         # print('update the items:')
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
-            locker = text_views.get_locker(
+            locker = views.get_locker(
                 password=rec['pw'], locker_name=user,
                 repr=self.repr
             )
             assert type(locker) is dict
-            item = text_views.update_item(
+            item = views.update_item(
                 password=self.mock_users[user]['pw'],
                 locker_name=user, item_name=item_name,
                 content=f'Goodbye! My name is {user}',
@@ -169,11 +169,11 @@ class TestJson(ConfigLoadingTestClass):
         # print('retrieve the lockers and items:')
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
-            locker = text_views.get_locker(
+            locker = views.get_locker(
                 password=rec['pw'], locker_name=user, repr=self.repr
             )
             assert type(locker) is dict
-            item = text_views.get_item(
+            item = views.get_item(
                 password=self.mock_users[user]['pw'],
                 locker_name=user, item_name=item_name,
                 repr=self.repr
@@ -182,11 +182,11 @@ class TestJson(ConfigLoadingTestClass):
 
         # print('retrieve the lockers and item lists:')
         for user, rec in self.mock_users.items():
-            locker = text_views.get_locker(
+            locker = views.get_locker(
                 repr=self.repr, password=rec['pw'], locker_name=user
             )
             assert type(locker) is dict
-            items = text_views.get_items(
+            items = views.get_items(
                 repr=self.repr,
                 password=self.mock_users[user]['pw'],
                 locker_name=user
@@ -198,12 +198,12 @@ class TestJson(ConfigLoadingTestClass):
         # print('delete items:')
         for user, rec in self.mock_users.items():
             item_name = 'greeting'
-            locker = text_views.get_locker(
+            locker = views.get_locker(
                 repr=self.repr, password=rec['pw'], locker_name=user
             )
             assert type(locker) is dict
             # print(f'{locker.__dict__=}')
-            text_views.delete_item(
+            views.delete_item(
                 repr=self.repr,
                 password=self.mock_users[user]['pw'],
                 locker_name=user, item_name=item_name
@@ -211,6 +211,6 @@ class TestJson(ConfigLoadingTestClass):
 
         # print('delete lockers:')
         for user, rec in self.mock_users.items():
-            text_views.delete_locker(
+            views.delete_locker(
                 repr=self.repr, password=rec['pw'], locker_name=user
             )
