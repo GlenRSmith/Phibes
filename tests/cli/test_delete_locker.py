@@ -21,7 +21,7 @@ from phibes.phibes_cli import main
 # Local test imports
 from tests.cli.click_test_helpers import update_config_option_default
 from tests.lib.test_helpers import BaseAnonLockerTest
-from tests.lib.test_helpers import ConfigLoadingTestClass
+from tests.lib.test_helpers import ConfigLoadingTestClass, PopulatedLocker
 
 
 crypt_ids = list(crypt_choices.choice_dict.keys())
@@ -147,3 +147,38 @@ class TestDeleteLocker(ConfigLoadingTestClass):
         with pytest.raises(PhibesNotFoundError):
             Locker.get(password=self.pw, locker_name=self.name)
         return
+
+
+class TestDeletePopulated(PopulatedLocker):
+
+    target_cmd_name = 'delete'
+
+    def custom_setup(self, tmp_path):
+        super(TestDeletePopulated, self).custom_setup(tmp_path)
+        self.target_cmd = main.commands[self.target_cmd_name]
+
+    def custom_teardown(self, tmp_path):
+        super(TestDeletePopulated, self).custom_teardown(tmp_path)
+
+    def invoke(self):
+        """
+        Helper method for often repeated code in test methods
+        :return:
+        """
+        return CliRunner().invoke(
+            cli=self.target_cmd,
+            args=[
+                "--config", self.test_path,
+                "--locker", self.locker_name,
+                "--password", self.password
+            ],
+            input="y\n"
+        )
+
+    @pytest.mark.positive
+    def test_delete(self, setup_and_teardown):
+        result = self.invoke()
+        assert result.exit_code == 0, (
+            f"      {self.locker_name=}      "
+            f"      {result=}      "
+        )
