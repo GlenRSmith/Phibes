@@ -6,9 +6,7 @@ As this is an early work-in-progress, I would discourage the use of it as an act
 
 ## Installation
 
-At this time, the app isn't available through PyPi, so you'll have to install from github.
-
-Clone the repository and install it in a virtual environment (python 3.8 or later) using pip.
+`pip install phibes`
 
 ## Basic usage
 
