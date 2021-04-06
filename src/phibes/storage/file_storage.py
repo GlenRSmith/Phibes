@@ -127,10 +127,8 @@ class LockerFileStorage(StorageImpl, ABC):
         Delete a locker
         """
         item_ids = self.list_items()
-        if item_ids:
-            raise PhibesExistsError(
-                f'locker {self.locker_id} is not empty: {item_ids}'
-            )
+        for id in item_ids:
+            self.delete_item(item_id=id)
         # Delete the locker file
         self.locker_file.unlink()
         # Delete the locker folder if it is a named one for the locker
