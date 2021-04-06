@@ -97,7 +97,7 @@ Advanced usage differs from basic usage in several important ways:
 
    - location of configuration file [default is user home directory]
    - editor [default is from $EDITOR if it is set]
-   - storage location [default is current working directory]
+   - storage location [default is user home directory/.phibes]
    
    The file, `.phibes.cfg`, is a simple json file that you can also edit directly.
    
