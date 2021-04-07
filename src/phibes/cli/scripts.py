@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 """
-Different Click-based command-line interface to phibes.
-- All lockers are stored on disk.
-- No configuration file is needed or used.
-- All parameters are required with each command line.
+Click-based command-line interface to phibes
+
+Two entry points are implemented; setup makes them available on command-line
 """
 # core library modules
 from os import getcwd
