@@ -12,14 +12,21 @@ import pytest
 
 # Local application/library specific imports
 from phibes.cli.cli_config import CLI_CONFIG_FILE_NAME
+from phibes.cli.commands import Action, Target
 from phibes.lib.errors import PhibesConfigurationError
-from phibes.phibes_cli import main
 
 # Local test imports
+from tests.cli.click_test_helpers import GroupProvider
 from tests.lib.test_helpers import ConfigLoadingTestClass
 
 
-class TestUpdateConfig(ConfigLoadingTestClass):
+class MixinConfigUpdate(GroupProvider):
+
+    target = Target.Config
+    action = Action.Update
+
+
+class TestUpdateConfig(ConfigLoadingTestClass, MixinConfigUpdate):
     """
     Testing for the CLI update-config.
     """
@@ -47,22 +54,17 @@ class TestUpdateConfig(ConfigLoadingTestClass):
             ]
             # easiest way to create a config
             CliRunner().invoke(
-                cli=main.commands['create-config'],
+                cli=self.target_cmd,
                 args=invoke_args
             )
-        return
+        self.setup_command(force_named_lockers=True)
 
     def custom_teardown(self, tmp_path):
         super(TestUpdateConfig, self).custom_teardown(tmp_path)
         return
 
-    @pytest.mark.parametrize(
-        "command_instance", [main.commands['update-config']]
-    )
     @pytest.mark.positive
-    def test_update_config(
-            self, setup_and_teardown, command_instance
-    ):
+    def test_update_config(self, setup_and_teardown):
         target_loc = self.test_path.joinpath(CLI_CONFIG_FILE_NAME)
         assert target_loc.exists()
         invoke_args = [
@@ -70,9 +72,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
             "--store_path", self.test_config['store']['store_path'],
             "--editor", self.test_config['editor']
         ]
-        result = CliRunner().invoke(
-            cli=command_instance, args=invoke_args
-        )
+        result = CliRunner().invoke(cli=self.target_cmd, args=invoke_args)
         assert result.exit_code == 0, (
             f"{result}"
             f"{result.exception}"
@@ -91,11 +91,8 @@ class TestUpdateConfig(ConfigLoadingTestClass):
                 Path(self.test_config['store']['store_path']).resolve()
         )
 
-    @pytest.mark.parametrize(
-        "command_instance", [main.commands['update-config']]
-    )
     @pytest.mark.negative
-    def test_update_bad_config(self, setup_and_teardown, command_instance):
+    def test_update_bad_config(self, setup_and_teardown):
         target_loc = self.test_path.joinpath(CLI_CONFIG_FILE_NAME)
         assert target_loc.exists()
         invoke_args = [
@@ -103,10 +100,7 @@ class TestUpdateConfig(ConfigLoadingTestClass):
             "--store_path", self.bad_test_config['store']['store_path'],
             "--editor", self.bad_test_config['editor']
         ]
-        result = CliRunner().invoke(
-            cli=command_instance,
-            args=invoke_args
-        )
+        result = CliRunner().invoke(cli=self.target_cmd, args=invoke_args)
         assert result.exit_code == 1
         assert type(result.exception) == PhibesConfigurationError
         # on windows, "foo/bar" ends up as "foo\\\bar" in the exception

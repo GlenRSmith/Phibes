@@ -3,55 +3,35 @@ pytest module for phibes_cli create-item command
 """
 
 # Standard library imports
-from typing import Callable
-
 # Related third party imports
-import click
 from click.testing import CliRunner
 import pytest
 
 # Local application/library specific imports
-from phibes import phibes_cli
-from phibes.cli import handlers
 from phibes.cli import PhibesCliError
 from phibes.cli.cli_config import CliConfig
 from phibes.cli.commands import Action, Target
-from phibes.cli.commands import build_cli_app
-from phibes.cli.lib import main as main_anon
 from phibes.crypto import list_crypts
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.lib.config import write_config_file
 from phibes.model import Locker, LOCKER_FILE
 
 # Local test imports
+from tests.cli.click_test_helpers import GroupProvider
 from tests.cli.click_test_helpers import update_config_option_default
-from tests.lib.test_helpers import BaseAnonLockerTest
+from tests.lib.test_helpers import ConfigLoadingTestClass
 from tests.lib.test_helpers import PopulatedLocker
 
 
-def make_single_command_cli_app(
-        group: click.group,
-        target: Target,
-        action: Action,
-        sub_cmd: str,
-        func: Callable,
-        named_locker: bool
-):
-    return build_cli_app(
-        command_dict={target: {action: {'name': sub_cmd, 'func': func}}},
-        click_group=group,
-        named_locker=named_locker
-    )
+class MixinItemCreate(GroupProvider):
 
-
-class TestNoName(BaseAnonLockerTest):
-
-    password = "78CollECtion!CampCoolio"
-    command_name = 'test_create_item'
     target = Target.Item
     action = Action.Create
-    func = handlers.create_item
-    click_group = main_anon
+
+
+class TestNoName(ConfigLoadingTestClass, MixinItemCreate):
+
+    password = "78CollECtion!CampCoolio"
     test_item_name = 'gonna_addit'
 
     def custom_setup(self, tmp_path):
@@ -63,6 +43,7 @@ class TestNoName(BaseAnonLockerTest):
         }
         conf.editor = 'echo happyclappy>> '
         write_config_file(tmp_path, update=True)
+        self.setup_command()
 
     def custom_teardown(self, tmp_path):
         super(TestNoName, self).custom_teardown(tmp_path)
@@ -80,7 +61,7 @@ class TestNoName(BaseAnonLockerTest):
         if 'template' in arg_dict:
             args += ["--template", arg_dict['template']]
         return CliRunner().invoke(
-            self.click_group.commands[self.command_name], args
+            self.target_cmd, args
         )
 
     def prep_and_run(self, arg_dict):
@@ -88,10 +69,7 @@ class TestNoName(BaseAnonLockerTest):
             password=self.password, crypt_id=arg_dict['crypt_id']
         )
         # change the configured working path to the test directory
-        update_config_option_default(
-            self.click_group.commands[self.command_name],
-            self.test_path
-        )
+        update_config_option_default(self.target_cmd, self.test_path)
         return self.invoke(arg_dict=arg_dict)
 
     @pytest.mark.parametrize("crypt_id", list_crypts())
@@ -114,13 +92,11 @@ class TestNoName(BaseAnonLockerTest):
         assert item_inst.content == 'happyclappy\n'
 
 
-class TestCreateBase(PopulatedLocker):
+class TestCreateBase(PopulatedLocker, MixinItemCreate):
 
     test_item_name = 'gonna_edit'
     good_template_name = 'good_template'
     bad_template_name = 'bad_template'
-    target_cmd_name = 'create-item'
-    target_cmd = None
 
     def custom_setup(self, tmp_path):
         super(TestCreateBase, self).custom_setup(tmp_path)
@@ -133,15 +109,8 @@ class TestCreateBase(PopulatedLocker):
         self.my_locker.add_item(my_item)
         CliConfig().editor = 'echo happyclappy>> '
         write_config_file(tmp_path, update=True)
-        try:
-            self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
-        except KeyError:
-            commands = list(phibes_cli.main.commands.keys())
-            raise KeyError(
-                f"{self.target_cmd_name} not found in {commands}"
-            )
+        self.setup_command()
         update_config_option_default(self.target_cmd, tmp_path)
-        return
 
     def custom_teardown(self, tmp_path):
         logs = ""

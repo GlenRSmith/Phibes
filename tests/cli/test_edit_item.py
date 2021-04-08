@@ -3,55 +3,41 @@ pytest module for phibes_cli edit (item) command
 """
 
 # Standard library imports
-
 # Related third party imports
-import pytest
 from click.testing import CliRunner
+import pytest
 
 # Local application/library specific imports
-from phibes import phibes_cli
-from phibes.cli import handlers
 from phibes.cli import PhibesCliError
 from phibes.cli.cli_config import CliConfig, load_config_file, write_config_file
 from phibes.cli.commands import Action, Target
-from phibes.cli.commands import build_cli_app
-from phibes.cli.lib import main as main_anon
 from phibes.crypto import list_crypts
 from phibes.lib.errors import PhibesNotFoundError
-# from phibes.lib.config import write_config_file
 from phibes.model import Locker
 
 # Local test imports
+from tests.cli.click_test_helpers import GroupProvider
 from tests.cli.click_test_helpers import update_config_option_default
 from tests.lib.test_helpers import ConfigLoadingTestClass
 from tests.lib.test_helpers import PopulatedLocker
 
 
-class TestNoName(ConfigLoadingTestClass):
+class MixinItemEdit(GroupProvider):
+
+    target = Target.Item
+    action = Action.Update
+
+
+class TestNoName(ConfigLoadingTestClass, MixinItemEdit):
 
     password = "78CollECtion!CampCoolio"
-    command_name = 'test_edit_item'
     test_item_name = 'gonna_editecha'
     start_content = f"replace this\n"
     edit_content = f"unique"
-    target = Target.Item
-    action = Action.Get
-    func = handlers.edit_item
 
     def custom_setup(self, tmp_path):
         super(TestNoName, self).custom_setup(tmp_path)
-        build_cli_app(
-            command_dict={
-                self.target: {
-                    self.action: {
-                        'name': self.command_name,
-                        'func': TestNoName.func
-                    }
-                }
-            },
-            click_group=main_anon,
-            named_locker=False
-        )
+        self.setup_command()
 
     def custom_teardown(self, tmp_path):
         super(TestNoName, self).custom_teardown(tmp_path)
@@ -66,9 +52,7 @@ class TestNoName(ConfigLoadingTestClass):
             "--path", arg_dict.get('path', self.test_path),
             "--item", arg_dict.get('item', self.test_item_name)
         ]
-        return CliRunner().invoke(
-            main_anon.commands[self.command_name], args
-        )
+        return CliRunner().invoke(self.target_cmd, args)
 
     def prep_and_run(self, arg_dict):
         return self.invoke(arg_dict=arg_dict)
@@ -90,9 +74,8 @@ class TestNoName(ConfigLoadingTestClass):
         conf.editor = f'echo {self.edit_content}> '
         write_config_file(tmp_path, update=True)
         load_config_file(tmp_path)
-        cmd_inst = main_anon.commands[self.command_name]
         # change the configured working path to the test directory
-        update_config_option_default(cmd_inst, self.test_path)
+        update_config_option_default(self.target_cmd, self.test_path)
         result = self.prep_and_run({'crypt_id': crypt_id})
         assert result
         assert result.exit_code == 0, (
@@ -105,13 +88,11 @@ class TestNoName(ConfigLoadingTestClass):
         assert self.edit_content == inst.content.strip()
 
 
-class TestEditBase(PopulatedLocker):
+class TestEditBase(PopulatedLocker, MixinItemEdit):
 
     test_item_name = 'gonna_edit'
     good_template_name = 'good_template'
     bad_template_name = 'bad_template'
-    target_cmd_name = 'edit'
-    target_cmd = None
 
     def custom_setup(self, tmp_path):
         super(TestEditBase, self).custom_setup(tmp_path)
@@ -120,15 +101,8 @@ class TestEditBase(PopulatedLocker):
         self.my_locker.add_item(my_item)
         CliConfig().editor = "echo 'happyclappy' >> "
         write_config_file(tmp_path, update=True)
-        try:
-            self.target_cmd = phibes_cli.main.commands[self.target_cmd_name]
-        except KeyError:
-            commands = list(phibes_cli.main.commands.keys())
-            raise KeyError(
-                f"{self.target_cmd_name} not found in {commands}"
-            )
+        self.setup_command()
         update_config_option_default(self.target_cmd, tmp_path)
-        return
 
     def custom_teardown(self, tmp_path):
         self.my_locker.delete_item(self.good_template_name)
@@ -153,14 +127,12 @@ class TestEditBase(PopulatedLocker):
         assert result.exit_code == 1
         assert result.exception
         assert isinstance(result.exception, PhibesCliError)
-        return
 
     def common_pos_asserts(self, result, expected_content):
         assert result.exit_code == 0
         inst = self.my_locker.get_item(self.test_item_name)
         assert inst
         assert inst.content == expected_content
-        return
 
 
 class TestEditNew(TestEditBase):
@@ -175,11 +147,9 @@ class TestEditNew(TestEditBase):
         super(TestEditNew, self).common_neg_asserts(result)
         with pytest.raises(PhibesNotFoundError):
             self.my_locker.get_item(self.test_item_name)
-        return
 
     def common_pos_asserts(self, result, expected_content):
         super(TestEditNew, self).common_pos_asserts(result, expected_content)
-        return
 
     @pytest.mark.negative
     def test_no_item(self, setup_and_teardown):
@@ -190,7 +160,6 @@ class TestEditNew(TestEditBase):
         """
         result = self.invoke()
         self.common_neg_asserts(result)
-        return
 
 
 class TestEditExists(TestEditBase):
@@ -200,20 +169,17 @@ class TestEditExists(TestEditBase):
         my_item = self.my_locker.create_item(self.test_item_name)
         my_item.content = f"{self.test_item_name}"
         self.my_locker.add_item(my_item)
-        return
 
     def custom_teardown(self, tmp_path):
         super(TestEditExists, self).custom_teardown(tmp_path)
 
     def common_neg_asserts(self, result):
         super(TestEditExists, self).common_neg_asserts(result)
-        return
 
     def common_pos_asserts(self, result, expected_content):
         super(TestEditExists, self).common_pos_asserts(
             result, expected_content
         )
-        return
 
     def item_unchanged_asserts(self, before_item):
         after = self.my_locker.get_item(self.test_item_name)
@@ -221,7 +187,6 @@ class TestEditExists(TestEditBase):
         assert after is not None
         assert before_item.content == after.content
         assert before_item.timestamp == after.timestamp
-        return
 
     @pytest.mark.positive
     def test_normal(self, tmp_path, datadir, setup_and_teardown):
@@ -241,4 +206,3 @@ class TestEditExists(TestEditBase):
         assert inst
         assert 'happyclappy' in inst.content
         assert before.content in inst.content
-        return
