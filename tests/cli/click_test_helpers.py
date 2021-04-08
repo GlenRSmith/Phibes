@@ -28,15 +28,18 @@ class GroupProvider(object):
     def click_test_group(self):
         pass
 
-    def setup_command(self):
+    def setup_command(self, force_named_lockers: bool = False):
         src_dict = (
-            ANON_COMMAND_DICT[self.target][self.action],
-            NAMED_COMMAND_DICT[self.target][self.action]
-        )[hasattr(self, 'locker_name')]
-        self.command_name = src_dict['name']
-        self.func = src_dict['func']
+            ANON_COMMAND_DICT, NAMED_COMMAND_DICT
+        )[hasattr(self, 'locker_name') or force_named_lockers]
+        self.command_name = src_dict[self.target][self.action]['name']
+        self.func = src_dict[self.target][self.action]['func']
         build_cli_app(
-            command_dict={self.target: {self.action: src_dict}},
+            command_dict={
+                self.target: {
+                    self.action: src_dict[self.target][self.action]
+                }
+            },
             named_locker=hasattr(self, 'locker_name'),
             click_group=self.click_test_group
         )
