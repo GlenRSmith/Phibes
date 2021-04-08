@@ -9,52 +9,45 @@ import pytest
 
 # Local application/library specific imports
 from phibes.cli.commands import Action, Target
-from phibes.cli.commands import build_cli_app
-from phibes.cli.handlers import create_locker
-from phibes.cli.lib import main as main_group
 from phibes.cli.options import crypt_choices
 from phibes.lib.errors import PhibesNotFoundError
 from phibes.model import Locker, LOCKER_FILE
 
 # Local test imports
+from tests.cli.click_test_helpers import GroupProvider
 from tests.cli.click_test_helpers import update_config_option_default
-from tests.lib.test_helpers import BaseAnonLockerTest
 from tests.lib.test_helpers import ConfigLoadingTestClass
-
 
 crypt_ids = list(crypt_choices.choice_dict.keys())
 
 
-class TestNoName(BaseAnonLockerTest):
+class MixinLockerCreate(GroupProvider):
 
-    password = "78CollECtion!CampCoolio"
-    command_name = 'test_create_locker'
     target = Target.Locker
     action = Action.Create
-    func = create_locker
-    click_group = main_group
+
+
+class TestNoName(ConfigLoadingTestClass, MixinLockerCreate):
+
+    password = "78CollECtion!CampCoolio"
 
     def custom_setup(self, tmp_path):
         super(TestNoName, self).custom_setup(tmp_path)
+        self.setup_command()
 
     def custom_teardown(self, tmp_path):
         super(TestNoName, self).custom_teardown(tmp_path)
 
     def prep_and_run(self, arg_dict):
         # change the configured working path to the test directory
-        update_config_option_default(
-            self.click_group.commands[self.command_name],
-            self.test_path
-        )
+        update_config_option_default(self.target_cmd, self.test_path)
         arg_list = [
             "--path", arg_dict.get('path', self.test_path),
             "--password", arg_dict.get('password', self.password),
             "--crypt_id", arg_dict.get('crypt_id')
         ]
         return CliRunner().invoke(
-            cli=self.click_group.commands[self.command_name],
-            args=arg_list,
-            input="y\n"
+            cli=self.target_cmd, args=arg_list, input="y\n"
         )
 
     @pytest.mark.parametrize("crypt_id", crypt_ids)
@@ -76,46 +69,27 @@ class TestNoName(BaseAnonLockerTest):
         )
 
 
-class TestCreateLocker(ConfigLoadingTestClass):
+class TestCreateLocker(ConfigLoadingTestClass, MixinLockerCreate):
 
-    name = "new_locker"
+    locker_name = "new_locker"
     pw = "SmellyBeansVictor"
     test_config = {
         "editor": "vim",
-        "store": {
-            "store_type": "FileSystem",
-            "store_path": "."
-        }
+        "store": {"store_type": "FileSystem", "store_path": "."}
     }
-    target = Target.Locker
-    action = Action.Create
-    command_name = 'test_create_locker'
-    func = create_locker
-    click_group = main_group
 
     def custom_setup(self, tmp_path):
         super(TestCreateLocker, self).custom_setup(tmp_path)
         try:
-            Locker.delete(self.name, self.pw)
+            Locker.delete(self.locker_name, self.pw)
         except PhibesNotFoundError:
             pass
-        build_cli_app(
-            command_dict={
-                self.target: {
-                    self.action: {
-                        'name': self.command_name,
-                        'func': self.__class__.func
-                    }
-                }
-            },
-            click_group=self.click_group,
-            named_locker=True
-        )
+        self.setup_command()
 
     def custom_teardown(self, tmp_path):
         super(TestCreateLocker, self).custom_teardown(tmp_path)
         try:
-            Locker.delete(self.name, self.pw)
+            Locker.delete(self.locker_name, self.pw)
         except PhibesNotFoundError:
             pass
 
@@ -124,12 +98,12 @@ class TestCreateLocker(ConfigLoadingTestClass):
     def test_normal(self, setup_and_teardown, crypt_id):
         arg_list = [
             "--config", self.test_path,
-            "--locker", self.name,
+            "--locker", self.locker_name,
             "--password", self.pw,
             "--crypt_id", crypt_id
         ]
         result = CliRunner().invoke(
-            cli=self.click_group.commands[self.command_name],
+            cli=self.target_cmd,
             args=arg_list,
             input="y\n"
         )
@@ -142,13 +116,11 @@ class TestCreateLocker(ConfigLoadingTestClass):
     @pytest.mark.parametrize("crypt_id", crypt_ids)
     @pytest.mark.positive
     def test_normal_default_config(self, setup_and_teardown, crypt_id):
-        update_config_option_default(
-            self.click_group.commands[self.command_name], self.test_path
-        )
+        update_config_option_default(self.target_cmd, self.test_path)
         result = CliRunner().invoke(
-            cli=self.click_group.commands[self.command_name],
+            cli=self.target_cmd,
             args=[
-                "--locker", self.name,
+                "--locker", self.locker_name,
                 "--password", self.pw,
                 "--crypt_id", crypt_id
             ],
