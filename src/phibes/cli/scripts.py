@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Click-based command-line interface to phibes
 
@@ -10,11 +9,9 @@ from os import getcwd
 # third party packages
 # in-project modules
 from phibes.cli.commands import build_cli_app
-from phibes.cli.commands import Action, Target
 from phibes.cli.commands import ANON_COMMAND_DICT, NAMED_COMMAND_DICT
 from phibes.cli.cli_config import CliConfig
 from phibes.cli.lib import main, main_func
-from phibes.cli import handlers
 
 
 def anon_lockers():
@@ -30,8 +27,4 @@ def named_lockers():
     build_cli_app(
         command_dict=NAMED_COMMAND_DICT, click_group=main, named_locker=True
     )
-    main_func()
-
-
-if __name__ == '__main__':
     main_func()
