@@ -5,8 +5,8 @@ pytest module for phibes_cli delete-item command
 # Standard library imports
 
 # Related third party imports
-import pytest
 from click.testing import CliRunner
+import pytest
 
 # Local application/library specific imports
 from phibes.cli.commands import Action, Target
