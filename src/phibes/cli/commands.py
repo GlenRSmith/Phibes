@@ -7,6 +7,7 @@ import click
 import enum
 
 # in-project modules
+from phibes.cli import handlers
 from phibes.cli.options import cli_config_file_option
 from phibes.cli.options import config_option
 from phibes.cli.options import editor_option
@@ -34,6 +35,59 @@ class Action(enum.Enum):
     Delete = 'Delete'
     Get = 'Get'
     List = 'List'
+
+
+ANON_COMMAND_DICT = {
+    Target.Locker: {
+        Action.Create: {'name': 'init', 'func': handlers.create_locker},
+        Action.Get: {'name': 'status', 'func': handlers.get_locker},
+        Action.Delete: {'name': 'delete', 'func': handlers.delete_locker},
+    },
+    Target.Item: {
+        Action.Create: {'name': 'add', 'func': handlers.create_item},
+        Action.Get: {'name': 'get', 'func': handlers.get_item},
+        Action.Update: {'name': 'edit', 'func': handlers.edit_item},
+        Action.List: {'name': 'list', 'func': handlers.get_items},
+        Action.Delete: {'name': 'remove', 'func': handlers.delete_item}
+    }
+}
+
+NAMED_COMMAND_DICT = {
+    Target.Locker: {
+        Action.Create: {'name': 'create', 'func': handlers.create_locker},
+        Action.Get: {'name': 'info', 'func': handlers.get_locker},
+        Action.Delete: {'name': 'delete', 'func': handlers.delete_locker},
+    },
+    Target.Item: {
+        Action.Create: {
+            'name': 'create-item', 'func': handlers.create_item
+        },
+        Action.Get: {'name': 'get-item', 'func': handlers.get_item},
+        Action.Update: {'name': 'edit', 'func': handlers.edit_item},
+        Action.List: {'name': 'list', 'func': handlers.get_items},
+        Action.Delete: {
+            'name': 'delete-item', 'func': handlers.delete_item
+        }
+    },
+    Target.Config: {
+        Action.Create: {
+            'name': 'create-config', 'func': handlers.create_cli_config
+        },
+        Action.Update: {
+            'name': 'update-config', 'func': handlers.update_cli_config
+        }
+    }
+}
+
+
+def make_command_handler(
+        target: Target, action: Action, name_lockers: bool, name: str = None
+) -> dict:
+    src = (ANON_COMMAND_DICT, NAMED_COMMAND_DICT)[name_lockers]
+    ret_val = src[target][action]
+    if name:
+        ret_val['name'] = name
+    return ret_val
 
 
 class PhibesClickCmd(object):
