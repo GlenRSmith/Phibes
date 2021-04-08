@@ -10,7 +10,6 @@ import random
 # Local application/library specific imports
 from phibes import crypto
 from phibes.cli.cli_config import CLI_CONFIG_FILE_NAME, set_home_dir
-from phibes.cli.commands import build_cli_app
 from phibes.lib.config import ConfigModel
 from phibes.lib.config import load_config_file, write_config_file
 from phibes.lib.config import StoreType
@@ -82,31 +81,6 @@ class ConfigLoadingTestClass(BaseTestClass):
     def update_config(self, config: ConfigModel) -> ConfigModel:
         write_config_file(self.test_path, config, update=True)
         return load_config_file(self.test_path)
-
-
-class BaseAnonLockerTest(ConfigLoadingTestClass):
-
-    password = None
-    command_name = None
-    target = None
-    action = None
-    func = None
-    click_group = None
-
-    def custom_setup(self, tmp_path):
-        super(BaseAnonLockerTest, self).custom_setup(tmp_path)
-        build_cli_app(
-            command_dict={
-                self.target: {
-                    self.action: {
-                        'name': self.command_name,
-                        'func': self.__class__.func
-                    }
-                }
-            },
-            click_group=self.click_group,
-            named_locker=False
-        )
 
 
 class EmptyLocker(ConfigLoadingTestClass):
