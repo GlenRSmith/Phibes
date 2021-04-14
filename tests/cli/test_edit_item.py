@@ -34,7 +34,6 @@ class TestNoName(ConfigLoadingTestClass, MixinItemEdit):
     test_item_name = 'gonna_editecha'
     start_content = f"replace this\n"
     edit_content = f"unique"
-    cli_editor_option = "echo emacswhatwhat>> "
 
     def custom_setup(self, tmp_path):
         super(TestNoName, self).custom_setup(tmp_path)
@@ -109,8 +108,10 @@ class TestNoName(ConfigLoadingTestClass, MixinItemEdit):
         load_config_file(tmp_path)
         # change the configured working path to the test directory
         update_config_option_default(self.target_cmd, self.test_path)
+        replacement_content = "emacswhatwhat"
+        cli_editor_option = f"echo {replacement_content}> "
         result = self.prep_and_run(
-            {'crypt_id': crypt_id, 'editor': self.cli_editor_option}
+            {'crypt_id': crypt_id, 'editor': cli_editor_option}
         )
         assert result
         assert result.exit_code == 0, (
@@ -121,7 +122,7 @@ class TestNoName(ConfigLoadingTestClass, MixinItemEdit):
         assert self.start_content not in result.output
         assert self.edit_content not in result.output
         inst = self.my_locker.get_item(self.test_item_name)
-        assert self.cli_editor_option == inst.content.strip()
+        assert replacement_content == inst.content.strip()
 
 
 class TestEditBase(PopulatedLocker, MixinItemEdit):

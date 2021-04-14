@@ -94,7 +94,7 @@ class TestNoName(ConfigLoadingTestClass, MixinItemCreate):
     @pytest.mark.parametrize("crypt_id", list_crypts())
     @pytest.mark.positive
     def test_editor_option(self, crypt_id, setup_and_teardown):
-        editor = 'echo emacswhatwhat>> '
+        editor = 'echo emacswhatwhat> '
         result = self.prep_and_run(
             {'crypt_id': crypt_id, 'editor': editor}
         )

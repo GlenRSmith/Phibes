@@ -146,6 +146,9 @@ def create_item(
         **kwargs
 ):
     """Create an Item in a Locker"""
+    # if any env_var options are in there, calling the config
+    # constructor should set the relevant environment variable
+    CliConfig(**kwargs)
     store_info = set_store_config(**kwargs)
     if template == 'Empty':
         template = None
@@ -197,6 +200,9 @@ def create_item(
 
 def edit_item(password: str, item: str, locker: str = None, **kwargs):
     """Edit the contents of an Item in a Locker"""
+    # if any env_var options are in there, calling the config
+    # constructor should set the relevant environment variable
+    CliConfig(**kwargs)
     set_store_config(**kwargs)
     try:
         item_inst = views.get_item(
