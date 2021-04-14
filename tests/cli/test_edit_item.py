@@ -34,6 +34,7 @@ class TestNoName(ConfigLoadingTestClass, MixinItemEdit):
     test_item_name = 'gonna_editecha'
     start_content = f"replace this\n"
     edit_content = f"unique"
+    cli_editor_option = "echo emacswhatwhat>> "
 
     def custom_setup(self, tmp_path):
         super(TestNoName, self).custom_setup(tmp_path)
@@ -52,6 +53,8 @@ class TestNoName(ConfigLoadingTestClass, MixinItemEdit):
             "--path", arg_dict.get('path', self.test_path),
             "--item", arg_dict.get('item', self.test_item_name)
         ]
+        if 'editor' in arg_dict:
+            args += ["--editor", arg_dict['editor']]
         return CliRunner().invoke(self.target_cmd, args)
 
     def prep_and_run(self, arg_dict):
@@ -86,6 +89,39 @@ class TestNoName(ConfigLoadingTestClass, MixinItemEdit):
         assert self.start_content not in result.output
         inst = self.my_locker.get_item(self.test_item_name)
         assert self.edit_content == inst.content.strip()
+
+    @pytest.mark.parametrize("crypt_id", list_crypts())
+    @pytest.mark.positive
+    def test_editor_option(self, crypt_id, tmp_path, setup_and_teardown):
+        self.my_locker = Locker.create(
+            password=self.password, crypt_id=crypt_id
+        )
+        new_item = self.my_locker.create_item(item_name=self.test_item_name)
+        new_item.content = self.start_content
+        self.my_locker.add_item(item=new_item)
+        conf = CliConfig()
+        conf.store = {
+            'store_type': conf.store['store_type'],
+            'store_path': tmp_path
+        }
+        conf.editor = f'echo {self.edit_content}> '
+        write_config_file(tmp_path, update=True)
+        load_config_file(tmp_path)
+        # change the configured working path to the test directory
+        update_config_option_default(self.target_cmd, self.test_path)
+        result = self.prep_and_run(
+            {'crypt_id': crypt_id, 'editor': self.cli_editor_option}
+        )
+        assert result
+        assert result.exit_code == 0, (
+            f"{crypt_id=}\n"
+            f"{result.exception=}\n"
+            f"{result.output=}\n"
+        )
+        assert self.start_content not in result.output
+        assert self.edit_content not in result.output
+        inst = self.my_locker.get_item(self.test_item_name)
+        assert self.cli_editor_option == inst.content.strip()
 
 
 class TestEditBase(PopulatedLocker, MixinItemEdit):
