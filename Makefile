@@ -12,15 +12,13 @@ list:
 	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
 
 clean:
-	echo "TODO"
-#	find . -name "*.pyc" -print0 | xargs -0 rm -rf
-#	-rm -rf .coverage
-#	-rm -rf build
-#	-rm -rf dist
-#	-rm -rf $(PROJECT).egg-info
+	find . -name "*.pyc" -print0 | xargs -0 rm -rf
+	rm -rf .coverage
+	rm -rf build
+	rm -rf dist
 
 build:
-	pytest phibes
+	python setup.py sdist
 
 which:
 	which python
