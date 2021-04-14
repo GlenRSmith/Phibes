@@ -1,5 +1,5 @@
 """
-pytest module for testing views
+pytest module for view:get_locker
 """
 
 # Standard library imports
