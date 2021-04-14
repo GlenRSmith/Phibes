@@ -1,5 +1,6 @@
 """
-EmptyLocker class used by several tests for setup, teardown
+Module for various bits used in testing, such as
+Base test classes used by several tests for setup, teardown
 """
 
 # Standard library imports
