@@ -53,9 +53,7 @@ class CliConfig(ConfigModel):
         :return: protected _editor attribute
         """
         if self._editor is None:
-            self._editor = environ.get(
-                'PHIBES_CLI_EDITOR', environ.get('EDITOR', None)
-            )
+            self._editor = environ.get('PHIBES_EDITOR', DEFAULT_EDITOR)
         return self._editor
 
     @editor.setter
@@ -67,7 +65,7 @@ class CliConfig(ConfigModel):
         """
         self._validate_editor(new_val)
         self._editor = new_val
-        environ['PHIBES_CLI_EDITOR'] = new_val
+        environ['PHIBES_EDITOR'] = new_val
 
     @property
     def work_path(self) -> str:
