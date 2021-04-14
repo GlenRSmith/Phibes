@@ -92,7 +92,7 @@ class Item(object):
         ret_val += "content follows (between lines)\n"
         ret_val += "----------\n"
         ret_val += f"{self.content}"
-        ret_val += "\n----------\n"
+        ret_val += "----------\n"
         return ret_val
 
     def as_dict(self):
