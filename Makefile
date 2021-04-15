@@ -13,14 +13,16 @@ list:
 
 clean:
 	echo "TODO"
-#	find . -name "*.pyc" -print0 | xargs -0 rm -rf
-#	-rm -rf .coverage
-#	-rm -rf build
-#	-rm -rf dist
-#	-rm -rf $(PROJECT).egg-info
+	find . -name "*.pyc" -print0 | xargs -0 rm -rf
+	-rm -rf .coverage
+	-rm -rf build
+	-rm -rf dist
+	-rm -rf $(PROJECT).egg-info
 
 build:
 	pytest phibes
+	python setup.py sdist
+	python setup.py bdist_wheel --universal
 
 which:
 	which python
