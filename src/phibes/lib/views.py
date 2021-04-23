@@ -33,7 +33,6 @@ def delete_locker(password: str, locker_name: str, **kwargs):
     return Locker.delete(password=password, locker_name=locker_name)
 
 
-@rendered
 def create_item(
         password: str, locker_name: str, item_name: str, content: str, **kwargs
 ):
@@ -63,7 +62,6 @@ def get_items(password: str, locker_name: str, **kwargs):
     return [item.as_dict() for item in locker.list_items()]
 
 
-@rendered
 def delete_item(
         password: str, locker_name: str, item_name: str, **kwargs
 ):
