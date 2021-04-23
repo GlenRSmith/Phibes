@@ -22,7 +22,7 @@ def create_locker(
 
 
 def get_locker(password: str, locker_name: str, **kwargs):
-    return Locker.get(password=password, locker_name=locker_name)
+    return Locker.get(password=password, locker_name=locker_name).to_dict()
 
 
 def delete_locker(password: str, locker_name: str, **kwargs):
