@@ -53,16 +53,14 @@ def update_item(
     return locker.update_item(item)
 
 
-@rendered
 def get_item(password: str, locker_name: str, item_name: str, **kwargs):
     locker = Locker.get(password=password, locker_name=locker_name)
-    return locker.get_item(item_name=item_name)
+    return locker.get_item(item_name=item_name).as_dict()
 
 
-@rendered
 def get_items(password: str, locker_name: str, **kwargs):
     locker = Locker.get(password=password, locker_name=locker_name)
-    return locker.list_items()
+    return [item.as_dict() for item in locker.list_items()]
 
 
 @rendered
