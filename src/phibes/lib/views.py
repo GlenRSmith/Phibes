@@ -11,7 +11,6 @@ from phibes.model import Locker
 from phibes.lib.represent import rendered
 
 
-@rendered
 def create_locker(
         password: str,
         crypt_id: str,
@@ -28,7 +27,6 @@ def get_locker(password: str, locker_name: str, **kwargs):
     return Locker.get(password=password, locker_name=locker_name)
 
 
-@rendered
 def delete_locker(password: str, locker_name: str, **kwargs):
     return Locker.delete(password=password, locker_name=locker_name)
 
@@ -42,14 +40,13 @@ def create_item(
     return locker.add_item(item)
 
 
-@rendered
 def update_item(
         password: str, locker_name: str, item_name: str, content: str, **kwargs
 ):
     locker = Locker.get(password=password, locker_name=locker_name)
     item = locker.get_item(item_name)
     item.content = content
-    return locker.update_item(item)
+    return locker.update_item(item).as_dict()
 
 
 def get_item(password: str, locker_name: str, item_name: str, **kwargs):
