@@ -8,7 +8,6 @@ Hence, provides a common entry point for various client types.
 # third party packages
 # in-project modules
 from phibes.model import Locker
-from phibes.lib.represent import rendered
 
 
 def create_locker(
@@ -19,10 +18,9 @@ def create_locker(
 ):
     return Locker.create(
         password=password, crypt_id=crypt_id, locker_name=locker_name
-    )
+    ).to_dict()
 
 
-@rendered
 def get_locker(password: str, locker_name: str, **kwargs):
     return Locker.get(password=password, locker_name=locker_name)
 
@@ -37,7 +35,10 @@ def create_item(
     locker = Locker.get(password=password, locker_name=locker_name)
     item = locker.create_item(item_name=item_name)
     item.content = content
-    return locker.add_item(item)
+    locker.add_item(item)
+    return get_item(
+        password=password, locker_name=locker_name, item_name=item_name
+    )
 
 
 def update_item(
@@ -46,7 +47,10 @@ def update_item(
     locker = Locker.get(password=password, locker_name=locker_name)
     item = locker.get_item(item_name)
     item.content = content
-    return locker.update_item(item).as_dict()
+    locker.update_item(item)
+    return get_item(
+        password=password, locker_name=locker_name, item_name=item_name
+    )
 
 
 def get_item(password: str, locker_name: str, item_name: str, **kwargs):
