@@ -12,7 +12,6 @@ import click
 # in-project modules
 from phibes.cli.cli_config import CliConfig
 from phibes.cli.errors import PhibesCliError
-from phibes.model import Locker
 
 CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
