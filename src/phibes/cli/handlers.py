@@ -85,8 +85,8 @@ def get_locker(password: str, locker: str = None, **kwargs):
         if hasattr(inst.path, 'name'):
             click.echo(f"Locker stored as {inst.path.name}")
     click.echo(f"{store_info}")
-    click.echo(f"Was created {inst.timestamp}")
-    click.echo(f"Crypt ID {inst.crypt_impl.crypt_id}")
+    click.echo(f"Was created {inst['timestamp']}")
+    click.echo(f"Crypt ID {inst['crypt_id']}")
     return inst
 
 
@@ -103,7 +103,7 @@ def delete_locker(password: str, locker: str = None, **kwargs):
         (
             f"Will attempt to delete locker \n"
             f"{store_info=}\n"
-            f"{inst.__dict__=}\n"
+            f"{inst=}\n"
             f"Enter `y` to accept, `N` to abort"
         ), abort=True
     )

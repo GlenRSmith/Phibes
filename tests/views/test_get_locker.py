@@ -57,25 +57,7 @@ class TestGetLocker(EmptyLocker):
             password=self.password, locker_name=self.locker_name
         )
         assert inst
-        assert type(inst) is Locker
-        inst = get_locker(
-            password=self.password,
-            locker_name=self.locker_name
-        )
-        assert inst
-        assert type(inst) is Locker
-        inst = get_locker(
-            password=self.password,
-            locker_name=self.locker_name
-        )
-        assert inst
         assert type(inst) is dict
-        inst = get_locker(
-            password=self.password,
-            locker_name=self.locker_name
-        )
-        assert inst
-        assert type(inst) is str
 
 
 class TestJson(ConfigLoadingTestClass):
