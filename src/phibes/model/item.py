@@ -85,16 +85,6 @@ class Item(object):
         item_inst.crypt_impl.salt = item_inst._salt
         return item_inst
 
-    def __str__(self):
-        ret_val = "Item\n"
-        ret_val += f"name: {self.name}\n"
-        ret_val += f"timestamp: {self.timestamp}\n"
-        ret_val += "content follows (between lines)\n"
-        ret_val += "----------\n"
-        ret_val += f"{self.content}"
-        ret_val += "\n----------\n"
-        return ret_val
-
     def as_dict(self):
         ret_val = {
             'salt': self.salt,
