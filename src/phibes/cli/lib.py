@@ -12,7 +12,6 @@ import click
 # in-project modules
 from phibes.cli.cli_config import CliConfig
 from phibes.cli.errors import PhibesCliError
-from phibes.model import Locker
 
 CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
@@ -110,23 +109,30 @@ def user_edit_local_item(item_name: str, initial_content: str = ''):
     )
 
 
-def present_list_items2(items, verbose: bool):
+def present_item(item: dict) -> str:
+    ret_val = "Item\n"
+    ret_val += f"name: {item['name']}\n"
+    ret_val += f"timestamp: {item['timestamp']}\n"
+    ret_val += "content follows (between lines)\n"
+    ret_val += "----------\n"
+    ret_val += f"{item['body']}"
+    ret_val += "\n----------\n"
+    return ret_val
+
+
+def present_list_items(items, verbose: bool):
     """Function to list items in a locker"""
     ret_val = ""
     if verbose:
         for sec in items:
-            ret_val += f"{sec}"
+            ret_val += present_item(sec)
     else:
         longest = 10
         for sec in items:
-            longest = (longest, len(sec.name))[longest < len(sec.name)]
+            longest = (
+                longest, len(sec['name'])
+            )[longest < len(sec['name'])]
         ret_val += f"{'Item Name':>{longest+2}}\n"
         for sec in items:
-            ret_val += f"{str(sec.name):>{longest+2}}\n"
+            ret_val += f"{str(sec['name']):>{longest+2}}\n"
     return ret_val
-
-
-def present_list_items(locker_inst: Locker, verbose: bool):
-    """Function to list items in a locker"""
-    items = locker_inst.list_items()
-    return present_list_items2(items, verbose)

@@ -11,11 +11,11 @@ import click
 from phibes.cli.cli_config import CliConfig, write_config_file
 from phibes.cli.errors import PhibesCliError, PhibesCliExistsError
 from phibes.cli.errors import PhibesCliNotFoundError
-from phibes.cli.lib import present_list_items2, user_edit_local_item
+from phibes.cli.lib import present_item, present_list_items
+from phibes.cli.lib import user_edit_local_item
 from phibes.cli.options import crypt_choices
 from phibes.lib.config import ConfigModel, load_config_file
 from phibes.lib.errors import PhibesExistsError, PhibesNotFoundError
-from phibes.lib.represent import ReprType
 from phibes.storage.types import StoreType
 from phibes.lib import views
 
@@ -67,8 +67,8 @@ def create_locker(password: str, crypt_id: int, locker: str = None, **kwargs):
     # TODO: use Locker.status!
     click.echo(f"Locker created {resp}")
     click.echo(f"{store_info}")
-    click.echo(f"Was created {resp.timestamp}")
-    click.echo(f"Crypt ID {resp.crypt_impl.crypt_id}")
+    click.echo(f"Was created {resp['timestamp']}")
+    click.echo(f"Crypt ID {resp['crypt_id']}")
 
 
 def get_locker(password: str, locker: str = None, **kwargs):
@@ -76,10 +76,7 @@ def get_locker(password: str, locker: str = None, **kwargs):
     store_info = set_store_config(**kwargs)
     try:
         inst = views.get_locker(
-            repr=ReprType.Object,
-            password=password,
-            locker_name=locker,
-            **kwargs
+            password=password, locker_name=locker, **kwargs
         )
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
@@ -88,8 +85,8 @@ def get_locker(password: str, locker: str = None, **kwargs):
         if hasattr(inst.path, 'name'):
             click.echo(f"Locker stored as {inst.path.name}")
     click.echo(f"{store_info}")
-    click.echo(f"Was created {inst.timestamp}")
-    click.echo(f"Crypt ID {inst.crypt_impl.crypt_id}")
+    click.echo(f"Was created {inst['timestamp']}")
+    click.echo(f"Crypt ID {inst['crypt_id']}")
     return inst
 
 
@@ -98,10 +95,7 @@ def delete_locker(password: str, locker: str = None, **kwargs):
     store_info = set_store_config(**kwargs)
     try:
         inst = views.get_locker(
-            repr=ReprType.Object,
-            password=password,
-            locker_name=locker,
-            **kwargs
+            password=password, locker_name=locker, **kwargs
         )
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
@@ -109,26 +103,20 @@ def delete_locker(password: str, locker: str = None, **kwargs):
         (
             f"Will attempt to delete locker \n"
             f"{store_info=}\n"
-            f"{inst.__dict__=}\n"
+            f"{inst=}\n"
             f"Enter `y` to accept, `N` to abort"
         ), abort=True
     )
     try:
         resp = views.delete_locker(
-            repr=ReprType.Object,
-            password=password,
-            locker_name=locker,
-            **kwargs
+            password=password, locker_name=locker, **kwargs
         )
     except Exception as err:
         raise PhibesCliError(f"something went wrong {err=}")
     click.echo(resp)
     try:
         inst = views.get_locker(
-            repr=ReprType.Object,
-            password=password,
-            locker_name=locker,
-            **kwargs
+            password=password, locker_name=locker, **kwargs
         )
     except PhibesNotFoundError:
         inst = None
@@ -175,7 +163,7 @@ def create_item(
                 item_name=template,
                 **kwargs
             )
-            content = found.content
+            content = found['body']
         except PhibesNotFoundError:
             try:
                 # try to find a local file by that name
@@ -215,7 +203,7 @@ def edit_item(password: str, item: str, locker: str = None, **kwargs):
             f"{item} does not exist in locker\n"
         )
     content = user_edit_local_item(
-        item_name=item, initial_content=item_inst.content
+        item_name=item, initial_content=item_inst['body']
     )
     return views.update_item(
         password=password,
@@ -237,8 +225,9 @@ def get_item(password: str, item: str, locker: str = None, **kwargs):
         raise PhibesCliError(err)
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
+    ret_val = present_item(item_inst)
     click.echo(f"{store_info}")
-    click.echo(f"{item_inst}")
+    click.echo(f"{ret_val}")
     return item_inst
 
 
@@ -255,7 +244,7 @@ def get_items(password: str, locker: str = None, **kwargs):
         raise PhibesCliError(err)
     except PhibesNotFoundError as err:
         raise PhibesCliNotFoundError(err)
-    report = present_list_items2(
+    report = present_list_items(
         items=items, verbose=kwargs.pop('verbose', True)
     )
     click.echo(f"{report}")

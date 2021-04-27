@@ -7,6 +7,7 @@ A Locker has other data on the file system, but that file
 
 # Built-in library packages
 from __future__ import annotations
+from json import dumps
 from typing import List
 
 # Third party packages
@@ -96,6 +97,8 @@ class Locker(object):
             instance = cls.get(password=password, locker_name=locker_name)
         except Exception as err:
             raise PhibesUnknownError(f' unknown {err=}')
+        if not instance:
+            raise PhibesNotFoundError(locker_name)
         return instance
 
     @classmethod
@@ -223,3 +226,19 @@ class Locker(object):
             item = self.get_item(item_name=self.decrypt(item_id))
             items.append(item)
         return items
+
+    def to_dict(self, **kwargs):
+        """
+        Provide design dict representation of locker
+        self.locker_name = locker_name
+        """
+        ret_dict = {
+            'timestamp': self.timestamp,
+            'crypt_id': self.crypt_impl.crypt_id,
+            'storage': dumps(
+                self.data_model.storage.__dict__, default=str
+            )
+        }
+        if hasattr(self, 'locker_name') and self.locker_name:
+            ret_dict['locker_name'] = self.locker_name
+        return ret_dict

@@ -1,5 +1,6 @@
 """
-EmptyLocker class used by several tests for setup, teardown
+Module for various bits used in testing, such as
+Base test classes used by several tests for setup, teardown
 """
 
 # Standard library imports
@@ -143,18 +144,22 @@ class EmptyLocker(ConfigLoadingTestClass):
 
 class PopulatedLocker(EmptyLocker):
 
-    def custom_setup(self, tmp_path):
-        super(PopulatedLocker, self).custom_setup(tmp_path)
-        all_lockers = list(self.lockers.values())
-        all_lockers.append(self.my_locker)
-        content = (
+    common_item_name = "phibes_test_item"
+    content = (
             f"here is some stuff\n"
             f"password: HardHat\n"
             f"some name\n"
         )
+
+    def custom_setup(self, tmp_path):
+        super(PopulatedLocker, self).custom_setup(tmp_path)
+        all_lockers = list(self.lockers.values())
+        all_lockers.append(self.my_locker)
         for lck in all_lockers:
-            new_item = lck.create_item(item_name="secret_name")
-            new_item.content = content
+            new_item = lck.create_item(
+                item_name=self.common_item_name
+            )
+            new_item.content = self.content
             lck.add_item(item=new_item)
         return
 

@@ -144,11 +144,11 @@ class TestItemStuff(PopulatedLocker):
     def test_update_item(self, plaintext, setup_and_teardown):
         all_lockers = list(self.lockers.values()) + [self.my_locker]
         for lck in all_lockers:
-            found = lck.get_item("secret_name")
+            found = lck.get_item(self.common_item_name)
             assert found
             found.content = plaintext
             lck.update_item(found)
-            refound = lck.get_item("secret_name")
+            refound = lck.get_item(self.common_item_name)
             assert refound.content == plaintext
 
 
