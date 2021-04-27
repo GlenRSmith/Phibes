@@ -125,7 +125,7 @@ class TestGetItem(PopulatedLocker, MixinItemGet):
         assert result.exit_code == 0, err_report
         assert self.item_name in result.output, err_report
 
-    @pytest.mark.positive
+    @pytest.mark.negative
     def test_get_wrong_name(self, setup_and_teardown):
         with pytest.raises(PhibesCliNotFoundError):
             self.invoke(self.missing_item_name)
