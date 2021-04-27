@@ -60,9 +60,9 @@ class TestNoName(ConfigLoadingTestClass, MixinItemCreate):
         ]
         if 'template' in arg_dict:
             args += ["--template", arg_dict['template']]
-        return CliRunner().invoke(
-            self.target_cmd, args
-        )
+        if 'editor' in arg_dict:
+            args += ["--editor", arg_dict['editor']]
+        return CliRunner().invoke(self.target_cmd, args)
 
     def prep_and_run(self, arg_dict):
         self.my_locker = Locker.create(
@@ -90,6 +90,28 @@ class TestNoName(ConfigLoadingTestClass, MixinItemCreate):
         item_inst = self.my_locker.get_item(self.test_item_name)
         assert item_inst
         assert item_inst.content == 'happyclappy\n'
+
+    @pytest.mark.parametrize("crypt_id", list_crypts())
+    @pytest.mark.positive
+    def test_editor_option(self, crypt_id, setup_and_teardown):
+        editor = 'echo emacswhatwhat> '
+        result = self.prep_and_run(
+            {'crypt_id': crypt_id, 'editor': editor}
+        )
+        assert result
+        assert result.exit_code == 0, (
+            f"{crypt_id=}\n"
+            f"{result.exception=}\n"
+            f"{result.output=}\n"
+        )
+        locker_inst = Locker.get(password=self.password, locker_name=None)
+        assert (
+                locker_inst.data_model.storage.locker_file ==
+                self.test_path / LOCKER_FILE
+        )
+        item_inst = self.my_locker.get_item(self.test_item_name)
+        assert item_inst
+        assert item_inst.content == 'emacswhatwhat\n'
 
 
 class TestCreateBase(PopulatedLocker, MixinItemCreate):

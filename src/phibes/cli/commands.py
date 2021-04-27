@@ -124,11 +124,9 @@ class PhibesClickCmd(object):
                         'editor': editor_option
                     }
                 else:
-                    cmd_opts = {
-                        'config': config_option,
-                        'password': password_option
-                    }
+                    cmd_opts = {'password': password_option}
                     if self.named_locker:
+                        cmd_opts['config'] = config_option
                         cmd_opts['locker'] = locker_name_option
                     else:
                         cmd_opts['path'] = locker_path_option

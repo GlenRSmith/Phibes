@@ -4,7 +4,9 @@ Base test classes used by several tests for setup, teardown
 """
 
 # Standard library imports
+import itertools
 import random
+from typing import Dict
 
 # Related third party imports
 
@@ -40,6 +42,17 @@ plain_texts = [
     }
     """
 ]
+
+
+class ParametrizeArgs(object):
+    def __init__(self, params: Dict):
+        """
+        Takes a dict of param name:list of values,
+        Builds a `names` property: comma-separated list of names, and
+        Builds a list of tuples with all combinations of param values
+        """
+        self.names = ','.join(params.keys())
+        self.params = [i for i in itertools.product(*params.values())]
 
 
 class BaseTestClass(object):

@@ -51,3 +51,9 @@ test_all:
 
 find_unmarked_tests:
 	pytest --co -m "not negative and not positive"
+
+publish_pypi:
+	python3 -m twine upload --repository pypi dist/*
+
+publish_test_pypi:
+	python3 -m twine upload --repository testpypi dist/*
