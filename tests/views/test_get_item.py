@@ -21,14 +21,10 @@ class TestGetItem(PopulatedLocker):
     Test the get_locker view function
     """
 
-    item_name = "get_item_via_view"
     missing_item_name = 'do_not_get_this'
 
     def custom_setup(self, tmp_path):
         super(TestGetItem, self).custom_setup(tmp_path)
-        my_item = self.my_locker.create_item(self.item_name)
-        my_item.content = f"{self.item_name}"
-        self.my_locker.add_item(my_item)
 
     def custom_teardown(self, tmp_path):
         super(TestGetItem, self).custom_teardown(tmp_path)
@@ -42,22 +38,24 @@ class TestGetItem(PopulatedLocker):
         inst = get_item(
             password=self.password,
             locker_name=self.locker_name,
-            item_name=self.item_name
+            item_name=self.common_item_name
         )
         assert inst
         assert type(inst) is dict
         for fv in inst.values():
             assert self.my_locker.crypt_impl.key not in fv
+        assert inst['body'] == self.content
         for locker_name, lck in self.lockers.items():
             inst = get_item(
                 password=self.password,
                 locker_name=self.locker_name,
-                item_name=self.item_name
+                item_name=self.common_item_name
             )
             assert inst
             assert type(inst) is dict
             for fv in inst.values():
                 assert lck.crypt_impl.key not in fv
+            assert inst['body'] == self.content
 
     @pytest.mark.negative
     def test_get_wrong_name(self, setup_and_teardown):
